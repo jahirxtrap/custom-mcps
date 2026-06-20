@@ -53,7 +53,7 @@ def pixel_guide(size: int = 0) -> str:
     return guide_text(size)
 
 
-@mcp.tool
+@mcp.tool(output_schema=None)
 def render_sprite(spec: str, out_dir: str = "", scale: int = 0) -> list[Any]:
     """Render a sprite from a declarative JSON spec and return an upscaled preview image
     plus a 'path=' summary line. Spec: {size, layers:[{shape, fill}], outline?, symmetry?, out?}.
@@ -68,7 +68,7 @@ def render_sprite(spec: str, out_dir: str = "", scale: int = 0) -> list[Any]:
     return _result(native, out_dir, scale)
 
 
-@mcp.tool
+@mcp.tool(output_schema=None)
 def from_grid(grid: str, size: int, out: str, palette: str = "", out_dir: str = "", scale: int = 0) -> list[Any]:
     """Build a native PNG from an explicit 2D matrix. Cells are '#rrggbb'/null (hex), or symbols
     plus a palette map {symbol:'#rrggbb'}. Returns the upscaled preview + a 'path=' line."""
@@ -87,7 +87,7 @@ def to_grid(path: str, fmt: str = "hex") -> str:
     return json.dumps(image_to_payload(path, fmt))
 
 
-@mcp.tool
+@mcp.tool(output_schema=None)
 def preview(paths: list[str], scale: int = 0, out_dir: str = "") -> list[Any]:
     """Upscale one or more PNGs with NEAREST on a checkerboard for inspection (never blurs).
     Returns the montage image + a 'path=' line. scale=0 auto-scales to ~512px."""
