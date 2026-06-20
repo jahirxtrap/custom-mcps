@@ -13,6 +13,7 @@ def test_modkit_registers_all_tools():
             return sorted(t.name for t in await client.list_tools())
 
     assert asyncio.run(run()) == [
+        "check_access",
         "check_json",
         "check_structure",
         "find_symbol",

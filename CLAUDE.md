@@ -33,7 +33,7 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | library | `audiolib` | SFX synthesis primitives: oscillators, noise, sweeps, FM, envelopes, shaping, audio I/O (ffmpeg > soundfile). |
 | server | `sfx` | Synthesize sound effects by data; principles embedded. Tools: `sfx_guide`, `synth_sfx`, `waveform`, `encode`, `inspect`. |
 | library | `loaderkit` | Read-only multiloader-workspace toolkit: scan mods/versions, parse gradle.properties, compare loaders, conventions. |
-| server | `modkit` | Domain-specific (multiloader mod dev); read-only. Tools: `list_mods`, `mod_info`, `loader_sync`, `check_structure`, `check_json`, `find_symbol`. |
+| server | `modkit` | Domain-specific (multiloader mod dev); read-only. Tools: `list_mods`, `mod_info`, `loader_sync`, `check_structure`, `check_json`, `check_access`, `find_symbol`. |
 
 ## Commands
 

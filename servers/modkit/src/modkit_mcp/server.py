@@ -5,6 +5,7 @@ import json
 
 from fastmcp import FastMCP
 from loaderkit import (
+    check_access as _check_access,
     check_json as _check_json,
     check_structure as _check_structure,
     find_symbol as _find_symbol,
@@ -32,8 +33,8 @@ def mod_info(path: str) -> str:
 
 @mcp.tool
 def loader_sync(path: str) -> str:
-    """Compare the Java source of fabric/forge/neoforge in a version folder; report files missing
-    from a loader or differing between loaders (catches a loader left with a stale copy)."""
+    """Compare the shared Java of fabric/forge/neoforge; report same-path files that differ
+    across loaders (entrypoints differ by design — focus on files you expect to be identical)."""
     return json.dumps(_loader_sync(path))
 
 
@@ -49,6 +50,13 @@ def check_json(path: str) -> str:
     """Scan assets/ and data/ JSON in a version folder for byte-level convention breaks:
     a trailing newline (the file must end in } or ]) and CRLF line endings."""
     return json.dumps(_check_json(path))
+
+
+@mcp.tool
+def check_access(path: str) -> str:
+    """Check Access Widener / Access Transformer presence and cross-loader parity, and validate
+    the .aw header against the MC version (v1/named pre-26.1, v2/official 26.1+)."""
+    return json.dumps(_check_access(path))
 
 
 @mcp.tool

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from loaderkit import (
+    check_access,
     check_json,
     check_structure,
     find_symbol,
@@ -81,12 +82,11 @@ def test_mod_info(workspace):
 
 def test_loader_sync_detects_drift(workspace):
     report = loader_sync(workspace / "Bar Mod" / "barmod-1.21.11-multi")
-    assert report["in_sync"] is False
     assert "com/x/Foo.java" in report["differing"]
 
 
 def test_loader_sync_clean(workspace):
-    assert loader_sync(workspace / "Foo Mod" / "foomod-26.2-multi")["in_sync"] is True
+    assert loader_sync(workspace / "Foo Mod" / "foomod-26.2-multi")["differing"] == []
 
 
 def test_check_structure_flags_common_java(workspace):
@@ -114,3 +114,54 @@ def test_check_json_clean(workspace):
 def test_find_symbol(workspace):
     report = find_symbol(workspace / "Foo Mod" / "foomod-26.2-multi", "class Foo")
     assert report["count"] >= 3
+
+
+def _add_at(vd, loader):
+    d = vd / loader / "src" / "main" / "resources" / "META-INF"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "accesstransformer.cfg").write_text("public net.x.Y z\n", encoding="utf-8")
+
+
+def test_check_access_parity(tmp_path):
+    vd = _make_mod(tmp_path, "Acc", "acc", "26.2", 25)
+    res = vd / "fabric" / "src" / "main" / "resources"
+    res.mkdir(parents=True, exist_ok=True)
+    (res / "acc.aw").write_bytes(b"accessWidener\tv2\tofficial\n")
+    _add_at(vd, "forge")
+    report = check_access(vd)
+    assert report["has_aw"] is True
+    assert report["ok"] is False
+    assert any("neoforge missing" in issue for issue in report["issues"])
+
+
+def test_check_access_wrong_header(tmp_path):
+    vd = _make_mod(tmp_path, "Acc2", "acc2", "26.2", 25)
+    res = vd / "fabric" / "src" / "main" / "resources"
+    res.mkdir(parents=True, exist_ok=True)
+    (res / "acc2.aw").write_bytes(b"accessWidener\tv1\tnamed\n")
+    _add_at(vd, "forge")
+    _add_at(vd, "neoforge")
+    report = check_access(vd)
+    assert any("expects v2/official" in issue for issue in report["issues"])
+
+
+def test_check_access_clean_without_access(tmp_path):
+    vd = _make_mod(tmp_path, "NoAcc", "noacc", "26.2", 25)
+    assert check_access(vd)["ok"] is True
+
+
+def test_check_structure_mixins_parity(tmp_path):
+    vd = _make_mod(tmp_path, "Mix", "mix", "26.2", 25)
+    res = vd / "fabric" / "src" / "main" / "resources"
+    res.mkdir(parents=True, exist_ok=True)
+    (res / "mix.mixins.json").write_text("{}", encoding="utf-8")
+    report = check_structure(vd)
+    assert any("mixins.json" in issue for issue in report["issues"])
+
+
+def test_check_structure_modid_prefix(tmp_path):
+    vd = _make_mod(tmp_path, "Pref", "pref", "26.2", 25)
+    bad = vd / "fabric" / "src" / "main" / "java" / "com" / "x" / "Bad.java"
+    bad.write_text("package com.x;\nclass Bad { int pref$field; }\n", encoding="utf-8")
+    report = check_structure(vd)
+    assert any("prefix" in issue for issue in report["issues"])

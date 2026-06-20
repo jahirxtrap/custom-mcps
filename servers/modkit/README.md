@@ -14,9 +14,10 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 |---|---|
 | `list_mods` | Inventory: every mod under a root + its version folders + the most recent one. |
 | `mod_info` | A version folder's `gradle.properties` + the Java version expected for its MC version. |
-| `loader_sync` | Compare fabric/forge/neoforge Java; report files missing or differing between loaders. |
+| `loader_sync` | Compare loaders' Java; report same-path files that differ (entrypoints differ by design). |
 | `check_structure` | `common/` has no `.java`, loaders present, gradle files in place, Java matches MC, repositories only in root. |
 | `check_json` | Scan assets/data JSON for trailing newline and CRLF (byte-level conventions). |
+| `check_access` | Access Widener / Transformer presence + cross-loader parity + `.aw` header vs MC version. |
 | `find_symbol` | Find an API/class/method across all loaders' Java; returns file + line per hit. |
 
 ## What it does NOT do

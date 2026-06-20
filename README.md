@@ -81,11 +81,11 @@ folder convention and **never hardcodes a mod name**, so it works on any such wo
 tools are read-only.
 
 - **list_mods** inventories every mod and its version folders, flagging the most recent.
-- **loader_sync** compares the Java of fabric/forge/neoforge and flags files out of sync —
-  the classic "ported the fix to fabric but forge/neoforge kept the old copy".
+- **loader_sync** compares the loaders' Java and reports same-path files that differ — to spot
+  "ported the fix to fabric but a loader kept the old copy" (entrypoints differ by design).
 - **mod_info** reads `gradle.properties` and the Java version expected for that MC version.
-- **check_structure** / **check_json** validate conventions (common has no Java, repositories
-  only in root, JSON without trailing newline or CRLF).
+- **check_structure** / **check_json** / **check_access** validate conventions (common has no
+  Java, repositories only in root, JSON byte rules, mixins.json parity, AW/AT parity + header).
 - **find_symbol** locates an API across all loaders — handy when migrating versions.
 
 See [`servers/modkit`](servers/modkit) and [`packages/loaderkit`](packages/loaderkit).
