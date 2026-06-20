@@ -26,8 +26,11 @@ print(find_hardcoded("/path/to/app/src"))            # hex / Color(0xFF...) / 14
 
 Flags, per language, what should live in a token/theme file:
 - `#rrggbb` (web/CSS-in-code), `Color(0xFF...)` / `0xFFRRGGBB` (Compose/Kotlin/Java),
-- sizes `14px` / `1.5rem` (web), `16.dp` / `14.sp` (Compose),
+- web size values `14px` / `1.5rem` (as `"12px"` / `[12px]`),
 - raw Tailwind palette classes (`text-blue-500`).
+
+Compose `.dp` / `.sp` spacing is idiomatic and intentionally not flagged; comments and token
+files (`themes.*`, `palette.*`, …) are skipped.
 
 Token files (`themes.*`, `palette.*`, `tokens.*`, `tailwind.config`, …) are skipped; add more
 via `allow`.

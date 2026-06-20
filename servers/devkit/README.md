@@ -14,7 +14,7 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 | `conventions` | The embedded conventions, all or one topic: commit/code/dry/hardcoding/design/patterns/docs/naming. |
 | `commit_style` | Analyze a repo's recent commit subjects (prefixes, % conventional, length, case) — the style to imitate. |
 | `commit_context` | Diffstat + changed files + recent subjects + style, to draft a commit message that fits the repo. |
-| `find_hardcoded` | Hardcoded colors (`#hex`, `Color(0xFF…)`), sizes (`px`/`rem`/`.dp`/`.sp`) and raw Tailwind classes → tokens. |
+| `find_hardcoded` | Hardcoded colors (`#hex`, `Color(0xFF…)`, any stack) + web `px`/`rem` values + raw Tailwind → tokens. |
 | `find_duplication` | Repeated normalized line blocks → DRY candidates (heuristic). |
 
 ## What it encodes (verified against real projects)

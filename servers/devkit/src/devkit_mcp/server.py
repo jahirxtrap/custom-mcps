@@ -38,9 +38,9 @@ def commit_context(repo: str = "", rev_range: str = "") -> str:
 
 @mcp.tool
 def find_hardcoded(path: str, allow: str = "") -> str:
-    """Scan code for hardcoded colors (hex, Color(0xFF...)), sizes (px/rem/.dp/.sp) and raw Tailwind
-    palette classes that should live in a token/theme file. `allow` = comma-separated extra filename
-    substrings to skip (token files are skipped by default). Multi-stack."""
+    """Scan code for hardcoded colors (hex, Color(0xFF...) on any stack) plus web px/rem size values
+    and raw Tailwind palette classes that should live in a token/theme file. Compose .dp/.sp spacing
+    is idiomatic and not flagged. `allow` = comma-separated extra filename substrings to skip."""
     extra = [token.strip() for token in allow.split(",") if token.strip()] if allow else None
     return json.dumps(_find_hardcoded(path, extra))
 

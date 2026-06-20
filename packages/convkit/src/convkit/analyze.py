@@ -8,7 +8,7 @@ from typing import Any
 
 _COLOR_LITERAL = re.compile(r"Color\(\s*0x[0-9a-fA-F]{6,8}|\b0x[0-9a-fA-F]{8}\b")
 _HEX = re.compile(r"#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b")
-_SIZE = re.compile(r"\b\d+(?:\.\d+)?\.(?:dp|sp)\b|[\"'\[]\s*\d+(?:\.\d+)?(?:px|rem)\b")
+_SIZE = re.compile(r"[\"'\[]\s*\d+(?:\.\d+)?(?:px|rem)\b")
 _TAILWIND = re.compile(
     r"\b(?:bg|text|border|ring|from|via|to|fill|stroke|divide|outline)-"
     r"(?:red|blue|green|yellow|gray|grey|slate|zinc|neutral|stone|orange|amber|lime|emerald|"
@@ -76,7 +76,8 @@ def find_hardcoded(path: str, allow: list[str] | None = None) -> dict[str, Any]:
         "scanned_files": scanned,
         "hit_count": len(hits),
         "hits": hits[:300],
-        "note": "Move these into your token/theme file. Token files (themes/palette/...) are skipped.",
+        "note": "Colors (any stack) and web px/rem sizes. Compose .dp/.sp spacing is idiomatic "
+        "and intentionally not flagged. Token files (themes/palette/...) and comments are skipped.",
     }
 
 
