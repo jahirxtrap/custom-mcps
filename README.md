@@ -80,6 +80,13 @@ Or run it straight from the repo, without a local checkout:
 claude mcp add pixelart -s user -- uvx --from git+https://github.com/jahirxtrap/custom-mcps pixelart-mcp
 ```
 
+Or register **every** server in the workspace at once — it discovers each one under
+`servers/` and adds it at user scope:
+
+```bash
+uv run python scripts/register.py
+```
+
 ## Add a server
 
 Drop a folder under `servers/<name>/` with its own `pyproject.toml` and a

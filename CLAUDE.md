@@ -38,6 +38,7 @@ uv sync                     # venv + install all members (editable)
 uv run pytest               # tests (tests/)
 uv run ruff check .         # lint
 uv run <name>-mcp           # run a server over stdio
+uv run python scripts/register.py   # register every server with Claude Code (user scope)
 ```
 
 Register a server for every Claude Code session:
