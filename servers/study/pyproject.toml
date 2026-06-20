@@ -1,0 +1,23 @@
+[project]
+name = "study-mcp"
+version = "0.1.0"
+description = "Area-agnostic study MCP: anti-AI writing checks, APA citations, concept maps, workspaces."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "jahirtrap" }]
+keywords = ["mcp", "study", "academic", "apa", "fastmcp"]
+dependencies = ["fastmcp>=3.4", "studykit"]
+
+[project.scripts]
+study-mcp = "study_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/study_mcp"]
+
+[tool.uv.sources]
+studykit = { workspace = true }

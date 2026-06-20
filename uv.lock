@@ -21,6 +21,8 @@ members = [
     "pixelart-mcp",
     "pixellib",
     "sfx-mcp",
+    "study-mcp",
+    "studykit",
 ]
 
 [[package]]
@@ -324,6 +326,8 @@ dependencies = [
     { name = "pixelart-mcp" },
     { name = "pixellib" },
     { name = "sfx-mcp" },
+    { name = "study-mcp" },
+    { name = "studykit" },
 ]
 
 [package.dev-dependencies]
@@ -344,6 +348,8 @@ requires-dist = [
     { name = "pixelart-mcp", editable = "servers/pixelart" },
     { name = "pixellib", editable = "packages/pixellib" },
     { name = "sfx-mcp", editable = "servers/sfx" },
+    { name = "study-mcp", editable = "servers/study" },
+    { name = "studykit", editable = "packages/studykit" },
 ]
 
 [package.metadata.requires-dev]
@@ -1648,6 +1654,32 @@ sdist = { url = "https://files.pythonhosted.org/packages/eb/e3/7c1dc7381d9f8ab7d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/bb/2799cc2ede3ed41131f8975621e7213dfc7ef4acbbaadfa440f32500c370/starlette-1.3.1-py3-none-any.whl", hash = "sha256:c7372aae11c3c3f26a42df7bd626cec2f47d03483d261d369516a615a53714c6", size = 73632, upload-time = "2026-06-12T09:23:10.017Z" },
 ]
+
+[[package]]
+name = "study-mcp"
+version = "0.1.0"
+source = { editable = "servers/study" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "studykit" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=3.4" },
+    { name = "studykit", editable = "packages/studykit" },
+]
+
+[[package]]
+name = "studykit"
+version = "0.1.0"
+source = { editable = "packages/studykit" }
+dependencies = [
+    { name = "pillow" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pillow", specifier = ">=11.0" }]
 
 [[package]]
 name = "typing-extensions"

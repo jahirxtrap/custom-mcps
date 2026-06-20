@@ -22,8 +22,9 @@ servers in `servers/` — so adding a server is a single new folder.
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
+| **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, multi-area workspaces. |
 
-`pixelart`, `sfx` and `i18n` are engine-agnostic; `modkit` (multiloader mod dev) and `devkit`
+`pixelart`, `sfx`, `i18n` and `study` are agnostic; `modkit` (multiloader mod dev) and `devkit`
 (your conventions) are personal/domain-specific. All are registered the same way.
 
 ## pixelart
@@ -127,6 +128,31 @@ The conventions were extracted from your real projects (backstube-web, cconnect,
 
 See [`servers/devkit`](servers/devkit) and [`packages/convkit`](packages/convkit).
 
+## study
+
+**study** is the academic counterpart — it helps produce study and coursework **by data**, for
+**any field and any language**. It distills the reusable half of an academic-work assistant into
+tools, and for the parts it doesn't reimplement (documents, deep research, diagrams) it tells you
+exactly what to install.
+
+- **writing_check** is the heart: it catches "AI tells" in a draft — em dashes, filler, negative
+  parallelism, the rule of three, tell-tale vocabulary, vague attributions, meta-commentary,
+  chained transitions and stacked hedging — in **English and Spanish**, with a 0-100 score.
+- **burstiness** measures sentence-length variation, the uniformity detectors actually penalize.
+- **concept_map** renders a graphic organizer from a JSON spec, following the anti-AI visual rules
+  (the title is the topic, two to four colors, no template signatures).
+- **cite** formats APA 7 references and BibTeX from fields, or resolves a DOI to BibTeX.
+- **study_guide** carries the writing, citation, structure and visual conventions; **toolkit** is
+  the ecosystem catalog (what to install, which needs a key, how to configure it).
+- **workspace_init**, **area_add**, **reference_add** and **workspace_status** scaffold a reusable,
+  **multi-area** study workspace — shared conventions and memory, one folder per subject with its
+  own knowledge base and reference library.
+
+It carries **no subject knowledge** — you pick the field. `scripts/setup.py` installs the toolkit
+and writes any API keys to a gitignored `.env`; the server never stores secrets.
+
+See [`servers/study`](servers/study) and [`packages/studykit`](packages/studykit).
+
 ## Structure
 
 ```
@@ -136,13 +162,16 @@ custom-mcps/
 │   ├── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
 │   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
 │   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
-│   └── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
+│   ├── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
+│   └── studykit/    # study library — writing checks, citations, concept maps, workspace
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
 │   ├── sfx/         # MCP server — synthesize sound effects
 │   ├── modkit/      # MCP server — inspect / validate multiloader mod workspaces
 │   ├── i18n/        # MCP server — keep translation locales in sync
-│   └── devkit/      # MCP server — development conventions + checks
+│   ├── devkit/      # MCP server — development conventions + checks
+│   └── study/       # MCP server — academic study work by data
+├── scripts/         # register.py (register servers) + setup.py (install toolkit + .env)
 └── tests/           # workspace test suite (pytest)
 ```
 

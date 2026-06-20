@@ -1,0 +1,1 @@
+"""study MCP server package."""
