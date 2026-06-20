@@ -18,6 +18,7 @@ servers in `servers/` — so adding a server is a single new folder.
 | Server | What it does |
 |---|---|
 | **pixelart** | Draw, inspect and verify pixel art by data — any size, no project assumptions. |
+| **sfx** | Synthesize sound effects (`.ogg`) by data — any kind, no project assumptions. |
 
 ## pixelart
 
@@ -47,14 +48,36 @@ game the art is for. Tools that produce an image return both the picture and a
 See [`servers/pixelart`](servers/pixelart) for the full spec and tool reference, and
 [`packages/pixellib`](packages/pixellib) for the underlying drawing library.
 
+## sfx
+
+**sfx** synthesizes sound effects the same way — by **data, not by hand**. You describe a
+sound as layers (a sweep, a tone, a burst of noise) with envelopes, and it renders the
+`.ogg` plus a **waveform image** so you can verify it at a glance (I can't hear, so I look).
+
+- **synth_sfx** is the heart: a declarative JSON spec — oscillators, sweeps, noise, FM,
+  envelopes, and shaping like bitcrush — becomes a finished effect in one call.
+- **waveform** draws any audio file's wave so its attack, body and tail are visible.
+- **encode** converts between formats, and **inspect** reports peak, RMS, clipping and duration.
+- **sfx_guide** carries general SFX-design principles (anatomy, techniques by intent), so the
+  server is self-contained.
+
+The same spec makes anything — a coin, a laser, an explosion, a jump, a UI click. Output is
+configurable (format, sample rate, channels, normalization) with sane defaults (peak 0.9,
+ogg, 44100, mono). It prefers **ffmpeg** when available and falls back to **soundfile**, so
+it always works.
+
+See [`servers/sfx`](servers/sfx) and [`packages/audiolib`](packages/audiolib).
+
 ## Structure
 
 ```
 custom-mcps/
 ├── packages/
-│   └── pixellib/    # shared drawing library — grid, ramps, shading, outline, preview
+│   ├── pixellib/    # pixel-art drawing library — grid, ramps, shading, outline, preview
+│   └── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
 ├── servers/
-│   └── pixelart/    # the MCP server — own pyproject, entry point and README
+│   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
+│   └── sfx/         # MCP server — synthesize sound effects
 └── tests/           # workspace test suite (pytest)
 ```
 

@@ -1,0 +1,23 @@
+[project]
+name = "sfx-mcp"
+version = "0.1.0"
+description = "Standalone, engine-agnostic MCP server to synthesize sound effects by data."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "jahirtrap" }]
+keywords = ["mcp", "sfx", "audio", "fastmcp", "synthesis"]
+dependencies = ["fastmcp>=3.4", "audiolib", "pillow>=11.0"]
+
+[project.scripts]
+sfx-mcp = "sfx_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sfx_mcp"]
+
+[tool.uv.sources]
+audiolib = { workspace = true }
