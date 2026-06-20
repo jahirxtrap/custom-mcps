@@ -1,0 +1,81 @@
+# CLAUDE.md — custom-mcps
+
+A personal collection of **standalone, engine-agnostic MCP servers**, managed as a
+[uv](https://docs.astral.sh/uv/) workspace. Each server runs on its own over **stdio**
+and is registered at user scope so every Claude Code client can use it — there is no
+host app dependency. Shared code lives in `packages/`, servers in `servers/`.
+
+## Architecture
+
+```
+custom-mcps/                      # uv workspace root (virtual project, package = false)
+├── packages/<lib>/               # shared libraries (src layout, py.typed, hatchling)
+│   └── src/<lib>/
+└── servers/<name>/               # MCP servers (own pyproject + [project.scripts] + README)
+    └── src/<pkg>_mcp/
+        ├── server.py             # FastMCP instance + @mcp.tool tools + main()
+        └── __main__.py           # python -m entry
+```
+
+- **Transport.** Every server is **stdio** (`mcp.run()`); the client launches the process
+  on demand and tears it down on close. No port, no FastAPI/uvicorn, nothing long-running.
+- **SDK.** [`fastmcp`](https://gofastmcp.com) (v3+). Define tools with `@mcp.tool`; return an
+  image with `from fastmcp.utilities.types import Image` (`Image(path=...)` or `Image(data=, format=)`).
+- **Packaging.** `hatchling` build backend, `src/` layout, `py.typed` on typed libs. Internal
+  deps are wired with `[tool.uv.sources] <pkg> = { workspace = true }`.
+
+## Current members
+
+| Kind | Name | Summary |
+|---|---|---|
+| library | `pixellib` | Pixel-art primitives: grid, color ramps, shading, outline, preview. |
+| server | `pixelart` | Draw/inspect/verify pixel art by data (8/16/32/64); principles embedded. Tools: `pixel_guide`, `render_sprite`, `from_grid`, `to_grid`, `preview`, `palette`, `check`. |
+
+## Commands
+
+```bash
+uv sync                     # venv + install all members (editable)
+uv run pytest               # tests (tests/)
+uv run ruff check .         # lint
+uv run <name>-mcp           # run a server over stdio
+```
+
+Register a server for every Claude Code session:
+```bash
+claude mcp add <name> -s user -- uv run --project <abs-repo-path> <name>-mcp
+```
+
+## Adding a server
+
+1. Create `servers/<name>/pyproject.toml` with `requires-python = ">=3.11"`,
+   `dependencies = ["fastmcp>=3.4", ...]`, and `[project.scripts] <name>-mcp = "<pkg>_mcp.server:main"`.
+2. `src/<pkg>_mcp/server.py`: build `mcp = FastMCP(name="<name>")`, add `@mcp.tool` functions,
+   and `def main(): mcp.run()`. Add `__main__.py` and `__init__.py`.
+3. Reuse `pixellib` or add a package under `packages/`; wire it with `[tool.uv.sources]`.
+4. `uv sync`, add tests under `tests/`, update both READMEs and the table above, then register it.
+
+## The pixelart model (reference for new graphics servers)
+
+Pixel art is drawn **by data, not by perception**: build a `pixellib.Grid` (silhouette →
+shade with a top-left light → 1px 8-connected outline → optional symmetry), then save the
+PNG. Upscaled previews (`preview` / `pixellib.montage`) are for **verification only**, never
+the drawing method. `check` validates against the embedded rules.
+
+### Output contract
+
+Tools that produce an image return a standard image block **and** a text line
+`path=<abs> mime=image/png size=NxN ...`. Servers stay UI-agnostic: rendering the image to
+a user is the **host agent's** job (e.g. a client that turns the path into a markdown image).
+Never hardcode a client, URL, or shared folder into a server.
+
+## Conventions (hard rules)
+
+1. **Agnostic.** No project/engine/game names or assumptions in any server or library.
+2. **English only.** Code, docstrings, READMEs, identifiers.
+3. **No comments.** Self-explanatory names; a short docstring only when it genuinely helps.
+   Never inline `#` comments.
+4. **Pillow-only** raster stack. No heavyweight, native, or paid dependencies in a core server.
+   Optional integrations (e.g. an Aseprite-CLI importer) load only if the tool is on PATH.
+5. **Relative/temp paths.** Never hardcode machine paths; scratch output goes to the system
+   temp dir unless an explicit `out_dir` is given. The repo is public on GitHub.
+6. **stdio only.** No long-running servers, no auth, no network transport.
