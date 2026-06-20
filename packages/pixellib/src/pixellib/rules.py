@@ -24,6 +24,38 @@ _HARD_RULES = [
     "No floating pixels: content stays wrapped by its own border.",
 ]
 
+_SILHOUETTE = [
+    "Silhouette test: fill the whole sprite with one solid color. Is it still recognizable? "
+    "Can you tell front from back and read the pose? If not, fix the shape before adding detail.",
+    "Lock the silhouette first; internal detail only earns its place once the outline reads.",
+    "Readable shape beats internal detail every time: detail that vanishes at 1x is wasted pixels.",
+]
+
+_SIZES = [
+    "8x8: items, bullets, tiny props.",
+    "16x16: classic icons and props -- the clarity sweet spot.",
+    "32x32: characters and detailed sprites (modern standard).",
+    "64x64: large enemies, bosses, portraits.",
+    "Chibi proportions: head ~50% of height. Realistic proportions: head ~1/6 to 1/8 of height.",
+]
+
+_LIGHT = [
+    "Commit to one light direction (top-left ~45deg) and keep it across the whole set.",
+    "Highlights on top surfaces and faces toward the light; midtones on the sides; "
+    "shadows on bottom surfaces and faces away from the light.",
+    "Hue-shift while shading: push shadows toward cool (blue/purple), highlights toward warm "
+    "(yellow/orange). Just darkening the same hue looks flat.",
+    "A small cast shadow under an object grounds it.",
+]
+
+_RAMP_NOTES = [
+    "skin: narrow warm ramp; shadows warm, highlights never reach pure white.",
+    "hair: subtle sheen, lift toward white only ~5-11%.",
+    "clothing/armor/props: wide hue-shifted ramp so volume reads.",
+    "Color variants from one sprite: draw NEUTRAL grayscale (no hue) and recolor via tint; "
+    "a baked hue makes the tint muddy.",
+]
+
 _OUTLINE_GOTCHAS = [
     "The outline cannot draw past the canvas edge: keep content >=1px away from every border, "
     "or the border will be incomplete on that side.",
@@ -37,34 +69,47 @@ _OUTLINE_EXCEPTIONS = [
     "Standalone blobs / distinct parts: inner-rim is fine.",
 ]
 
-_RAMP_NOTES = [
-    "skin: narrow warm ramp; shadows warm, highlights never reach pure white.",
-    "hair: subtle sheen, lift toward white only ~5-11%.",
-    "clothing/armor/props: wide hue-shifted ramp so volume reads.",
-    "Color variants from one sprite: draw NEUTRAL grayscale (no hue) and recolor via tint; "
-    "a baked hue makes the tint muddy.",
+_OUTLINE_STYLES = [
+    "none: softer, painted look -- best for larger or atmospheric sprites.",
+    "selective: outline only the outer edge -- clean and readable, a solid default.",
+    "full: outline every edge including internal -- bold, cartoon, high visibility.",
+    "colored: outline in the darkest shade of the adjacent color (not pure black) -- soft, integrated.",
+    "Pick one style and keep 1px weight consistent across a set; mixed weights look amateur.",
+]
+
+_DITHERING = [
+    "For a gradient inside a limited palette, use ORDERED dithering (checkerboard / 25% / diagonal), "
+    "never random noise -- noise looks messy at pixel scale.",
+    "Prefer one more ramp step over heavy dithering when the color budget allows it.",
 ]
 
 _ANTIPATTERNS = [
     "Pillow shading: darkening all edges uniformly (looks inflated, no light direction).",
     "Detail invisible at 1x.",
-    "Non-integer scaling.",
+    "Non-integer scaling (always scale by whole numbers).",
     "Mixing pixel resolutions in one sprite.",
+    "Anti-aliasing against a background color (causes halos on other backgrounds).",
 ]
 
 
 def guide(size: int = 0) -> str:
     """Render the embedded pixel-art guidance, with the color budget for `size` if given."""
-    lines = ["# Pixel-art guide", "", "## Hard rules"]
-    lines += [f"- {r}" for r in _HARD_RULES]
-    lines += ["", "## Outline gotchas"]
-    lines += [f"- {g}" for g in _OUTLINE_GOTCHAS]
-    lines += ["", "## Outline exceptions"]
-    lines += [f"- {e}" for e in _OUTLINE_EXCEPTIONS]
-    lines += ["", "## Ramps"]
-    lines += [f"- {n}" for n in _RAMP_NOTES]
-    lines += ["", "## Anti-patterns"]
-    lines += [f"- {a}" for a in _ANTIPATTERNS]
+    sections = [
+        ("Hard rules", _HARD_RULES),
+        ("Silhouette first", _SILHOUETTE),
+        ("Sizes & proportions", _SIZES),
+        ("Shading & light", _LIGHT),
+        ("Ramps", _RAMP_NOTES),
+        ("Outline gotchas", _OUTLINE_GOTCHAS),
+        ("Outline exceptions", _OUTLINE_EXCEPTIONS),
+        ("Outline styles", _OUTLINE_STYLES),
+        ("Dithering", _DITHERING),
+        ("Anti-patterns", _ANTIPATTERNS),
+    ]
+    lines = ["# Pixel-art guide"]
+    for title, items in sections:
+        lines += ["", f"## {title}"]
+        lines += [f"- {item}" for item in items]
     lines += ["", "## Color budget by size"]
     for s, (lo, hi) in COLOR_LIMITS.items():
         lines.append(f"- {s}x{s}: {lo}-{hi} colors")
