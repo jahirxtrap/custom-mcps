@@ -9,7 +9,9 @@ from audiolib import (
     noise,
     osc,
     peak_normalize,
+    pluck,
     read,
+    ring_mod,
     sweep,
     waveform_image,
     write,
@@ -96,3 +98,21 @@ def test_write_ogg_via_soundfile(tmp_path):
 def test_waveform_image_size():
     img = waveform_image(osc("sine", 440, 0.1, SR), width=320, height=120)
     assert img.size == (320, 120)
+
+
+def test_pluck_produces_tone():
+    s = pluck(220, 0.2, SR, seed=1)
+    assert len(s) == int(0.2 * SR)
+    assert float(np.max(np.abs(s))) > 0
+
+
+def test_ring_mod_differs_from_plain_osc():
+    r = ring_mod(440, 110, 0.05, SR)
+    assert len(r) == int(0.05 * SR)
+    assert not np.allclose(r, osc("sine", 440, 0.05, SR))
+
+
+def test_envelope_hump_peaks_in_middle():
+    e = envelope("hump", 0.2, SR, power=1.4)
+    assert e[len(e) // 2] > e[0]
+    assert e[len(e) // 2] > e[-1]

@@ -15,6 +15,8 @@ from .synth import (
     noise,
     osc,
     peak_normalize,
+    pluck,
+    ring_mod,
     sweep,
 )
 
@@ -23,6 +25,8 @@ __all__ = [
     "osc",
     "sweep",
     "fm",
+    "ring_mod",
+    "pluck",
     "noise",
     "envelope",
     "low_pass",

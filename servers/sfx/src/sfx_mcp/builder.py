@@ -16,6 +16,8 @@ from audiolib import (
     noise,
     osc,
     peak_normalize,
+    pluck,
+    ring_mod,
     sweep,
 )
 
@@ -56,6 +58,16 @@ def _source(layer: dict[str, Any], duration: float, sample_rate: int) -> Samples
             duration,
             sample_rate,
             layer.get("wave", "sine"),
+        )
+    if kind == "ring":
+        return ring_mod(float(layer["a"]), float(layer["b"]), duration, sample_rate, layer.get("wave", "sine"))
+    if kind == "pluck":
+        return pluck(
+            float(layer["freq"]),
+            duration,
+            sample_rate,
+            decay=float(layer.get("pluck_decay", 0.996)),
+            seed=int(layer.get("seed", 0)),
         )
     raise ValueError(f"unknown layer type: {kind}")
 

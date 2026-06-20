@@ -50,6 +50,24 @@ def fm(
     return _wave(wave, _TWO_PI * carrier * t + index * np.sin(_TWO_PI * mod_freq * t))
 
 
+def ring_mod(freq_a: float, freq_b: float, duration: float, sample_rate: int, wave: str = "sine") -> Samples:
+    t = _time(duration, sample_rate)
+    return _wave(wave, _TWO_PI * freq_a * t) * _wave(wave, _TWO_PI * freq_b * t)
+
+
+def pluck(freq: float, duration: float, sample_rate: int, decay: float = 0.996, seed: int = 0) -> Samples:
+    n = len(_time(duration, sample_rate))
+    period = max(2, int(sample_rate / max(freq, 1.0)))
+    rng = np.random.default_rng(seed)
+    buf = rng.uniform(-1.0, 1.0, period)
+    out = np.empty(n)
+    for i in range(n):
+        idx = i % period
+        out[i] = buf[idx]
+        buf[idx] = decay * 0.5 * (buf[idx] + buf[(i + 1) % period])
+    return out
+
+
 def noise(duration: float, sample_rate: int, filter_coef: float = 0.0, seed: int = 0) -> Samples:
     n = len(_time(duration, sample_rate))
     rng = np.random.default_rng(seed)
@@ -79,6 +97,9 @@ def envelope(
     if shape == "decay":
         tn = np.linspace(0.0, 1.0, n, endpoint=False)
         return np.power(np.clip(1.0 - tn, 0.0, 1.0), power)
+    if shape == "hump":
+        tn = np.linspace(0.0, 1.0, n, endpoint=False)
+        return np.power(np.sin(np.pi * tn), power)
     env = np.zeros(n)
     a = min(n, max(0, int(attack * sample_rate)))
     if shape == "ar":

@@ -52,3 +52,16 @@ def test_normalize_can_be_disabled():
 def test_unknown_layer_type_raises():
     with pytest.raises(ValueError):
         build_from_spec({"layers": [{"type": "bogus"}]})
+
+
+def test_pluck_and_ring_layers():
+    spec = {
+        "duration": 0.15,
+        "layers": [
+            {"type": "pluck", "freq": 330, "gain": 0.8},
+            {"type": "ring", "a": 440, "b": 123, "gain": 0.4},
+        ],
+    }
+    samples, _ = build_from_spec(spec)
+    assert len(samples) == int(0.15 * 44100)
+    assert float(np.max(np.abs(samples))) > 0
