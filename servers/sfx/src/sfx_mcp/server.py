@@ -7,9 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from audiolib import guide as guide_text
-from audiolib import inspect as audio_inspect
-from audiolib import read, waveform_image, write
+from audiolib import guide as guide_text, inspect as audio_inspect, read, waveform_image, write
 from fastmcp import FastMCP
 from fastmcp.utilities.types import Image
 

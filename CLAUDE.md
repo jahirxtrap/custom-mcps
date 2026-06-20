@@ -1,7 +1,7 @@
 # CLAUDE.md — custom-mcps
 
-A personal collection of **standalone, engine-agnostic MCP servers**, managed as a
-[uv](https://docs.astral.sh/uv/) workspace. Each server runs on its own over **stdio**
+A personal collection of **standalone MCP servers** (most engine-agnostic, some
+domain-specific), managed as a [uv](https://docs.astral.sh/uv/) workspace. Each server runs on its own over **stdio**
 and is registered at user scope so every Claude Code client can use it — there is no
 host app dependency. Shared code lives in `packages/`, servers in `servers/`.
 
@@ -32,6 +32,8 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `pixelart` | Draw/inspect/verify pixel art by data (8/16/32/64); principles embedded. Tools: `pixel_guide`, `render_sprite`, `from_grid`, `to_grid`, `preview`, `palette`, `check`. |
 | library | `audiolib` | SFX synthesis primitives: oscillators, noise, sweeps, FM, envelopes, shaping, audio I/O (ffmpeg > soundfile). |
 | server | `sfx` | Synthesize sound effects by data; principles embedded. Tools: `sfx_guide`, `synth_sfx`, `waveform`, `encode`, `inspect`. |
+| library | `loaderkit` | Read-only multiloader-workspace toolkit: scan mods/versions, parse gradle.properties, compare loaders, conventions. |
+| server | `modkit` | Domain-specific (multiloader mod dev); read-only. Tools: `list_mods`, `mod_info`, `loader_sync`, `check_structure`, `check_json`, `find_symbol`. |
 
 ## Commands
 
@@ -73,7 +75,10 @@ Never hardcode a client, URL, or shared folder into a server.
 
 ## Conventions (hard rules)
 
-1. **Agnostic.** No project/engine/game names or assumptions in any server or library.
+1. **Agnostic by default; domain-specific only when justified.** Agnostic servers
+   (pixelart, sfx) assume no engine/game. A domain server (modkit) may target a domain
+   but must still **never hardcode a specific project/instance** (e.g. modkit knows
+   "Minecraft multiloader" but never a specific mod name) — it scans generically.
 2. **English only.** Code, docstrings, READMEs, identifiers.
 3. **No comments.** Self-explanatory names; a short docstring only when it genuinely helps.
    Never inline `#` comments.

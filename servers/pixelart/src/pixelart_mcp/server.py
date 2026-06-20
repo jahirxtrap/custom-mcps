@@ -13,12 +13,10 @@ from PIL import Image as PILImage
 from pixellib import (
     build_ramp,
     color_limit,
+    guide as guide_text,
     hex_to_rgb,
     montage,
     rgb_to_hex,
-)
-from pixellib import (
-    guide as guide_text,
 )
 
 from .builder import build_from_spec

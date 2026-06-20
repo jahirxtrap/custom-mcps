@@ -19,6 +19,10 @@ servers in `servers/` — so adding a server is a single new folder.
 |---|---|
 | **pixelart** | Draw, inspect and verify pixel art by data — any size, no project assumptions. |
 | **sfx** | Synthesize sound effects (`.ogg`) by data — any kind, no project assumptions. |
+| **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
+
+`pixelart` and `sfx` are engine-agnostic; `modkit` is domain-specific (multiloader mod dev).
+All of them are personal tools, registered the same way.
 
 ## pixelart
 
@@ -68,16 +72,36 @@ it always works.
 
 See [`servers/sfx`](servers/sfx) and [`packages/audiolib`](packages/audiolib).
 
+## modkit
+
+**modkit** is the odd one out — **domain-specific** rather than agnostic. It helps with
+**multiloader mod workspaces**: the mechanical, repetitive half of mod-dev that complements
+`minecraft-dev` (which handles API/decompile). It scans by the `<modid>-<version>-multi`
+folder convention and **never hardcodes a mod name**, so it works on any such workspace. All
+tools are read-only.
+
+- **list_mods** inventories every mod and its version folders, flagging the most recent.
+- **loader_sync** compares the Java of fabric/forge/neoforge and flags files out of sync —
+  the classic "ported the fix to fabric but forge/neoforge kept the old copy".
+- **mod_info** reads `gradle.properties` and the Java version expected for that MC version.
+- **check_structure** / **check_json** validate conventions (common has no Java, repositories
+  only in root, JSON without trailing newline or CRLF).
+- **find_symbol** locates an API across all loaders — handy when migrating versions.
+
+See [`servers/modkit`](servers/modkit) and [`packages/loaderkit`](packages/loaderkit).
+
 ## Structure
 
 ```
 custom-mcps/
 ├── packages/
 │   ├── pixellib/    # pixel-art drawing library — grid, ramps, shading, outline, preview
-│   └── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
+│   ├── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
+│   └── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
-│   └── sfx/         # MCP server — synthesize sound effects
+│   ├── sfx/         # MCP server — synthesize sound effects
+│   └── modkit/      # MCP server — inspect / validate multiloader mod workspaces
 └── tests/           # workspace test suite (pytest)
 ```
 
