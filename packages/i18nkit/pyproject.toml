@@ -1,0 +1,17 @@
+[project]
+name = "i18nkit"
+version = "0.1.0"
+description = "Read-only translation checks: locale diff, completeness, placeholders, unused keys."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "jahirtrap" }]
+keywords = ["i18n", "translation", "locale", "json"]
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/i18nkit"]

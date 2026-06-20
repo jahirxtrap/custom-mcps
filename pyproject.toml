@@ -4,7 +4,16 @@ version = "0"
 description = "Personal collection of standalone, engine-agnostic MCP servers."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pixellib", "pixelart-mcp", "audiolib", "sfx-mcp", "loaderkit", "modkit-mcp"]
+dependencies = [
+    "pixellib",
+    "pixelart-mcp",
+    "audiolib",
+    "sfx-mcp",
+    "loaderkit",
+    "modkit-mcp",
+    "i18nkit",
+    "i18n-mcp",
+]
 
 [tool.uv]
 package = false
@@ -19,6 +28,8 @@ audiolib = { workspace = true }
 sfx-mcp = { workspace = true }
 loaderkit = { workspace = true }
 modkit-mcp = { workspace = true }
+i18nkit = { workspace = true }
+i18n-mcp = { workspace = true }
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.11"]

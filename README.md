@@ -20,9 +20,10 @@ servers in `servers/` — so adding a server is a single new folder.
 | **pixelart** | Draw, inspect and verify pixel art by data — any size, no project assumptions. |
 | **sfx** | Synthesize sound effects (`.ogg`) by data — any kind, no project assumptions. |
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
+| **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 
-`pixelart` and `sfx` are engine-agnostic; `modkit` is domain-specific (multiloader mod dev).
-All of them are personal tools, registered the same way.
+`pixelart`, `sfx` and `i18n` are engine-agnostic; `modkit` is domain-specific (multiloader
+mod dev). All of them are personal tools, registered the same way.
 
 ## pixelart
 
@@ -90,6 +91,23 @@ tools are read-only.
 
 See [`servers/modkit`](servers/modkit) and [`packages/loaderkit`](packages/loaderkit).
 
+## i18n
+
+**i18n** keeps your translations healthy — in sync, complete and consistent. It works on
+JSON locales, **flat** (Minecraft `lang/*.json`) or **nested** (`react-i18next`), flattening
+nested objects to dot-paths so both compare the same way. Read-only.
+
+- **locale_diff** reports, per locale, which keys are missing vs the base and which are extra —
+  the "every key in one must exist in the others" check.
+- **completeness** gives the translated percentage per locale.
+- **check_format** flags placeholders (`{name}`, `%s`) that differ between a key's translations,
+  and empty values.
+- **find_unused** crosses keys with the code: used-but-undefined (broken) and defined-but-unused
+  (dead), with configurable `t()`/`tr()` patterns.
+- **i18n_guide** carries the conventions (no hardcoded strings, locales in sync, key naming).
+
+See [`servers/i18n`](servers/i18n) and [`packages/i18nkit`](packages/i18nkit).
+
 ## Structure
 
 ```
@@ -97,11 +115,13 @@ custom-mcps/
 ├── packages/
 │   ├── pixellib/    # pixel-art drawing library — grid, ramps, shading, outline, preview
 │   ├── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
-│   └── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
+│   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
+│   └── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
 │   ├── sfx/         # MCP server — synthesize sound effects
-│   └── modkit/      # MCP server — inspect / validate multiloader mod workspaces
+│   ├── modkit/      # MCP server — inspect / validate multiloader mod workspaces
+│   └── i18n/        # MCP server — keep translation locales in sync
 └── tests/           # workspace test suite (pytest)
 ```
 
