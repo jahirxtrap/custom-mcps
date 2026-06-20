@@ -21,9 +21,10 @@ servers in `servers/` — so adding a server is a single new folder.
 | **sfx** | Synthesize sound effects (`.ogg`) by data — any kind, no project assumptions. |
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
+| **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
 
-`pixelart`, `sfx` and `i18n` are engine-agnostic; `modkit` is domain-specific (multiloader
-mod dev). All of them are personal tools, registered the same way.
+`pixelart`, `sfx` and `i18n` are engine-agnostic; `modkit` (multiloader mod dev) and `devkit`
+(your conventions) are personal/domain-specific. All are registered the same way.
 
 ## pixelart
 
@@ -108,6 +109,24 @@ nested objects to dot-paths so both compare the same way. Read-only.
 
 See [`servers/i18n`](servers/i18n) and [`packages/i18nkit`](packages/i18nkit).
 
+## devkit
+
+**devkit** carries **your development conventions** and the checks that verify them, across
+stacks (Java, Kotlin/Compose, TS/React, GDScript, Python). The guides say what to follow; the
+tools look at the real code and history. Read-only.
+
+- **conventions** returns your rules by topic: commit, code (no comments, latest versions), dry,
+  hardcoding, design (tokens), patterns (API envelope, auto-discovery, data-driven), docs, naming.
+- **commit_style** / **commit_context** read the repo's git log so a new commit message matches
+  the existing style and what actually changed — no Co-Authored-By.
+- **find_hardcoded** flags colors (`#hex`, `Color(0xFF…)`), sizes (`px`/`rem`/`.dp`/`.sp`) and raw
+  Tailwind classes that belong in a token file.
+- **find_duplication** surfaces repeated blocks to unify (DRY).
+
+The conventions were extracted from your real projects (backstube-web, cconnect, vorenth, mods).
+
+See [`servers/devkit`](servers/devkit) and [`packages/convkit`](packages/convkit).
+
 ## Structure
 
 ```
@@ -116,12 +135,14 @@ custom-mcps/
 │   ├── pixellib/    # pixel-art drawing library — grid, ramps, shading, outline, preview
 │   ├── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
 │   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
-│   └── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
+│   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
+│   └── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
 │   ├── sfx/         # MCP server — synthesize sound effects
 │   ├── modkit/      # MCP server — inspect / validate multiloader mod workspaces
-│   └── i18n/        # MCP server — keep translation locales in sync
+│   ├── i18n/        # MCP server — keep translation locales in sync
+│   └── devkit/      # MCP server — development conventions + checks
 └── tests/           # workspace test suite (pytest)
 ```
 

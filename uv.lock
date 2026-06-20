@@ -11,7 +11,9 @@ resolution-markers = [
 [manifest]
 members = [
     "audiolib",
+    "convkit",
     "custom-mcps",
+    "devkit-mcp",
     "i18n-mcp",
     "i18nkit",
     "loaderkit",
@@ -247,6 +249,11 @@ wheels = [
 ]
 
 [[package]]
+name = "convkit"
+version = "0.1.0"
+source = { editable = "packages/convkit" }
+
+[[package]]
 name = "cryptography"
 version = "49.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -308,6 +315,8 @@ version = "0"
 source = { virtual = "." }
 dependencies = [
     { name = "audiolib" },
+    { name = "convkit" },
+    { name = "devkit-mcp" },
     { name = "i18n-mcp" },
     { name = "i18nkit" },
     { name = "loaderkit" },
@@ -326,6 +335,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "audiolib", editable = "packages/audiolib" },
+    { name = "convkit", editable = "packages/convkit" },
+    { name = "devkit-mcp", editable = "servers/devkit" },
     { name = "i18n-mcp", editable = "servers/i18n" },
     { name = "i18nkit", editable = "packages/i18nkit" },
     { name = "loaderkit", editable = "packages/loaderkit" },
@@ -354,6 +365,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9a/19/5c438b428b3dca208eb920804dc16aeb3ca1e85d6163d17e8fb0785ead19/cyclopts-4.18.0.tar.gz", hash = "sha256:fb7b730f21932e0784f7e54462df0447aaa1fbf034d65b605bd8a25dce58b188", size = 182821, upload-time = "2026-06-11T19:55:05.326Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/9f/b67f14c6b686ca90d317c0358f1a52ae171f43f83c808683fae3ba0b1f90/cyclopts-4.18.0-py3-none-any.whl", hash = "sha256:18ba2912e48e890a97ecc8a05c9beddf30a407b43f4e14cccfd40efddc41f029", size = 221216, upload-time = "2026-06-11T19:55:03.773Z" },
+]
+
+[[package]]
+name = "devkit-mcp"
+version = "0.1.0"
+source = { editable = "servers/devkit" }
+dependencies = [
+    { name = "convkit" },
+    { name = "fastmcp" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "convkit", editable = "packages/convkit" },
+    { name = "fastmcp", specifier = ">=3.4" },
 ]
 
 [[package]]

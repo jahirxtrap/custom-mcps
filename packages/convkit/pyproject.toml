@@ -1,0 +1,17 @@
+[project]
+name = "convkit"
+version = "0.1.0"
+description = "Developer-convention guidance plus git and static-analysis checks (multi-stack)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "jahirtrap" }]
+keywords = ["conventions", "commits", "lint", "dry", "design-tokens"]
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/convkit"]

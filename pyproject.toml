@@ -13,6 +13,8 @@ dependencies = [
     "modkit-mcp",
     "i18nkit",
     "i18n-mcp",
+    "convkit",
+    "devkit-mcp",
 ]
 
 [tool.uv]
@@ -30,6 +32,8 @@ loaderkit = { workspace = true }
 modkit-mcp = { workspace = true }
 i18nkit = { workspace = true }
 i18n-mcp = { workspace = true }
+convkit = { workspace = true }
+devkit-mcp = { workspace = true }
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.11"]
