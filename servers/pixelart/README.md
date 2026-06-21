@@ -14,6 +14,7 @@ on top of the shared [`pixellib`](../../packages/pixellib) library.
 | Tool | Purpose |
 |---|---|
 | `pixel_guide` | Embedded pixel-art principles, tuned to a sprite size (color budget, outline gotchas, ramps). |
+| `search_reference` | Build a reference brief before drawing: web-search queries (photos + similar pixel arts), what to extract, how to translate to pixels. Optional. |
 | `render_sprite` | Render a sprite from a declarative JSON spec (silhouette → shade → outline → symmetry). Returns the upscaled preview + a `path=` line. |
 | `from_grid` | Build a PNG from an explicit 2D matrix (hex cells, or symbols + a palette map). |
 | `to_grid` | Dump a PNG as a 2D matrix (`hex` or `index` format) to read a reference or edit pixels. |

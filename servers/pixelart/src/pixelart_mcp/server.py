@@ -16,6 +16,7 @@ from pixellib import (
     guide as guide_text,
     hex_to_rgb,
     montage,
+    reference_brief,
     rgb_to_hex,
 )
 
@@ -116,6 +117,16 @@ def palette(path: str = "", base: str = "", kind: str = "art", steps: int = 5) -
             }
         )
     raise ValueError("provide 'path' to inspect or 'base' to generate")
+
+
+@mcp.tool
+def search_reference(subject: str, size: int = 0, kind: str = "") -> str:
+    """Build a reference brief before drawing (optional, but it makes results much better). Returns
+    targeted web-search queries for `subject` (realistic photos and similar pixel arts), what to
+    extract (silhouette, proportions, palette, light) and how to translate it to pixels at `size`.
+    kind = character/creature/item/tile/environment. It does NOT fetch images: run the queries with
+    your own web search/fetch, read a downloaded reference with to_grid/palette, then render_sprite."""
+    return json.dumps(reference_brief(subject, size, kind))
 
 
 @mcp.tool

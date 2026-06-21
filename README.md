@@ -48,6 +48,9 @@ instead of squinting at a 16-pixel thumbnail.
 - **pixel_guide** carries the pixel-art principles with it, so the server is
   self-contained; for reference-driven design and animation it points to the complementary
   [pixel-art-sprites](https://github.com/omer-metin/skills-for-antigravity) skill.
+- **search_reference** builds a reference brief before you draw — targeted search queries (real
+  photos and similar pixel arts), what to extract (silhouette, palette, light) and how to translate
+  it to pixels. It doesn't fetch; the host agent runs the queries with its own web tools.
 
 It's **agnostic by design** — 8×8, 16×16, 32×32, 64×64, with no idea what engine or
 game the art is for. Tools that produce an image return both the picture and a

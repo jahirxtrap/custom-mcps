@@ -15,6 +15,7 @@ from .color import (
 from .grid import Color, Coord, Grid, disc, from_rows, rect
 from .outline import edge_contact, outline
 from .preview import auto_scale, montage
+from .reference import reference_brief
 from .rules import COLOR_LIMITS, color_limit, guide
 from .shade import inner_rim, shade, sphere
 
@@ -44,4 +45,5 @@ __all__ = [
     "guide",
     "color_limit",
     "COLOR_LIMITS",
+    "reference_brief",
 ]

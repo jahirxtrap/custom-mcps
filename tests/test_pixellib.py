@@ -107,3 +107,12 @@ def test_guide_mentions_related_skill():
     from pixellib import guide
 
     assert "pixel-art-sprites" in guide()
+
+
+def test_reference_brief():
+    from pixellib import reference_brief
+
+    brief = reference_brief("fox", 32, "creature")
+    assert any("fox" in q for q in brief["queries"])
+    assert any("pixel art" in q for q in brief["queries"])
+    assert brief["color_budget"] == list(color_limit(32))

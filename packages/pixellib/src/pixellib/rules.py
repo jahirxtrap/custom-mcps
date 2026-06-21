@@ -118,6 +118,13 @@ def guide(size: int = 0) -> str:
         lines += ["", f"For {size}x{size}: aim for {lo}-{hi} distinct colors."]
     lines += [
         "",
+        "## Reference first",
+        "For an unfamiliar subject, call search_reference to get targeted queries and an extraction "
+        "checklist, then pull real references (photos and similar pixel arts) with your web tools "
+        "before building the spec. Optional, but it makes results much better.",
+    ]
+    lines += [
+        "",
         "## Related skill",
         "This server draws by data and verifies by preview. For reference-driven design, sprite-sheet "
         "animation and Aseprite workflows, the pixel-art-sprites skill complements it:",

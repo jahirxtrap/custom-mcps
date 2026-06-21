@@ -29,7 +29,7 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | Kind | Name | Summary |
 |---|---|---|
 | library | `pixellib` | Pixel-art primitives: grid, color ramps, shading, outline, preview. |
-| server | `pixelart` | Draw/inspect/verify pixel art by data (8/16/32/64); principles embedded. Tools: `pixel_guide`, `render_sprite`, `from_grid`, `to_grid`, `preview`, `palette`, `check`. |
+| server | `pixelart` | Draw/inspect/verify pixel art by data (8/16/32/64); principles embedded. Tools: `pixel_guide`, `search_reference`, `render_sprite`, `from_grid`, `to_grid`, `preview`, `palette`, `check`. |
 | library | `audiolib` | SFX synthesis primitives: oscillators, noise, sweeps, FM, envelopes, shaping, audio I/O (ffmpeg > soundfile). |
 | server | `sfx` | Synthesize sound effects by data; principles embedded. Tools: `sfx_guide`, `synth_sfx`, `waveform`, `encode`, `inspect`. |
 | library | `loaderkit` | Read-only multiloader-workspace toolkit: scan mods/versions, parse gradle.properties, compare loaders, conventions. |
