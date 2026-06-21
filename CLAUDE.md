@@ -37,7 +37,7 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | library | `i18nkit` | Read-only translation checks: parse flat/nested locales, diff, completeness, placeholders, unused keys. |
 | server | `i18n` | Keep translation locales in sync (agnostic); read-only. Tools: `locale_diff`, `completeness`, `check_format`, `find_unused`, `i18n_guide`. |
 | library | `convkit` | Developer-convention guides + git/static checks (multi-stack); no deps. |
-| server | `devkit` | The user's dev conventions + checks (personal); read-only. Tools: `conventions`, `commit_style`, `commit_context`, `find_hardcoded`, `find_inconsistent`, `find_duplication`. |
+| server | `devkit` | The user's dev conventions + checks (personal); read-only. Tools: `conventions`, `commit_style`, `commit_context`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`. |
 | library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, APA citations, concept-map render, multi-area workspace. |
 | server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `study_guide`, `concept_map`, `cite`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
 

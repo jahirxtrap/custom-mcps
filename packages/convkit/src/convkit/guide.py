@@ -51,6 +51,17 @@ _TOPICS: dict[str, list[str]] = {
         "the same spacing for the same relationship across screens. Reuse one token per semantic "
         "role (screen padding, list gap) so it changes in one place.",
     ],
+    "format": [
+        "Imports at the top; never use a fully-qualified class name inline (import it and use the "
+        "short name). Remove unused imports.",
+        "Consistent indentation matching the file/language; never mix tabs and spaces, and don't "
+        "drop 4-space blocks into a 2-space project (or vice versa).",
+        "Data files (JSON) follow the project's existing format: indent unit (2 spaces for MC "
+        "assets/data), no spurious trailing newline, and do NOT reorder/alphabetize keys unless the "
+        "project already does (watch JSON.stringify/json.dump defaults).",
+        "When editing a file, preserve its existing format; change only what you must, don't "
+        "reformat the whole file. Prefer the project's formatter (ruff/prettier/ktlint) over ad-hoc style.",
+    ],
     "patterns": [
         "Unified API response envelope: {success, status, message, data}; clients read .success, never .ok.",
         "Auto-discovery: drop a file (router / MCP tool / server) and it registers itself; no manual wiring.",
@@ -80,7 +91,7 @@ def topics() -> list[str]:
 
 def guide(topic: str = "") -> str:
     """Render all conventions, or a single topic
-    (commit/code/dry/hardcoding/design/spacing/patterns/docs/naming)."""
+    (commit/code/dry/hardcoding/design/spacing/format/patterns/docs/naming)."""
     selected = {topic: _TOPICS[topic]} if topic in _TOPICS else _TOPICS
     lines = ["# Developer conventions"]
     for name, items in selected.items():

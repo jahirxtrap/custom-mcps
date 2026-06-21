@@ -7,6 +7,7 @@ from convkit import (
     commit_context as _commit_context,
     commit_style as _commit_style,
     find_duplication as _find_duplication,
+    find_format as _find_format,
     find_hardcoded as _find_hardcoded,
     find_inconsistent as _find_inconsistent,
     guide as _guide,
@@ -52,6 +53,14 @@ def find_inconsistent(path: str, rare: int = 2, grid: int = 4) -> str:
     one-off values (used <= `rare` times), spacing off a base `grid` (default 4), and Tailwind
     arbitrary `-[Npx]` values. Reads Compose .dp/.sp, CSS font-size. Token files are skipped."""
     return json.dumps(_find_inconsistent(path, rare, grid))
+
+
+@mcp.tool
+def find_format(path: str) -> str:
+    """Flag AI-typical format breaks that formatters miss: inline fully-qualified class names
+    (Java/Kotlin -- import them), unused imports (Java/Kotlin/TS), tab+space mixed indentation, and
+    JSON files whose indent style differs from the tree majority. Read-only, multi-stack."""
+    return json.dumps(_find_format(path))
 
 
 @mcp.tool

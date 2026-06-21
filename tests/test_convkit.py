@@ -8,6 +8,7 @@ from convkit import (
     commit_context,
     commit_style,
     find_duplication,
+    find_format,
     find_hardcoded,
     find_inconsistent,
     guide,
@@ -38,7 +39,7 @@ def _make_repo(tmp_path):
 
 def test_topics():
     found = topics()
-    assert {"commit", "hardcoding", "spacing", "patterns", "naming"} <= set(found)
+    assert {"commit", "hardcoding", "spacing", "format", "patterns", "naming"} <= set(found)
 
 
 def test_guide_all_and_topic():
@@ -83,6 +84,28 @@ def test_find_inconsistent(tmp_path):
     assert "5" in report["spacing"]["off_grid"]
     assert "13" in dict(report["text_size"]["values"])
     assert report["arbitrary"] and "p-[13px]" in report["arbitrary"][0]["text"]
+
+
+def test_find_format(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    java = (
+        "package com.x;\n"
+        "import java.util.List;\n"
+        "import java.util.Map;\n"
+        "class Foo {\n"
+        "    List<String> a = new java.util.ArrayList<>();\n"
+        "}\n"
+    )
+    (src / "Foo.java").write_text(java, encoding="utf-8")
+    (src / "two.json").write_text('{\n  "a": 1\n}\n', encoding="utf-8")
+    (src / "four.json").write_text('{\n    "a": 1\n}\n', encoding="utf-8")
+    (src / "b.json").write_text('{\n  "b": 2\n}\n', encoding="utf-8")
+    report = find_format(str(src))
+    assert any("ArrayList" in h["match"] for h in report["inline_fqn"])
+    assert any(u["name"] == "Map" for u in report["unused_imports"])
+    assert report["json_style"]["majority"] == "2sp"
+    assert any("four.json" in o["file"] for o in report["json_style"]["outliers"])
 
 
 def test_find_duplication(tmp_path):

@@ -16,6 +16,7 @@ def test_devkit_registers_tools():
         "commit_style",
         "conventions",
         "find_duplication",
+        "find_format",
         "find_hardcoded",
         "find_inconsistent",
     ]
