@@ -68,9 +68,9 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
         {
             "name": "Semantic Scholar MCP",
             "what": "225M+ papers, citations, authors",
-            "install": "pick a Semantic Scholar MCP from the MCP registry / npm and follow its README",
+            "install": "claude mcp add semantic-scholar -s user -- uvx semantic-scholar-mcp",
             "get_key": "optional; request a key at https://www.semanticscholar.org/product/api to raise rate limits",
-            "configure": "register it with -e SEMANTIC_SCHOLAR_API_KEY=... (the key, if any, lives in .env)",
+            "configure": "add -e SEMANTIC_SCHOLAR_API_KEY=... before the -- (the key lives in .env)",
         },
     ],
     "citations": [
@@ -115,6 +115,12 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
             "name": "ffmpeg + whisper",
             "what": "cut/convert video and auto subtitles",
             "install": "winget install Gyan.FFmpeg  |  brew install ffmpeg  |  apt install ffmpeg",
+        },
+        {
+            "name": "video-audio MCP",
+            "what": "30+ video/audio editing tools over ffmpeg, by natural language",
+            "install": "git clone https://github.com/misbahsy/video-audio-mcp ; cd video-audio-mcp ; uv sync",
+            "configure": "claude mcp add video-audio -- uv run --directory <clone> server.py",
         },
     ],
     "humanize": [

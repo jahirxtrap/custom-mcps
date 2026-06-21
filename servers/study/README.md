@@ -30,11 +30,14 @@ subjects at once):
 <workspace>/
 ├── CLAUDE.md              # how to work here: anti-AI, APA, consult the area, keep memory
 ├── conventions/          # writing-rules.md (anti-AI) + citation-apa.md
-├── styles/               # how to fetch apa.csl for pandoc
+├── styles/apa.csl        # APA style for pandoc (downloaded by setup)
 ├── templates/            # paper-apa7.tex, concept-map-example.json
 ├── memory/               # profile.md, log.md
 ├── areas/<area>/         # knowledge.md, references.bib, library/{INDEX.md,sources/,md/}
-└── .claude/skills/       # project-scoped skills (added by setup)
+├── tools/video-audio-mcp # ffmpeg-based editing MCP, cloned by setup --all
+├── .mcp.json             # study + openalex + semantic-scholar (+ video-audio)
+├── puppeteer-config.json # --no-sandbox for headless mermaid (mmdc)
+└── .claude/skills/        # project-scoped skills
 ```
 
 The structure, folder names and conventions are **English**; the *output* (essays, diagram labels,
@@ -50,9 +53,12 @@ can, registers the external MCPs (OpenAlex, Semantic Scholar), and writes any ke
 **gitignored `.env`**. Most tools need no key (OpenAlex is free; Semantic Scholar works without
 one), so it only asks when a key would raise your limits. The server never stores secrets.
 
-`scripts/setup.py --workspace <dir> [--mermaid] [--skills-from <dir>]` keeps everything inside one
-workspace: a local `.env`, a project `.mcp.json`, a `TOOLKIT.md`, npm tools under `node_modules`,
-and `.claude/skills/`. Plugin skills (doc skills, humanizer, deep-research) install once at user
+`scripts/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]` keeps everything
+inside one workspace. **Basics** write `.env`, `.mcp.json` (study + openalex + semantic-scholar),
+`TOOLKIT.md`, `puppeteer-config.json`, download `styles/apa.csl`, create `.claude/skills/`, and
+install `markmap` locally. **`--all`** also clones the `video-audio` MCP into `tools/`, installs
+`mermaid` + `Marp` locally, installs the system CLIs (pandoc, ffmpeg, graphviz), and installs skill
+plugins via `claude plugin install` (deep-research via superpowers). Plugin skills install at user
 scope and apply everywhere; `--skills-from` copies your own skill folders in for a portable bundle.
 
 ## Output contract

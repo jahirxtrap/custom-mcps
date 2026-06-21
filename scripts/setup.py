@@ -29,6 +29,9 @@ from studykit import toolkit
 ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = shutil.which("claude") or "claude"
 NPM = shutil.which("npm")
+GIT = shutil.which("git")
+UV = shutil.which("uv")
+VIDEO_AUDIO_REPO = "https://github.com/misbahsy/video-audio-mcp.git"
 PLATFORM = "win" if sys.platform.startswith("win") else "mac" if sys.platform == "darwin" else "linux"
 INTERACTIVE = sys.stdin.isatty()
 APA_CSL_URL = "https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl"
@@ -76,8 +79,8 @@ your own copies of existing skills into a portable workspace, run setup with
 """
 
 
-def run(command: list[str], env: dict[str, str] | None = None) -> bool:
-    done = subprocess.run(command, capture_output=True, text=True, env=env)
+def run(command: list[str], env: dict[str, str] | None = None, cwd: str | None = None) -> bool:
+    done = subprocess.run(command, capture_output=True, text=True, env=env, cwd=cwd)
     if done.returncode != 0:
         tail = (done.stderr or done.stdout).strip().splitlines()[-1:] or [""]
         print(f"  ! {tail[0]}")
@@ -210,13 +213,41 @@ def write_mcp_json(workspace: Path, env: dict[str, str]) -> None:
     openalex: dict[str, object] = {"command": "npx", "args": ["-y", "@cyanheads/openalex-mcp-server"]}
     if env.get("OPENALEX_API_KEY"):
         openalex["env"] = {"OPENALEX_API_KEY": env["OPENALEX_API_KEY"]}
-    config = {
-        "mcpServers": {
-            "study": {"command": "uv", "args": ["run", "--project", str(ROOT), "study-mcp"]},
-            "openalex": openalex,
-        }
+    semantic: dict[str, object] = {"command": "uvx", "args": ["semantic-scholar-mcp"]}
+    if env.get("SEMANTIC_SCHOLAR_API_KEY"):
+        semantic["env"] = {"SEMANTIC_SCHOLAR_API_KEY": env["SEMANTIC_SCHOLAR_API_KEY"]}
+    servers: dict[str, object] = {
+        "study": {"command": "uv", "args": ["run", "--project", str(ROOT), "study-mcp"]},
+        "openalex": openalex,
+        "semantic-scholar": semantic,
     }
-    (workspace / ".mcp.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8", newline="\n")
+    video = workspace / "tools" / "video-audio-mcp"
+    if (video / "server.py").exists():
+        servers["video-audio"] = {"command": "uv", "args": ["run", "--directory", str(video), "server.py"]}
+    (workspace / ".mcp.json").write_text(
+        json.dumps({"mcpServers": servers}, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+
+
+def install_video_audio(workspace: Path) -> None:
+    print("\n== video-audio MCP (misbahsy/video-audio-mcp) ==")
+    dest = workspace / "tools" / "video-audio-mcp"
+    if (dest / ".venv").exists():
+        print("  already installed")
+        return
+    if not (dest / "server.py").exists():
+        if not GIT:
+            print("  git not found; skipping")
+            return
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if not run([GIT, "clone", "--depth", "1", VIDEO_AUDIO_REPO, str(dest)]):
+            print("  clone failed")
+            return
+    (dest / ".python-version").write_text("3.13\n", encoding="utf-8", newline="\n")
+    if UV and run([UV, "sync"], cwd=str(dest)):
+        print(f"  installed at {dest}")
+    else:
+        print(f"  cloned at {dest} (uv sync failed; run it there to finish)")
 
 
 def write_skills_dir(workspace: Path, skills_from: str) -> None:
@@ -245,10 +276,19 @@ def workspace_setup(workspace: Path, all_: bool, mermaid: bool, skills_from: str
     workspace.mkdir(parents=True, exist_ok=True)
     print(f"Workspace setup -> {workspace}  (mode: {'all' if all_ else 'basics'})")
     env = collect_keys(workspace / ".env")
+    if all_:
+        install_video_audio(workspace)
     write_mcp_json(workspace, env)
     print(f"wrote {workspace / '.mcp.json'}")
     (workspace / "TOOLKIT.md").write_text(toolkit() + "\n", encoding="utf-8", newline="\n")
-    (workspace / ".gitignore").write_text(".env\nnode_modules/\n.cache/\n*.png\n", encoding="utf-8", newline="\n")
+    (workspace / ".gitignore").write_text(
+        ".env\nnode_modules/\n.venv/\n.cache/\n*.png\n", encoding="utf-8", newline="\n"
+    )
+    puppeteer = {"args": ["--no-sandbox"]}
+    (workspace / "puppeteer-config.json").write_text(
+        json.dumps(puppeteer, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+    print(f"wrote {workspace / 'puppeteer-config.json'}")
 
     styles = workspace / "styles"
     styles.mkdir(parents=True, exist_ok=True)
@@ -272,8 +312,9 @@ def workspace_setup(workspace: Path, all_: bool, mermaid: bool, skills_from: str
         install_skills(auto=True)
     else:
         install_skills(auto=False)
-        print("\nbasics done. Run with --all to also install mermaid, Marp, system CLIs and skills.")
-    print("\nOpen this folder in Claude Code; .mcp.json loads the study and openalex servers.")
+        print("\nbasics done. Run with --all to also clone video-audio, install mermaid, Marp, CLIs and skills.")
+    print("\nOpen this folder in Claude Code; .mcp.json loads study, openalex, semantic-scholar"
+          " (and video-audio if cloned).")
 
 
 def global_setup(all_: bool) -> None:
