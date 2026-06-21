@@ -99,7 +99,10 @@ can carry more than one at a time.
 
 ## Working rules
 
-1. Language: work in the user's language and keep spelling and accents correct.
+1. Language. The workspace structure, folder names, templates, and these conventions are in
+   English and stay in English. The *output* follows the user: produce deliverables (essays,
+   slides, diagram labels, bibliography notes) and chat in the language the user asks for, or the
+   area's language. Default to the user's language and keep spelling and accents correct.
 2. Human voice: before delivering any text or graphic, apply `conventions/writing-rules.md`. No em
    dashes, no AI filler, no default lists; vary sentence length. For graphics: no meta labels, no
    brand footers, a palette of two to four colors.
@@ -114,8 +117,10 @@ can carry more than one at a time.
 
 - `conventions/` - writing rules (anti-AI) and the APA quick guide.
 - `styles/` - how to fetch `apa.csl` for pandoc.
+- `templates/` - reusable templates (`paper-apa7.tex`, `concept-map-example.json`).
 - `memory/` - `profile.md` (the student and their preferences) and `log.md` (ongoing work).
 - `areas/<area>/` - `knowledge.md`, `references.bib`, and `library/` (INDEX.md, sources/, notes/).
+- `.claude/skills/` - project-scoped skills, loaded when this folder is open in Claude Code.
 
 ## Tools
 
@@ -159,4 +164,40 @@ https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl
 
 Then use it: pandoc essay.md --citeproc --bibliography=areas/<area>/references.bib
 --csl=styles/apa.csl -o essay.docx
+"""
+
+PAPER_APA7_TEX = r"""\documentclass[stu,12pt]{apa7}
+\usepackage[american]{babel}
+\usepackage{csquotes}
+\usepackage[style=apa,backend=biber]{biblatex}
+% point this to the bibliography of your area, e.g. ../areas/<area>/references.bib
+\addbibresource{references.bib}
+
+\title{Working title}
+\shorttitle{Short title}
+\author{Author Name}
+\affiliation{Institution}
+\course{Course}
+\professor{Professor}
+\duedate{\today}
+
+\abstract{One short paragraph summarizing the work.}
+
+\begin{document}
+\maketitle
+
+Body text. Cite a source with \parencite{key2024}. Vary your sentence length and avoid AI tells.
+
+\printbibliography
+\end{document}
+"""
+
+CONCEPT_MAP_EXAMPLE = """{
+  "central": "Central concept",
+  "branches": [
+    {"label": "First branch", "items": ["Idea", "Idea", {"label": "Detail", "text": "short explanation"}]},
+    {"label": "Second branch", "items": ["Idea", "Idea"]}
+  ],
+  "out": "concept-map.png"
+}
 """

@@ -109,6 +109,7 @@ def test_workspace_lifecycle(tmp_path):
     assert "CLAUDE.md" in info["created"]
     assert info["areas"] == ["cell-biology"]
     assert (tmp_path / "areas" / "cell-biology" / "knowledge.md").exists()
+    assert (tmp_path / "templates" / "paper-apa7.tex").exists()
 
     area_add(str(tmp_path), "World History")
     result = reference_add(

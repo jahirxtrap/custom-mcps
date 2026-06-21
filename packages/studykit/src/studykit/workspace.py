@@ -11,10 +11,12 @@ from .assets import (
     APA_CSL_README,
     BIB_HEADER,
     CITATION_APA,
+    CONCEPT_MAP_EXAMPLE,
     INDEX_TEMPLATE,
     KNOWLEDGE_TEMPLATE,
     MEMORY_LOG,
     MEMORY_PROFILE,
+    PAPER_APA7_TEX,
     VISUAL_GUIDE,
     WORKSPACE_CLAUDE,
     WRITING_RULES,
@@ -48,7 +50,7 @@ def _create_area(root: Path, name: str) -> str:
 
 def workspace_init(path: str, areas: list[str] | None = None) -> dict[str, Any]:
     root = Path(path)
-    for name in ("conventions", "styles", "memory", "areas"):
+    for name in ("conventions", "styles", "memory", "areas", "templates"):
         (root / name).mkdir(parents=True, exist_ok=True)
     files = {
         root / "CLAUDE.md": WORKSPACE_CLAUDE,
@@ -57,6 +59,8 @@ def workspace_init(path: str, areas: list[str] | None = None) -> dict[str, Any]:
         root / "styles" / "README.md": APA_CSL_README,
         root / "memory" / "profile.md": MEMORY_PROFILE,
         root / "memory" / "log.md": MEMORY_LOG,
+        root / "templates" / "paper-apa7.tex": PAPER_APA7_TEX,
+        root / "templates" / "concept-map-example.json": CONCEPT_MAP_EXAMPLE,
     }
     created = [str(p.relative_to(root)) for p, content in files.items() if _write_if_absent(p, content)]
     slugs = [_create_area(root, name) for name in (areas or [])]

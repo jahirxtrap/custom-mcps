@@ -31,13 +31,17 @@ subjects at once):
 ├── CLAUDE.md              # how to work here: anti-AI, APA, consult the area, keep memory
 ├── conventions/          # writing-rules.md (anti-AI) + citation-apa.md
 ├── styles/               # how to fetch apa.csl for pandoc
+├── templates/            # paper-apa7.tex, concept-map-example.json
 ├── memory/               # profile.md, log.md
-└── areas/<area>/         # knowledge.md, references.bib, library/{INDEX.md,sources/,notes/}
+├── areas/<area>/         # knowledge.md, references.bib, library/{INDEX.md,sources/,notes/}
+└── .claude/skills/       # project-scoped skills (added by setup)
 ```
 
-Shared conventions, styles and memory live at the root; each area keeps its own knowledge base and
-bibliography. The generated `CLAUDE.md` tells Claude to apply the anti-AI rules, cite in APA from
-the area's `references.bib`, consult its `knowledge.md`, and keep `memory/` up to date.
+The structure, folder names and conventions are **English**; the *output* (essays, diagram labels,
+bibliography) is produced in the **language the user asks for**. Shared conventions, styles and
+memory live at the root; each area keeps its own knowledge base and bibliography. The generated
+`CLAUDE.md` tells Claude to apply the anti-AI rules, cite in APA from the area's `references.bib`,
+consult its `knowledge.md`, and keep `memory/` up to date.
 
 ## Setup and API keys
 
@@ -45,6 +49,11 @@ The `toolkit` tool is the catalog; `scripts/setup.py` is its executable form: it
 can, registers the external MCPs (OpenAlex, Semantic Scholar), and writes any keys you give to a
 **gitignored `.env`**. Most tools need no key (OpenAlex is free; Semantic Scholar works without
 one), so it only asks when a key would raise your limits. The server never stores secrets.
+
+`scripts/setup.py --workspace <dir> [--mermaid] [--skills-from <dir>]` keeps everything inside one
+workspace: a local `.env`, a project `.mcp.json`, a `TOOLKIT.md`, npm tools under `node_modules`,
+and `.claude/skills/`. Plugin skills (doc skills, humanizer, deep-research) install once at user
+scope and apply everywhere; `--skills-from` copies your own skill folders in for a portable bundle.
 
 ## Output contract
 
