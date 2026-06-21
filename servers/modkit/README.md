@@ -19,12 +19,14 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 | `check_json` | Scan assets/data JSON for trailing newline and CRLF (byte-level conventions). |
 | `check_access` | Access Widener / Transformer presence + cross-loader parity + `.aw` header vs MC version. |
 | `find_symbol` | Find an API/class/method across all loaders' Java; returns file + line per hit. |
+| `decompile_guide` | The strategy for reading the MC/loader API with `minecraft-dev` + `mcmodding-mcp`: per-loader decompile jars and merge steps (incl. the NeoForge sources-jar step), vanilla source, and migration refs (primers/misode/mcasset). |
 
 ## What it does NOT do
 
 It does not analyze API changes, decompile, or diff Minecraft versions — that is
-`minecraft-dev`'s job. `modkit` is the mechanical layer: inventory, structure, sync,
-search. Publishing order is intentionally excluded (it is mod-specific, not generic).
+`minecraft-dev`'s job. `modkit` stays the mechanical layer (inventory, structure, sync,
+search) and `decompile_guide` only **points** to `minecraft-dev`'s tools, it does not run
+them. Publishing order is intentionally excluded (it is mod-specific, not generic).
 
 ## Embedded conventions
 

@@ -36,6 +36,13 @@ _NORMALIZATION = [
     "Keep headroom: target peak ~0.9, never 1.0.",
 ]
 
+_TOOLS = [
+    "ffmpeg is optional. This server prefers it for encoding (wider format support) and falls back "
+    "to soundfile, so it works without it; install ffmpeg only to widen format/codec coverage.",
+    "Install: winget install Gyan.FFmpeg  |  brew install ffmpeg  |  apt install ffmpeg. "
+    "The study server's scripts/setup.py --all also installs it.",
+]
+
 _RULES = [
     "Keep it short and punchy; trim dead tails.",
     "Mono for SFX; reserve stereo for ambience.",
@@ -54,6 +61,7 @@ def guide() -> str:
         ("Recipes (reference parameters)", _RECIPES),
         ("Normalization", _NORMALIZATION),
         ("Rules", _RULES),
+        ("Tools (optional)", _TOOLS),
     ]
     lines = ["# Sound-effect design guide"]
     for title, items in sections:

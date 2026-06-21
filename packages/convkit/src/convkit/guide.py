@@ -6,6 +6,8 @@ _TOPICS: dict[str, list[str]] = {
         "Conventional commits: feat / fix / chore / refactor / docs. Short, lowercase subject "
         "(e.g. 'feat: tab system', 'fix: some fixes').",
         "NEVER add Co-Authored-By or any attribution footer.",
+        "If a just-made commit has a small error or omission and is not yet pushed, fix it by "
+        "amending that commit (git commit --amend) instead of adding a separate fixup commit.",
         "Changelog: plain past-tense bullets (Added/Fixed/Updated/Removed), no headers/versions/"
         "dates, derived from the commits since the last release; replace the whole file.",
         "Match the repo's existing style before committing (run commit_style).",

@@ -2,8 +2,9 @@
 
 A standalone MCP server for **drawing, inspecting and verifying pixel art by data**.
 Engine-agnostic (works for 8×8, 16×16, 32×32, 64×64) — it knows nothing about any
-project, engine or game. The pixel-art principles are embedded, so it does not
-depend on any external skill.
+project, engine or game. The pixel-art principles are embedded, so it is self-contained;
+for reference-driven design and sprite animation it points to the complementary
+[pixel-art-sprites](https://github.com/omer-metin/skills-for-antigravity) skill.
 
 Built on [`fastmcp`](https://gofastmcp.com) + [`pillow`](https://python-pillow.org),
 on top of the shared [`pixellib`](../../packages/pixellib) library.
@@ -55,6 +56,8 @@ showing the image is the host agent's job (e.g. a client that renders markdown i
 
 - **Pillow** — all raster I/O and NEAREST upscaling.
 - **pixellib** — the shared grid/ramp/shade/outline/preview engine.
+- **pixel-art-sprites skill** (complementary, not required): reference-driven design, sprite-sheet
+  animation, Aseprite workflows. Install: `npx skills add https://github.com/omer-metin/skills-for-antigravity --skill pixel-art-sprites`.
 - **Optional, future**: an Aseprite-CLI importer, enabled only if `aseprite` is on PATH.
 
 ## Run / register

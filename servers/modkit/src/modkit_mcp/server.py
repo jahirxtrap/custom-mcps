@@ -8,6 +8,7 @@ from loaderkit import (
     check_access as _check_access,
     check_json as _check_json,
     check_structure as _check_structure,
+    decompile_guide as _decompile_guide,
     find_symbol as _find_symbol,
     list_mods as _list_mods,
     loader_sync as _loader_sync,
@@ -64,6 +65,15 @@ def find_symbol(path: str, symbol: str) -> str:
     """Find a symbol (API, class, method) in the Java source of all loaders in a version folder;
     returns file + line + text per hit. Useful to locate what to change during a migration."""
     return json.dumps(_find_symbol(path, symbol))
+
+
+@mcp.tool
+def decompile_guide(topic: str = "") -> str:
+    """How to read the Minecraft and loader APIs with the minecraft-dev MCP (@mcdxai/minecraft-dev-mcp)
+    and mcmodding-mcp: per-loader decompile jar locations and merge steps (fabric/forge/neoforge,
+    including the NeoForge sources-jar step), vanilla source, and migration references (primers, misode,
+    mcasset). All of it or one topic: overview / vanilla / fabric / forge / neoforge / migration."""
+    return _decompile_guide(topic)
 
 
 def main() -> None:

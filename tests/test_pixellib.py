@@ -101,3 +101,9 @@ def test_montage_upscales_nearest():
 def test_color_limit_buckets():
     assert color_limit(16) == (8, 12)
     assert color_limit(32) == (12, 16)
+
+
+def test_guide_mentions_related_skill():
+    from pixellib import guide
+
+    assert "pixel-art-sprites" in guide()

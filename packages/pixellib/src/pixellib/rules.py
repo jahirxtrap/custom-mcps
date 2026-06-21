@@ -116,4 +116,12 @@ def guide(size: int = 0) -> str:
     if size > 0:
         lo, hi = color_limit(size)
         lines += ["", f"For {size}x{size}: aim for {lo}-{hi} distinct colors."]
+    lines += [
+        "",
+        "## Related skill",
+        "This server draws by data and verifies by preview. For reference-driven design, sprite-sheet "
+        "animation and Aseprite workflows, the pixel-art-sprites skill complements it:",
+        "- install: npx skills add https://github.com/omer-metin/skills-for-antigravity --skill pixel-art-sprites",
+        "- source: https://github.com/omer-metin/skills-for-antigravity",
+    ]
     return "\n".join(lines)

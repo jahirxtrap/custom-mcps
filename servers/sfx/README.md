@@ -58,6 +58,10 @@ playing the audio is the host agent's job.
 `encoder="auto"` (default) prefers **ffmpeg** when on PATH (quality, more formats) and falls
 back to **soundfile**/libsndfile, which is always available. Force `ffmpeg` or `soundfile`.
 
+ffmpeg is **optional** — install it only to widen format/codec coverage:
+`winget install Gyan.FFmpeg` | `brew install ffmpeg` | `apt install ffmpeg`. The study server's
+`scripts/setup.py --all` also installs it. `sfx_guide` repeats this under "Tools (optional)".
+
 ## Run / register
 
 ```bash

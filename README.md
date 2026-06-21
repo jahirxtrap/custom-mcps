@@ -46,7 +46,8 @@ instead of squinting at a 16-pixel thumbnail.
 - **check** flags the usual mistakes: anti-aliasing, content touching the canvas
   edge, floating pixels, and going over the per-size color budget.
 - **pixel_guide** carries the pixel-art principles with it, so the server is
-  self-contained and needs no external skill or reference.
+  self-contained; for reference-driven design and animation it points to the complementary
+  [pixel-art-sprites](https://github.com/omer-metin/skills-for-antigravity) skill.
 
 It's **agnostic by design** — 8×8, 16×16, 32×32, 64×64, with no idea what engine or
 game the art is for. Tools that produce an image return both the picture and a
@@ -90,6 +91,10 @@ tools are read-only.
 - **check_structure** / **check_json** / **check_access** validate conventions (common has no
   Java, repositories only in root, JSON byte rules, mixins.json parity, AW/AT parity + header).
 - **find_symbol** locates an API across all loaders — handy when migrating versions.
+- **decompile_guide** carries the strategy for reading the MC/loader API with `minecraft-dev` and
+  `mcmodding-mcp` — per-loader decompile jars and merge steps (including the NeoForge sources-jar
+  step), vanilla source, and migration references (primers, misode, mcasset). It points; it never
+  decompiles itself.
 
 See [`servers/modkit`](servers/modkit) and [`packages/loaderkit`](packages/loaderkit).
 

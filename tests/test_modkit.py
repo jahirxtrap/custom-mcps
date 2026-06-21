@@ -16,6 +16,7 @@ def test_modkit_registers_all_tools():
         "check_access",
         "check_json",
         "check_structure",
+        "decompile_guide",
         "find_symbol",
         "list_mods",
         "loader_sync",

@@ -5,6 +5,7 @@ from loaderkit import (
     check_access,
     check_json,
     check_structure,
+    decompile_guide,
     find_symbol,
     java_for_mc,
     list_mods,
@@ -165,3 +166,9 @@ def test_check_structure_modid_prefix(tmp_path):
     bad.write_text("package com.x;\nclass Bad { int pref$field; }\n", encoding="utf-8")
     report = check_structure(vd)
     assert any("prefix" in issue for issue in report["issues"])
+
+
+def test_decompile_guide():
+    assert "minecraft-dev" in decompile_guide().lower()
+    assert "net.neoforged" in decompile_guide("neoforge")
+    assert "Unknown" in decompile_guide("nope")

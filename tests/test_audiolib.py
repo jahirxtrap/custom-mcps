@@ -116,3 +116,9 @@ def test_envelope_hump_peaks_in_middle():
     e = envelope("hump", 0.2, SR, power=1.4)
     assert e[len(e) // 2] > e[0]
     assert e[len(e) // 2] > e[-1]
+
+
+def test_guide_mentions_ffmpeg():
+    from audiolib import guide
+
+    assert "ffmpeg" in guide().lower()
