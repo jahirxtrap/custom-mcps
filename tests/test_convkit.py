@@ -9,6 +9,7 @@ from convkit import (
     commit_style,
     find_duplication,
     find_hardcoded,
+    find_inconsistent,
     guide,
     topics,
 )
@@ -37,7 +38,7 @@ def _make_repo(tmp_path):
 
 def test_topics():
     found = topics()
-    assert {"commit", "hardcoding", "patterns", "naming"} <= set(found)
+    assert {"commit", "hardcoding", "spacing", "patterns", "naming"} <= set(found)
 
 
 def test_guide_all_and_topic():
@@ -68,6 +69,20 @@ def test_find_hardcoded_skips_vendored(tmp_path):
     vendor.mkdir()
     (vendor / "lib.ts").write_text('const c = "#ffffff"\n', encoding="utf-8")
     assert find_hardcoded(str(tmp_path))["scanned_files"] == 0
+
+
+def test_find_inconsistent(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    kt = "Spacer(Modifier.height(8.dp))\nrow(16.dp)\nText(fontSize = 13.sp)\nfoo(5.dp)\n"
+    (src / "Screen.kt").write_text(kt, encoding="utf-8")
+    (src / "ui.tsx").write_text('<div className="p-[13px]">x</div>\n', encoding="utf-8")
+    report = find_inconsistent(str(src), rare=1, grid=4)
+    spacing = dict(report["spacing"]["values"])
+    assert {"8", "16", "5"} <= set(spacing)
+    assert "5" in report["spacing"]["off_grid"]
+    assert "13" in dict(report["text_size"]["values"])
+    assert report["arbitrary"] and "p-[13px]" in report["arbitrary"][0]["text"]
 
 
 def test_find_duplication(tmp_path):

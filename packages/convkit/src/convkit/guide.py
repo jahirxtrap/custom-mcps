@@ -40,6 +40,17 @@ _TOPICS: dict[str, list[str]] = {
         "SettingsGroup/PreferenceRow on Compose).",
         "One accent/theme system; everything else stays neutral and token-driven.",
     ],
+    "spacing": [
+        "One spacing scale from a single source (Compose: a Dimens/theme object; web: the Tailwind "
+        "scale or CSS vars). Gaps, margins and paddings all come from it, not arbitrary values.",
+        "Spacing stays on a base grid (steps of 4, ideally 8): 4/8/12/16/24/32. Avoid off-grid "
+        "one-offs (5, 13, 18) and values used only once or twice; snap them to the nearest step.",
+        "One type scale for text sizes from the theme (Compose: MaterialTheme.typography; web: "
+        "text-* or a font-size token). No inline .sp or font-size px one-offs.",
+        "Symmetry and rhythm: equal padding on matched sides, the same gap between sibling items, "
+        "the same spacing for the same relationship across screens. Reuse one token per semantic "
+        "role (screen padding, list gap) so it changes in one place.",
+    ],
     "patterns": [
         "Unified API response envelope: {success, status, message, data}; clients read .success, never .ok.",
         "Auto-discovery: drop a file (router / MCP tool / server) and it registers itself; no manual wiring.",
@@ -68,7 +79,8 @@ def topics() -> list[str]:
 
 
 def guide(topic: str = "") -> str:
-    """Render all conventions, or a single topic (commit/code/dry/hardcoding/design/patterns/docs/naming)."""
+    """Render all conventions, or a single topic
+    (commit/code/dry/hardcoding/design/spacing/patterns/docs/naming)."""
     selected = {topic: _TOPICS[topic]} if topic in _TOPICS else _TOPICS
     lines = ["# Developer conventions"]
     for name, items in selected.items():

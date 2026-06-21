@@ -17,6 +17,7 @@ def test_devkit_registers_tools():
         "conventions",
         "find_duplication",
         "find_hardcoded",
+        "find_inconsistent",
     ]
 
 

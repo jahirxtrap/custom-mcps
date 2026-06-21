@@ -11,10 +11,11 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 
 | Tool | Purpose |
 |---|---|
-| `conventions` | The embedded conventions, all or one topic: commit/code/dry/hardcoding/design/patterns/docs/naming. |
+| `conventions` | The embedded conventions, all or one topic: commit/code/dry/hardcoding/design/spacing/patterns/docs/naming. |
 | `commit_style` | Analyze a repo's recent commit subjects (prefixes, % conventional, length, case) — the style to imitate. |
 | `commit_context` | Diffstat + changed files + recent subjects + style, to draft a commit message that fits the repo. |
 | `find_hardcoded` | Hardcoded colors (`#hex`, `Color(0xFF…)`, any stack) + web `px`/`rem` values + raw Tailwind → tokens. |
+| `find_inconsistent` | Snapshot the spacing and text-size scales in use; flag rare one-offs, off-grid spacing, and Tailwind arbitrary values. |
 | `find_duplication` | Repeated normalized line blocks → DRY candidates (heuristic). |
 
 ## What it encodes (verified against real projects)
@@ -24,6 +25,8 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 - **dry / patterns**: extract logic to reusable modules, thin routers → services, unified API
   envelope `{success, status, message, data}`, auto-discovery, data-driven content (JSON + registry).
 - **hardcoding / design**: text → i18n, colors/sizes → one token file, catalogued components.
+- **spacing**: one spacing scale and one type scale (gaps/margins/paddings on a base grid, text
+  sizes from the theme); symmetry and rhythm; reuse one token per semantic role.
 - **docs / naming**: README showcase vs CLAUDE internal; consistent prose-based names.
 
 ## Usage
@@ -33,6 +36,7 @@ conventions      topic=hardcoding
 commit_style     repo=/path/to/repo
 commit_context   repo=/path/to/repo            # then draft the message in that style
 find_hardcoded   path=app/src   allow=brand    # extra filename substrings to skip
+find_inconsistent path=app/src   rare=2 grid=4  # spacing/text-size scale snapshot + outliers
 find_duplication path=src        window=6
 ```
 

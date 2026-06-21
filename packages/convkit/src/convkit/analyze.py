@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -78,6 +79,63 @@ def find_hardcoded(path: str, allow: list[str] | None = None) -> dict[str, Any]:
         "hits": hits[:300],
         "note": "Colors (any stack) and web px/rem sizes. Compose .dp/.sp spacing is idiomatic "
         "and intentionally not flagged. Token files (themes/palette/...) and comments are skipped.",
+    }
+
+
+_DP = re.compile(r"\b(\d+(?:\.\d+)?)\.dp\b")
+_SP = re.compile(r"\b(\d+(?:\.\d+)?)\.sp\b")
+_CSS_FONT = re.compile(r"font-size\s*:\s*(\d+(?:\.\d+)?)(?:px|rem)", re.IGNORECASE)
+_TW_ARBITRARY = re.compile(r"\b[a-z]+-\[(\d+(?:\.\d+)?)(?:px|rem)\]")
+_SCALE_SKIP = ("dimens", "spacing", "type.", "typography", "theme", "tokens", "palette")
+
+
+def _scale_report(counter: Counter[str], rare: int, grid: int) -> dict[str, Any]:
+    values = sorted(counter.items(), key=lambda kv: (-kv[1], float(kv[0])))
+    outliers = sorted((v for v, c in counter.items() if c <= rare), key=float)
+    off_grid = sorted(
+        (v for v in counter if float(v).is_integer() and float(v) != 0 and int(float(v)) % grid),
+        key=float,
+    )
+    return {
+        "distinct": len(counter),
+        "total": sum(counter.values()),
+        "values": [[v, c] for v, c in values[:40]],
+        "outliers": outliers[:40],
+        "off_grid": off_grid[:40],
+    }
+
+
+def find_inconsistent(path: str, rare: int = 2, grid: int = 4) -> dict[str, Any]:
+    """Measure the spacing and text-size scales actually in use and flag what breaks consistency:
+    rare one-off values (used <= `rare` times), values off a base `grid` (default 4), and Tailwind
+    arbitrary values. Sources: Compose .dp (spacing) / .sp (text), CSS font-size, `-[Npx]` classes."""
+    base = Path(path)
+    spacing: Counter[str] = Counter()
+    text: Counter[str] = Counter()
+    arbitrary: list[dict[str, Any]] = []
+    scanned = 0
+    files = base.rglob("*") if base.is_dir() else [base]
+    for f in files:
+        if not f.is_file() or f.suffix not in _CODE_EXT or _vendored(f):
+            continue
+        if any(token in f.name.lower() for token in _SCALE_SKIP):
+            continue
+        scanned += 1
+        rel = str(f.relative_to(base)) if base.is_dir() else str(f)
+        for number, line in _code_lines(f.read_text(encoding="utf-8", errors="replace")):
+            spacing.update(_DP.findall(line))
+            text.update(_SP.findall(line))
+            text.update(_CSS_FONT.findall(line))
+            if _TW_ARBITRARY.search(line):
+                arbitrary.append({"file": rel, "line": number, "text": line.strip()[:120]})
+    return {
+        "scanned_files": scanned,
+        "spacing": _scale_report(spacing, rare, grid),
+        "text_size": _scale_report(text, rare, grid),
+        "arbitrary": arbitrary[:100],
+        "note": "Scale snapshot, not errors. Converge rare/off-grid spacing onto the base grid and "
+        "inline text sizes onto one type scale; route Tailwind arbitrary values back to the scale. "
+        "Token files (dimens/type/theme/...) are skipped.",
     }
 
 

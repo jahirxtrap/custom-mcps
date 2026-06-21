@@ -122,11 +122,13 @@ stacks (Java, Kotlin/Compose, TS/React, GDScript, Python). The guides say what t
 tools look at the real code and history. Read-only.
 
 - **conventions** returns your rules by topic: commit, code (no comments, latest versions), dry,
-  hardcoding, design (tokens), patterns (API envelope, auto-discovery, data-driven), docs, naming.
+  hardcoding, design (tokens), spacing (one spacing + type scale, symmetry), patterns, docs, naming.
 - **commit_style** / **commit_context** read the repo's git log so a new commit message matches
   the existing style and what actually changed — no Co-Authored-By.
 - **find_hardcoded** flags colors (`#hex`, `Color(0xFF…)`, any stack), web `px`/`rem` values and raw
   Tailwind classes that belong in a token file (Compose `.dp` spacing is idiomatic, not flagged).
+- **find_inconsistent** snapshots the spacing and text-size scales actually in use and flags what
+  breaks consistency: rare one-off values, spacing off a base grid, and Tailwind arbitrary `[Npx]`.
 - **find_duplication** surfaces repeated blocks to unify (DRY).
 
 The conventions were extracted from your real projects (backstube-web, cconnect, vorenth, mods).

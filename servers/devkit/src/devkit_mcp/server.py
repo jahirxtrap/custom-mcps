@@ -8,6 +8,7 @@ from convkit import (
     commit_style as _commit_style,
     find_duplication as _find_duplication,
     find_hardcoded as _find_hardcoded,
+    find_inconsistent as _find_inconsistent,
     guide as _guide,
 )
 from fastmcp import FastMCP
@@ -43,6 +44,14 @@ def find_hardcoded(path: str, allow: str = "") -> str:
     is idiomatic and not flagged. `allow` = comma-separated extra filename substrings to skip."""
     extra = [token.strip() for token in allow.split(",") if token.strip()] if allow else None
     return json.dumps(_find_hardcoded(path, extra))
+
+
+@mcp.tool
+def find_inconsistent(path: str, rare: int = 2, grid: int = 4) -> str:
+    """Snapshot the spacing and text-size scales in use and flag what breaks consistency: rare
+    one-off values (used <= `rare` times), spacing off a base `grid` (default 4), and Tailwind
+    arbitrary `-[Npx]` values. Reads Compose .dp/.sp, CSS font-size. Token files are skipped."""
+    return json.dumps(_find_inconsistent(path, rare, grid))
 
 
 @mcp.tool
