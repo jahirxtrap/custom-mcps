@@ -127,10 +127,10 @@ def test_workspace_lifecycle(tmp_path):
     assert history["references"] == 1
 
 
-def test_reference_add_copies_source(tmp_path):
+def test_reference_add_copies_and_converts_source(tmp_path):
     workspace_init(str(tmp_path), ["Physics"])
     source = tmp_path / "paper.txt"
-    source.write_text("content", encoding="utf-8")
+    source.write_text("reference content", encoding="utf-8")
     result = reference_add(
         str(tmp_path),
         "Physics",
@@ -138,4 +138,8 @@ def test_reference_add_copies_source(tmp_path):
         file=str(source),
     )
     assert result["source_copied"] is not None
+    assert result["markdown"] is not None
     assert (tmp_path / "areas" / "physics" / "library" / "sources" / "paper.txt").exists()
+    md = tmp_path / "areas" / "physics" / "library" / "md" / "bohr1913.md"
+    assert md.exists()
+    assert "reference content" in md.read_text(encoding="utf-8")

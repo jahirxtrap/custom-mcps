@@ -18,7 +18,7 @@ reimplement, the `toolkit` tool tells you exactly what to install.
 | `toolkit` | `topic=""` | The ecosystem to install (documents, research, citations, diagrams, latex, images, video): commands, API keys, how to configure them. |
 | `workspace_init` | `path`, `areas=""` | Scaffold a multi-area study workspace (conventions, styles, memory, areas) with a generated CLAUDE.md. |
 | `area_add` | `path`, `name` | Add a study area with its knowledge base and reference library. |
-| `reference_add` | `path`, `area`, `fields`, `file=""` | Register a reference (BibTeX + index row, optional source copy). |
+| `reference_add` | `path`, `area`, `fields`, `file=""` | Register a reference (BibTeX + index row, copy source, convert it to Markdown via pdftotext/pandoc). |
 | `workspace_status` | `path` | Overview: areas, reference counts, stored sources. |
 
 ## The workspace
@@ -33,7 +33,7 @@ subjects at once):
 ├── styles/               # how to fetch apa.csl for pandoc
 ├── templates/            # paper-apa7.tex, concept-map-example.json
 ├── memory/               # profile.md, log.md
-├── areas/<area>/         # knowledge.md, references.bib, library/{INDEX.md,sources/,notes/}
+├── areas/<area>/         # knowledge.md, references.bib, library/{INDEX.md,sources/,md/}
 └── .claude/skills/       # project-scoped skills (added by setup)
 ```
 

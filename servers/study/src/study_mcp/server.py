@@ -113,9 +113,10 @@ def area_add(path: str, name: str) -> str:
 
 @mcp.tool
 def reference_add(path: str, area: str, fields: str, file: str = "") -> str:
-    """Register a reference in an area's library: append a BibTeX entry and an index row, and
-    optionally copy the original file into the library. 'fields' is JSON (type/authors/year/title/...);
-    'file' is an optional path to the source document."""
+    """Register a reference in an area's library: append a BibTeX entry and an index row, copy the
+    original into library/sources, and convert it to readable Markdown in library/md (txt/md by copy;
+    pdf via pdftotext; docx/odt/rtf/html/epub/tex via pandoc, if on PATH). 'fields' is JSON
+    (type/authors/year/title/...); 'file' is an optional path to the source document."""
     data = json.loads(fields)
     return json.dumps(_reference_add(path, area, data, file))
 

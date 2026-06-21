@@ -137,8 +137,8 @@ cite them from your work. Mark anything you have not verified and check it befor
 
 INDEX_TEMPLATE = """# Reference library - {area}
 
-| Key | Title | Type | Summary |
-|---|---|---|---|
+| Key | Title | Type | Markdown | Summary |
+|---|---|---|---|---|
 """
 
 BIB_HEADER = """% BibTeX references - {area}

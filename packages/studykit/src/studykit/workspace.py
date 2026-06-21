@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,9 @@ from .assets import (
 )
 from .cite import bibtex_entry, bibtex_key
 
+_PLAINTEXT = ("md", "markdown", "txt")
+_PANDOC = ("docx", "odt", "rtf", "html", "htm", "epub", "tex")
+
 
 def _slug(name: str) -> str:
     norm = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
@@ -37,11 +41,34 @@ def _write_if_absent(path: Path, content: str) -> bool:
     return True
 
 
+def _run(command: list[str]) -> bool:
+    try:
+        return subprocess.run(command, capture_output=True, text=True).returncode == 0
+    except OSError:
+        return False
+
+
+def _to_markdown(src: Path, key: str, md_dir: Path) -> str | None:
+    md_dir.mkdir(parents=True, exist_ok=True)
+    ext = src.suffix.lower().lstrip(".")
+    out = md_dir / f"{key}.md"
+    if ext in _PLAINTEXT:
+        out.write_text(src.read_text(encoding="utf-8", errors="replace"), encoding="utf-8", newline="\n")
+        return str(out)
+    if ext == "pdf" and shutil.which("pdftotext") and _run(["pdftotext", "-layout", str(src), str(out)]):
+        return str(out)
+    if ext in _PANDOC and shutil.which("pandoc"):
+        media = md_dir / f"media-{key}"
+        if _run(["pandoc", str(src), "-t", "gfm", f"--extract-media={media}", "-o", str(out)]):
+            return str(out)
+    return None
+
+
 def _create_area(root: Path, name: str) -> str:
     slug = _slug(name)
     base = root / "areas" / slug
     (base / "library" / "sources").mkdir(parents=True, exist_ok=True)
-    (base / "library" / "notes").mkdir(parents=True, exist_ok=True)
+    (base / "library" / "md").mkdir(parents=True, exist_ok=True)
     _write_if_absent(base / "knowledge.md", KNOWLEDGE_TEMPLATE.format(area=name))
     _write_if_absent(base / "references.bib", BIB_HEADER.format(area=name))
     _write_if_absent(base / "library" / "INDEX.md", INDEX_TEMPLATE.format(area=name))
@@ -92,25 +119,24 @@ def reference_add(path: str, area: str, fields: dict[str, Any], file: str = "") 
     with bib.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(f"{prefix}{entry}\n")
 
-    title = str(data.get("title", "")).strip()
-    summary = str(data.get("summary", data.get("abstract", ""))).strip().replace("\n", " ")[:120]
-    row = f"| {key} | {title} | {data.get('type', '')} | {summary} |\n"
-    with (base / "library" / "INDEX.md").open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(row)
-
     source_copied = None
+    markdown = None
     if file:
         src = Path(file)
         if src.exists():
             dest = base / "library" / "sources" / src.name
             shutil.copy2(src, dest)
             source_copied = str(dest)
-            _write_if_absent(
-                base / "library" / "notes" / f"{key}.md",
-                f"# {title or key}\n\nSource: {src.name}\nKey: {key}\n\nNotes:\n",
-            )
+            markdown = _to_markdown(src, key, base / "library" / "md")
 
-    return {"area": slug, "key": key, "bibtex": entry, "source_copied": source_copied}
+    title = str(data.get("title", "")).strip()
+    summary = str(data.get("summary", data.get("abstract", ""))).strip().replace("\n", " ")[:120]
+    md_cell = f"md/{key}.md" if markdown else ""
+    row = f"| {key} | {title} | {data.get('type', '')} | {md_cell} | {summary} |\n"
+    with (base / "library" / "INDEX.md").open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(row)
+
+    return {"area": slug, "key": key, "bibtex": entry, "source_copied": source_copied, "markdown": markdown}
 
 
 def workspace_status(path: str) -> dict[str, Any]:
