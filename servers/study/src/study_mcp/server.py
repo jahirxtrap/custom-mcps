@@ -61,7 +61,7 @@ def study_guide(topic: str = "") -> str:
 def toolkit(topic: str = "") -> str:
     """List the ecosystem to install for full academic work (documents, research, citations,
     diagrams, latex, images, video, humanize): install commands, which need an API key, how to get
-    it and how to configure it. Pass a group name to filter. Run scripts/setup.py to automate it."""
+    it and how to configure it. Pass a group name to filter. Run servers/study/setup.py to automate it."""
     return _toolkit(topic)
 
 
@@ -99,7 +99,7 @@ def cite(fields: str = "", doi: str = "") -> str:
 def workspace_init(path: str, areas: str = "") -> str:
     """Scaffold a multi-area study workspace at 'path': conventions (anti-AI + APA), styles, memory,
     and areas/. 'areas' is a comma-separated list of subjects to seed (a student can be multi-area).
-    Also writes a CLAUDE.md that tells Claude how to work in the workspace. Idempotent."""
+    Also writes a CLAUDE.md that tells Claude how to work in the workspace."""
     names = [name.strip() for name in areas.split(",") if name.strip()] if areas else []
     return json.dumps(_workspace_init(path, names))
 

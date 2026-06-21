@@ -59,8 +59,8 @@ playing the audio is the host agent's job.
 back to **soundfile**/libsndfile, which is always available. Force `ffmpeg` or `soundfile`.
 
 ffmpeg is **optional** — install it only to widen format/codec coverage:
-`winget install Gyan.FFmpeg` | `brew install ffmpeg` | `apt install ffmpeg`. The study server's
-`scripts/setup.py --all` also installs it. `sfx_guide` repeats this under "Tools (optional)".
+`winget install Gyan.FFmpeg` | `brew install ffmpeg` | `apt install ffmpeg`, or run this server's
+own setup `uv run python servers/sfx/setup.py`. `sfx_guide` repeats this under "Tools (optional)".
 
 ## Run / register
 

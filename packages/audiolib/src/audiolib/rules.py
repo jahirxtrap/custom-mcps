@@ -40,7 +40,7 @@ _TOOLS = [
     "ffmpeg is optional. This server prefers it for encoding (wider format support) and falls back "
     "to soundfile, so it works without it; install ffmpeg only to widen format/codec coverage.",
     "Install: winget install Gyan.FFmpeg  |  brew install ffmpeg  |  apt install ffmpeg. "
-    "The study server's scripts/setup.py --all also installs it.",
+    "Or run the sfx setup: uv run python servers/sfx/setup.py.",
 ]
 
 _RULES = [

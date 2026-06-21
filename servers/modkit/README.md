@@ -33,6 +33,17 @@ them. Publishing order is intentionally excluded (it is mod-specific, not generi
 Generic Minecraft knowledge (a Java-per-MC table, JSON byte rules, canonical structure)
 lives in `loaderkit` — never a specific mod. See its README.
 
+## minecraft-dev (its own setup)
+
+`decompile_guide` points to the **minecraft-dev** MCP (`@mcdxai/minecraft-dev-mcp`), the tool for
+decompiling and reading the MC/loader API. Register it with this server's own setup:
+
+```bash
+uv run python servers/modkit/setup.py
+```
+
+mcmodding-mcp is intentionally not installed: it is optional, rarely needed, and harder to set up.
+
 ## Run / register
 
 ```bash

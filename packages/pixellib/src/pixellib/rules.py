@@ -122,6 +122,7 @@ def guide(size: int = 0) -> str:
         "This server draws by data and verifies by preview. For reference-driven design, sprite-sheet "
         "animation and Aseprite workflows, the pixel-art-sprites skill complements it:",
         "- install: npx skills add https://github.com/omer-metin/skills-for-antigravity --skill pixel-art-sprites",
+        "- or run the setup: uv run python servers/pixelart/setup.py",
         "- source: https://github.com/omer-metin/skills-for-antigravity",
     ]
     return "\n".join(lines)

@@ -57,7 +57,9 @@ showing the image is the host agent's job (e.g. a client that renders markdown i
 - **Pillow** — all raster I/O and NEAREST upscaling.
 - **pixellib** — the shared grid/ramp/shade/outline/preview engine.
 - **pixel-art-sprites skill** (complementary, not required): reference-driven design, sprite-sheet
-  animation, Aseprite workflows. Install: `npx skills add https://github.com/omer-metin/skills-for-antigravity --skill pixel-art-sprites`.
+  animation, Aseprite workflows. Install with this server's own setup
+  `uv run python servers/pixelart/setup.py`, or directly:
+  `npx skills add https://github.com/omer-metin/skills-for-antigravity --skill pixel-art-sprites`.
 - **Optional, future**: an Aseprite-CLI importer, enabled only if `aseprite` is on PATH.
 
 ## Run / register

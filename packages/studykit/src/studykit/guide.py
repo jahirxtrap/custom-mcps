@@ -145,7 +145,7 @@ def toolkit(topic: str = "") -> str:
     out = [
         "# Study toolkit (ecosystem)",
         "",
-        "scripts/setup.py installs the automatable items (basics by default, everything with --all; "
+        "servers/study/setup.py installs the automatable items (basics by default, everything with --all; "
         "skills via 'claude plugin install'). Web services (Pollinations) and proprietary skills are "
         "documented here, not auto-installed. Keys are optional and live in a gitignored .env.",
         "",

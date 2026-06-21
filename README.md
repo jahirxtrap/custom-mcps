@@ -153,8 +153,8 @@ exactly what to install.
   **multi-area** study workspace — shared conventions and memory, one folder per subject with its
   own knowledge base and reference library.
 
-It carries **no subject knowledge** — you pick the field. `scripts/setup.py` installs the toolkit
-and writes any API keys to a gitignored `.env`; the server never stores secrets.
+It carries **no subject knowledge** — you pick the field. `servers/study/setup.py` installs the
+toolkit and writes any API keys to a gitignored `.env`; the server never stores secrets.
 
 See [`servers/study`](servers/study) and [`packages/studykit`](packages/studykit).
 
@@ -176,7 +176,7 @@ custom-mcps/
 │   ├── i18n/        # MCP server — keep translation locales in sync
 │   ├── devkit/      # MCP server — development conventions + checks
 │   └── study/       # MCP server — academic study work by data
-├── scripts/         # register.py (register servers) + setup.py (install toolkit + .env)
+├── scripts/         # register.py (register every server at user scope)
 └── tests/           # workspace test suite (pytest)
 ```
 
@@ -185,6 +185,18 @@ custom-mcps/
 ```bash
 uv sync             # create the venv and install every workspace member
 uv run pytest       # run the test suite
+```
+
+### Per-server setup (optional)
+
+Servers that lean on an external integration ship their own `servers/<name>/setup.py` — each is
+self-contained (no server references another's) and leaves an already-present dependency alone:
+
+```bash
+uv run python servers/study/setup.py [--all]   # the full academic ecosystem (its own toolkit)
+uv run python servers/sfx/setup.py             # ffmpeg (optional; soundfile fallback otherwise)
+uv run python servers/pixelart/setup.py        # the complementary pixel-art-sprites skill
+uv run python servers/modkit/setup.py          # register the minecraft-dev MCP (decompiling)
 ```
 
 ## Use it from Claude Code

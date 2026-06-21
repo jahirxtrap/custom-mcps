@@ -4,12 +4,15 @@ from __future__ import annotations
 _OVERVIEW = """# Decompile & API reference strategy (multiloader)
 
 modkit covers the mechanical workspace half; for the actual Minecraft / loader API use the
-minecraft-dev MCP (package @mcdxai/minecraft-dev-mcp) and mcmodding-mcp. Never rely on training
-data: Minecraft changes a lot between versions.
+minecraft-dev MCP (package @mcdxai/minecraft-dev-mcp) — the mandatory tool for mod development
+(decompile vanilla and the loaders). Never rely on training data: Minecraft changes a lot between
+versions. Register it with the modkit setup (servers/modkit/setup.py).
 
 Priority for any API question:
-1. mcmodding-mcp first (Fabric / NeoForge docs, events, convention tags).
-2. Decompiled loader source via minecraft-dev (search_mod_code) when mcmodding-mcp lacks it.
+1. minecraft-dev: decompiled vanilla source (get_minecraft_source / search_minecraft_code) and
+   decompiled loader source (search_mod_code). Always mojmap.
+2. mcmodding-mcp (package mcmodding-mcp): optional, only for Fabric/NeoForge-specific API (rare)
+   and harder to set up; most mods use vanilla API + Mixins.
 3. External doc links last.
 
 Mapping: always mojmap (unobfuscated on 26.1+, and the preferred choice on older versions too).

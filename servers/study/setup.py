@@ -5,11 +5,11 @@ automated (heavier CLIs, slide tools, mermaid, and skills via `claude plugin ins
 Things a script cannot install (proprietary skills without a known marketplace, web-only
 services) are always reported, never faked.
 
-  uv run python scripts/setup.py [--all]
+  uv run python servers/study/setup.py [--all]
       Global: register the external MCP at user scope; with --all also install the CLIs,
       npm tools, and skill plugins.
 
-  uv run python scripts/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]
+  uv run python servers/study/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]
       Workspace-scoped: keep config inside <dir> (.env, .mcp.json, TOOLKIT.md, .gitignore,
       styles/apa.csl, .claude/skills) and install npm tools under <dir>/node_modules.
       Basics install markmap; --all adds mermaid, Marp, the system CLIs, and skill plugins.
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from studykit import toolkit
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 CLAUDE = shutil.which("claude") or "claude"
 NPM = shutil.which("npm")
 GIT = shutil.which("git")
@@ -46,6 +46,11 @@ OPTIONAL_KEYS = [
     ("OPENALEX_API_KEY", "OpenAlex contact email for the polite pool (free; blank to skip)"),
     ("SEMANTIC_SCHOLAR_API_KEY", "Semantic Scholar API key to raise limits (blank to skip)"),
 ]
+
+ENV_HEADER = (
+    "# Optional API keys for the research MCPs (openalex, semantic-scholar). Both work without a\n"
+    "# key; set one only to raise rate limits. This file is gitignored, never commit it."
+)
 
 SKILL_PLUGINS = [
     {"plugin": "superpowers", "marketplace": "claude-plugins-official", "provides": "deep-research + brainstorming"},
@@ -108,8 +113,14 @@ def read_env(path: Path) -> dict[str, str]:
 
 
 def write_env(path: Path, values: dict[str, str]) -> None:
-    lines = [f"{key}={value}" for key, value in values.items() if value]
-    path.write_text(("\n".join(lines) + "\n") if lines else "", encoding="utf-8", newline="\n")
+    known = {key for key, _ in OPTIONAL_KEYS}
+    lines = [ENV_HEADER, ""]
+    for key, description in OPTIONAL_KEYS:
+        lines += [f"# {description}", f"{key}={values.get(key, '')}", ""]
+    extra = [f"{key}={value}" for key, value in values.items() if key not in known and value]
+    if extra:
+        lines += [*extra, ""]
+    path.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8", newline="\n")
 
 
 def _ask(prompt: str) -> str | None:
@@ -129,18 +140,17 @@ def confirm(prompt: str) -> bool:
 def collect_keys(env_path: Path) -> dict[str, str]:
     print(f"\n== API keys (optional) -> {env_path.name} ==")
     values = read_env(env_path)
-    if not INTERACTIVE:
-        print("non-interactive; keeping existing values")
-        return values
-    for key, description in OPTIONAL_KEYS:
-        current = values.get(key, "")
-        shown = f" [current: {current}]" if current else ""
-        entered = _ask(f"{description}{shown}: ")
-        if entered is None:
-            print("no input stream; keeping existing values")
-            break
-        if entered:
-            values[key] = entered
+    if INTERACTIVE:
+        for key, description in OPTIONAL_KEYS:
+            current = values.get(key, "")
+            shown = f" [current: {current}]" if current else ""
+            entered = _ask(f"{description}{shown}: ")
+            if entered is None:
+                break
+            if entered:
+                values[key] = entered
+    else:
+        print("non-interactive; writing the .env template (fill the keys later)")
     write_env(env_path, values)
     print(f"saved {env_path}")
     return values

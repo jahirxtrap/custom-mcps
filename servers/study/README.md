@@ -48,13 +48,13 @@ consult its `knowledge.md`, and keep `memory/` up to date.
 
 ## Setup and API keys
 
-The `toolkit` tool is the catalog; `scripts/setup.py` is its executable form: it installs what it
-can, registers the external MCPs (OpenAlex, Semantic Scholar), and writes any keys you give to a
+The `toolkit` tool is the catalog; `servers/study/setup.py` is its executable form: it installs
+what it can, registers the external MCPs (OpenAlex, Semantic Scholar), and writes any keys to a
 **gitignored `.env`**. Most tools need no key (OpenAlex is free; Semantic Scholar works without
 one), so it only asks when a key would raise your limits. The server never stores secrets.
 
-`scripts/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]` keeps everything
-inside one workspace. **Basics** write `.env`, `.mcp.json` (study + openalex + semantic-scholar),
+`servers/study/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]` keeps
+everything inside one workspace. **Basics** write `.env`, `.mcp.json` (study + openalex + semantic-scholar),
 `TOOLKIT.md`, `puppeteer-config.json`, download `styles/apa.csl`, create `.claude/skills/`, and
 install `markmap` locally. **`--all`** also clones the `video-audio` MCP into `tools/`, installs
 `mermaid` + `Marp` locally, installs the system CLIs (pandoc, ffmpeg, graphviz), and installs skill
