@@ -139,8 +139,9 @@ def toolkit(topic: str = "") -> str:
     out = [
         "# Study toolkit (ecosystem)",
         "",
-        "Run scripts/setup.py to install and configure these automatically. Keys are optional and "
-        "live in a gitignored .env; the MCP never stores secrets.",
+        "scripts/setup.py installs the automatable items (basics by default, everything with --all; "
+        "skills via 'claude plugin install'). Web services (Pollinations) and proprietary skills are "
+        "documented here, not auto-installed. Keys are optional and live in a gitignored .env.",
         "",
     ]
     for name, items in groups.items():

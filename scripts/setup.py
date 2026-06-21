@@ -1,16 +1,18 @@
 """Install the study ecosystem and store optional API keys in a gitignored .env.
 
-Two modes, both idempotent and best-effort:
+Tiers: a default run installs the light basics; `--all` installs everything that can be
+automated (heavier CLIs, slide tools, mermaid, and skills via `claude plugin install`).
+Things a script cannot install (proprietary skills without a known marketplace, web-only
+services) are always reported, never faked.
 
-  uv run python scripts/setup.py
-      Global: install CLIs (winget/brew/apt) and npm tools, write a repo .env, and
-      register the external MCP servers at user scope.
+  uv run python scripts/setup.py [--all]
+      Global: register the external MCP at user scope; with --all also install the CLIs,
+      npm tools, and skill plugins.
 
-  uv run python scripts/setup.py --workspace <dir> [--mermaid]
-      Workspace-scoped: keep everything inside <dir> -- a local .env, a project
-      .mcp.json, a TOOLKIT.md, a .gitignore, and npm tools installed under
-      <dir>/node_modules. Nothing is installed globally and no user scope is touched.
-      --mermaid also installs mermaid-cli locally (heavy: it pulls Chromium).
+  uv run python scripts/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]
+      Workspace-scoped: keep config inside <dir> (.env, .mcp.json, TOOLKIT.md, .gitignore,
+      styles/apa.csl, .claude/skills) and install npm tools under <dir>/node_modules.
+      Basics install markmap; --all adds mermaid, Marp, the system CLIs, and skill plugins.
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ import os
 import shutil
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 from studykit import toolkit
@@ -28,6 +31,7 @@ CLAUDE = shutil.which("claude") or "claude"
 NPM = shutil.which("npm")
 PLATFORM = "win" if sys.platform.startswith("win") else "mac" if sys.platform == "darwin" else "linux"
 INTERACTIVE = sys.stdin.isatty()
+APA_CSL_URL = "https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl"
 
 CLI_TOOLS = [
     {"bin": "pandoc", "win": "JohnMacFarlane.Pandoc", "mac": "pandoc", "linux": "pandoc"},
@@ -35,14 +39,24 @@ CLI_TOOLS = [
     {"bin": "dot", "win": "Graphviz.Graphviz", "mac": "graphviz", "linux": "graphviz"},
 ]
 
-NPM_TOOLS = [
-    {"bin": "mmdc", "pkg": "@mermaid-js/mermaid-cli"},
-    {"bin": "markmap", "pkg": "markmap-cli"},
-]
-
 OPTIONAL_KEYS = [
     ("OPENALEX_API_KEY", "OpenAlex contact email for the polite pool (free; blank to skip)"),
     ("SEMANTIC_SCHOLAR_API_KEY", "Semantic Scholar API key to raise limits (blank to skip)"),
+]
+
+SKILL_PLUGINS = [
+    {"plugin": "superpowers", "marketplace": "claude-plugins-official", "provides": "deep-research + brainstorming"},
+]
+
+SKILL_MANUAL = [
+    {
+        "name": "humanizer",
+        "how": "claude plugin marketplace add <repo> ; claude plugin install humanizer@<marketplace>",
+    },
+    {
+        "name": "docx/pptx/xlsx/pdf",
+        "how": "Anthropic doc skills (proprietary): add their marketplace, then claude plugin install",
+    },
 ]
 
 SKILLS_README = """# Skills (project-scoped)
@@ -51,11 +65,10 @@ Skills placed here load automatically when this folder is open in Claude Code (p
 Plugin skills installed once at user scope are also available here, so most skills do not need
 to be copied per project.
 
-Recommended:
-- Document skills: docx, pptx, xlsx, pdf (install the Anthropic document skills, user scope).
-- humanizer: rewrite text to a human voice (install its plugin); verify with the study
-  writing_check tool.
-- deep-research: multi-source, cited research (Claude Code skill).
+Install via Claude Code plugins:
+- deep-research (+ brainstorming): claude plugin install superpowers@claude-plugins-official
+- humanizer: add its marketplace, then claude plugin install humanizer@<marketplace>
+- docx / pptx / xlsx / pdf: Anthropic document skills (proprietary), from their marketplace.
 
 Use this folder for skills specific to this workspace (a `<name>/SKILL.md` per skill). To bundle
 your own copies of existing skills into a portable workspace, run setup with
@@ -69,6 +82,16 @@ def run(command: list[str], env: dict[str, str] | None = None) -> bool:
         tail = (done.stderr or done.stdout).strip().splitlines()[-1:] or [""]
         print(f"  ! {tail[0]}")
     return done.returncode == 0
+
+
+def download(url: str, dest: Path) -> bool:
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            dest.write_bytes(response.read())
+        return True
+    except Exception as error:
+        print(f"  ! {error}")
+        return False
 
 
 def read_env(path: Path) -> dict[str, str]:
@@ -120,43 +143,57 @@ def collect_keys(env_path: Path) -> dict[str, str]:
     return values
 
 
-def report_clis() -> None:
-    print("\n== system CLIs (installed globally; not confined to a directory) ==")
-    for tool in [*[t["bin"] for t in CLI_TOOLS], "latexmk"]:
-        print(f"  {tool}: {'found' if shutil.which(tool) else 'missing (see TOOLKIT.md)'}")
-
-
-def install_cli() -> None:
-    print("\n== CLI tools ==")
+def install_cli(auto: bool) -> None:
+    print("\n== system CLIs ==")
     for tool in CLI_TOOLS:
         if shutil.which(tool["bin"]):
-            print(f"{tool['bin']}: already installed")
+            print(f"  {tool['bin']}: already installed")
             continue
-        installed = False
-        if PLATFORM == "win" and shutil.which("winget") and confirm(f"install {tool['bin']} with winget?"):
-            installed = run([
+        do = auto or confirm(f"install {tool['bin']}?")
+        if not do:
+            print(f"  {tool['bin']}: skipped (see TOOLKIT.md)")
+            continue
+        if PLATFORM == "win" and shutil.which("winget"):
+            ok = run([
                 "winget", "install", "--id", tool["win"], "-e", "--source", "winget",
                 "--accept-package-agreements", "--accept-source-agreements",
             ])
-        elif PLATFORM == "mac" and shutil.which("brew") and confirm(f"install {tool['bin']} with brew?"):
-            installed = run(["brew", "install", tool["mac"]])
-        elif PLATFORM == "linux" and shutil.which("apt") and confirm(f"install {tool['bin']} with apt?"):
-            installed = run(["sudo", "apt", "install", "-y", tool["linux"]])
-        print(f"{tool['bin']}: {'installed' if installed else 'install manually (see toolkit)'}")
-
-
-def install_npm_global() -> None:
-    print("\n== npm tools (global) ==")
-    if not NPM:
-        print("npm not found; install Node.js to get mmdc and markmap")
-        return
-    for tool in NPM_TOOLS:
-        if shutil.which(tool["bin"]):
-            print(f"{tool['bin']}: already installed")
-        elif confirm(f"install {tool['pkg']} globally?"):
-            print(f"{tool['bin']}: {'installed' if run([NPM, 'install', '-g', tool['pkg']]) else 'FAILED'}")
+        elif PLATFORM == "mac" and shutil.which("brew"):
+            ok = run(["brew", "install", tool["mac"]])
+        elif PLATFORM == "linux" and shutil.which("apt"):
+            ok = run(["sudo", "apt", "install", "-y", tool["linux"]])
         else:
-            print(f"{tool['bin']}: skipped")
+            ok = False
+        print(f"  {tool['bin']}: {'installed' if ok else 'install manually (see TOOLKIT.md)'}")
+    print("  d2: manual (no verified per-OS installer); see https://d2lang.com")
+
+
+def install_npm(packages: list[str], prefix: Path | None = None) -> None:
+    location = f"local -> {prefix.name}/node_modules" if prefix else "global"
+    print(f"\n== npm tools ({location}) ==")
+    if not NPM:
+        print("  npm not found; install Node.js")
+        return
+    command = [NPM, "install", *(["--prefix", str(prefix)] if prefix else ["-g"]), *packages]
+    env = {**os.environ, "PUPPETEER_CACHE_DIR": str((prefix or ROOT) / ".cache" / "puppeteer")}
+    ok = run(command, env=env)
+    print(f"  {' '.join(packages)}: {'installed' if ok else 'FAILED (check network)'}")
+
+
+def install_skills(auto: bool) -> None:
+    print("\n== skills (Claude Code plugins) ==")
+    if not auto:
+        print("  skipped (run with --all). To add them yourself:")
+        for plugin in SKILL_PLUGINS:
+            print(f"    claude plugin install {plugin['plugin']}@{plugin['marketplace']}  ({plugin['provides']})")
+        for manual in SKILL_MANUAL:
+            print(f"    {manual['name']}: {manual['how']}")
+        return
+    for plugin in SKILL_PLUGINS:
+        ok = run([CLAUDE, "plugin", "install", f"{plugin['plugin']}@{plugin['marketplace']}"])
+        print(f"  {plugin['plugin']}: {'installed' if ok else 'FAILED'} ({plugin['provides']})")
+    for manual in SKILL_MANUAL:
+        print(f"  {manual['name']}: manual -> {manual['how']}")
 
 
 def register_mcps(env: dict[str, str]) -> None:
@@ -166,13 +203,11 @@ def register_mcps(env: dict[str, str]) -> None:
         command += ["-e", f"OPENALEX_API_KEY={env['OPENALEX_API_KEY']}"]
     command += ["--", "npx", "-y", "@cyanheads/openalex-mcp-server"]
     run([CLAUDE, "mcp", "remove", "openalex", "-s", "user"])
-    print(f"openalex: {'registered' if run(command) else 'FAILED (need claude + npx)'}")
-    print("semantic-scholar: pick an MCP from the registry/npm and register it with "
-          "-e SEMANTIC_SCHOLAR_API_KEY (from .env) if you set a key")
+    print(f"  openalex: {'registered' if run(command) else 'FAILED (need claude + npx)'}")
 
 
 def write_mcp_json(workspace: Path, env: dict[str, str]) -> None:
-    openalex = {"command": "npx", "args": ["-y", "@cyanheads/openalex-mcp-server"]}
+    openalex: dict[str, object] = {"command": "npx", "args": ["-y", "@cyanheads/openalex-mcp-server"]}
     if env.get("OPENALEX_API_KEY"):
         openalex["env"] = {"OPENALEX_API_KEY": env["OPENALEX_API_KEY"]}
     config = {
@@ -184,14 +219,13 @@ def write_mcp_json(workspace: Path, env: dict[str, str]) -> None:
     (workspace / ".mcp.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
-def write_skills(workspace: Path, skills_from: str) -> None:
-    print("\n== skills (.claude/skills) ==")
+def write_skills_dir(workspace: Path, skills_from: str) -> None:
+    print("\n== skills folder (.claude/skills) ==")
     skills_dir = workspace / ".claude" / "skills"
     skills_dir.mkdir(parents=True, exist_ok=True)
     (skills_dir / "README.md").write_text(SKILLS_README, encoding="utf-8", newline="\n")
     print(f"  {skills_dir}")
     if not skills_from:
-        print("  (no --skills-from; install plugin skills at user scope, add custom skills here)")
         return
     source = Path(skills_from).expanduser()
     if not source.is_dir():
@@ -207,48 +241,54 @@ def write_skills(workspace: Path, skills_from: str) -> None:
                 print(f"  {entry.name}: copied")
 
 
-def npm_local(workspace: Path, packages: list[str]) -> None:
-    print(f"\n== npm tools (local -> {workspace.name}/node_modules) ==")
-    if not NPM:
-        print("npm not found; install Node.js to get markmap/mmdc")
-        return
-    child_env = {**os.environ, "PUPPETEER_CACHE_DIR": str(workspace / ".cache" / "puppeteer")}
-    ok = run([NPM, "install", "--prefix", str(workspace), *packages], env=child_env)
-    bin_dir = workspace / "node_modules" / ".bin"
-    for tool in ("markmap", "mmdc"):
-        present = (bin_dir / tool).exists() or (bin_dir / f"{tool}.cmd").exists()
-        if present:
-            print(f"  {tool}: {bin_dir / tool}")
-    if not ok:
-        print("  (npm reported an error; check network or the package names)")
-
-
-def workspace_setup(workspace: Path, mermaid: bool, skills_from: str) -> None:
+def workspace_setup(workspace: Path, all_: bool, mermaid: bool, skills_from: str) -> None:
     workspace.mkdir(parents=True, exist_ok=True)
-    print(f"Workspace setup -> {workspace}")
+    print(f"Workspace setup -> {workspace}  (mode: {'all' if all_ else 'basics'})")
     env = collect_keys(workspace / ".env")
     write_mcp_json(workspace, env)
     print(f"wrote {workspace / '.mcp.json'}")
     (workspace / "TOOLKIT.md").write_text(toolkit() + "\n", encoding="utf-8", newline="\n")
-    print(f"wrote {workspace / 'TOOLKIT.md'}")
     (workspace / ".gitignore").write_text(".env\nnode_modules/\n.cache/\n*.png\n", encoding="utf-8", newline="\n")
-    write_skills(workspace, skills_from)
-    packages = ["markmap-cli"] + (["@mermaid-js/mermaid-cli"] if mermaid else [])
-    npm_local(workspace, packages)
-    if not mermaid:
-        print("\nmermaid-cli skipped (heavy, pulls Chromium). Add it with --mermaid.")
-    report_clis()
-    print("\nDone. Open this folder in Claude Code; .mcp.json loads the study and openalex servers.")
+
+    styles = workspace / "styles"
+    styles.mkdir(parents=True, exist_ok=True)
+    print("\n== apa.csl ==")
+    if (styles / "apa.csl").exists():
+        print("  styles/apa.csl: already present")
+    else:
+        print(f"  styles/apa.csl: {'downloaded' if download(APA_CSL_URL, styles / 'apa.csl') else 'download failed'}")
+
+    write_skills_dir(workspace, skills_from)
+
+    packages = ["markmap-cli"]
+    if all_ or mermaid:
+        packages.append("@mermaid-js/mermaid-cli")
+    if all_:
+        packages.append("@marp-team/marp-cli")
+    install_npm(packages, prefix=workspace)
+
+    if all_:
+        install_cli(auto=True)
+        install_skills(auto=True)
+    else:
+        install_skills(auto=False)
+        print("\nbasics done. Run with --all to also install mermaid, Marp, system CLIs and skills.")
+    print("\nOpen this folder in Claude Code; .mcp.json loads the study and openalex servers.")
 
 
-def global_setup() -> None:
-    print("Global ecosystem setup")
+def global_setup(all_: bool) -> None:
+    print(f"Global ecosystem setup  (mode: {'all' if all_ else 'basics'})")
     print(f"platform={PLATFORM} interactive={INTERACTIVE} env={ROOT / '.env'}")
-    install_cli()
-    install_npm_global()
     env = collect_keys(ROOT / ".env")
     register_mcps(env)
-    print("\nDone. Register the workspace MCP servers with: uv run python scripts/register.py")
+    if all_:
+        install_cli(auto=True)
+        install_npm(["@mermaid-js/mermaid-cli", "markmap-cli", "@marp-team/marp-cli"])
+        install_skills(auto=True)
+    else:
+        install_cli(auto=False)
+        install_skills(auto=False)
+        print("\nbasics done. Run with --all to install CLIs, npm tools and skills without prompts.")
 
 
 def _flag_value(args: list[str], name: str) -> str:
@@ -261,14 +301,15 @@ def _flag_value(args: list[str], name: str) -> str:
 
 def main() -> int:
     args = sys.argv[1:]
+    all_ = "--all" in args
     if "--workspace" in args:
         target = _flag_value(args, "--workspace")
         if not target:
-            print("usage: setup.py --workspace <dir> [--mermaid] [--skills-from <dir>]")
+            print("usage: setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]")
             return 1
-        workspace_setup(Path(target).expanduser(), "--mermaid" in args, _flag_value(args, "--skills-from"))
+        workspace_setup(Path(target).expanduser(), all_, "--mermaid" in args, _flag_value(args, "--skills-from"))
     else:
-        global_setup()
+        global_setup(all_)
     return 0
 
 
