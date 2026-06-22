@@ -51,9 +51,10 @@ uv run <name>-mcp           # run a server over stdio
 uv run python scripts/register.py   # register every server with Claude Code (user scope)
 ```
 
-Register a server for every Claude Code session:
+Register a server for every Claude Code session (`uv sync` once first; `--no-sync` keeps each
+launch from re-syncing, so startup is fast and never stalls rebuilding on a locked entry point):
 ```bash
-claude mcp add <name> -s user -- uv run --project <abs-repo-path> <name>-mcp
+claude mcp add <name> -s user -- uv run --no-sync --project <abs-repo-path> <name>-mcp
 ```
 
 ## Adding a server

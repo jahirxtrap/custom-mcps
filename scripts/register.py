@@ -9,6 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CLAUDE = shutil.which("claude") or "claude"
+WIN = sys.platform.startswith("win")
+SCRIPTS = ROOT / ".venv" / ("Scripts" if WIN else "bin")
 
 
 def entry_points() -> list[str]:
@@ -19,11 +21,18 @@ def entry_points() -> list[str]:
     return names
 
 
+def server_command(entry: str) -> list[str]:
+    exe = SCRIPTS / (f"{entry}.exe" if WIN else entry)
+    if exe.exists():
+        return [str(exe)]
+    return ["uv", "run", "--no-sync", "--project", str(ROOT), entry]
+
+
 def register(entry: str) -> bool:
     name = entry.removesuffix("-mcp")
     subprocess.run([CLAUDE, "mcp", "remove", name, "-s", "user"], capture_output=True, text=True)
     done = subprocess.run(
-        [CLAUDE, "mcp", "add", name, "-s", "user", "--", "uv", "run", "--project", str(ROOT), entry],
+        [CLAUDE, "mcp", "add", name, "-s", "user", "--", *server_command(entry)],
         capture_output=True,
         text=True,
     )

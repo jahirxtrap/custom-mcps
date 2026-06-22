@@ -210,10 +210,11 @@ uv run python servers/modkit/setup.py          # register the minecraft-dev MCP 
 ## Use it from Claude Code
 
 Register a server once at user scope and it's available in every session — the tools
-show up as `mcp__pixelart__*`:
+show up as `mcp__pixelart__*`. Run `uv sync` once first, then register with `--no-sync` so each
+launch skips re-syncing (fast, stable startup — no rebuild-on-launch stalls):
 
 ```bash
-claude mcp add pixelart -s user -- uv run --project /path/to/custom-mcps pixelart-mcp
+claude mcp add pixelart -s user -- uv run --no-sync --project /path/to/custom-mcps pixelart-mcp
 ```
 
 Or run it straight from the repo, without a local checkout:
@@ -223,9 +224,12 @@ claude mcp add pixelart -s user -- uvx --from git+https://github.com/jahirxtrap/
 ```
 
 Or register **every** server in the workspace at once — it discovers each one under
-`servers/` and adds it at user scope:
+`servers/` and adds it at user scope. It registers the **installed venv entry point** directly
+(`.venv/Scripts/<name>-mcp`), so launch is just the server process — no `uv` resolve/sync on every
+start, which is what keeps startup fast and avoids stalls:
 
 ```bash
+uv sync                              # once, so the venv entry points exist
 uv run python scripts/register.py
 ```
 
