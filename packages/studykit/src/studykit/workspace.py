@@ -43,7 +43,7 @@ def _write_if_absent(path: Path, content: str) -> bool:
 
 def _run(command: list[str]) -> bool:
     try:
-        return subprocess.run(command, capture_output=True, text=True).returncode == 0
+        return subprocess.run(command, capture_output=True, text=True, stdin=subprocess.DEVNULL).returncode == 0
     except OSError:
         return False
 

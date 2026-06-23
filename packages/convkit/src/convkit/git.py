@@ -11,11 +11,12 @@ _CONVENTIONAL = re.compile(r"^(feat|fix|chore|refactor|docs|test|perf|build|ci|s
 
 def _git(repo: str | Path, args: list[str]) -> str:
     result = subprocess.run(
-        ["git", "-C", str(repo or "."), *args],
+        ["git", "--no-pager", "-C", str(repo or "."), *args],
         capture_output=True,
         text=True,
         encoding="utf-8",
         errors="replace",
+        stdin=subprocess.DEVNULL,
     )
     return result.stdout
 

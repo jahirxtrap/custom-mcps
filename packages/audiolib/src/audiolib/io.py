@@ -53,12 +53,12 @@ def _write_ffmpeg(
 ) -> None:
     tmp = Path(tempfile.gettempdir()) / f"audiolib_{uuid.uuid4().hex[:8]}.wav"
     sf.write(str(tmp), data, sample_rate, format="WAV", subtype="PCM_16")
-    cmd = [ff, "-y", "-i", str(tmp), "-ac", str(channels), "-c:a", _FFMPEG_CODEC.get(fmt, "libvorbis")]
+    cmd = [ff, "-nostdin", "-y", "-i", str(tmp), "-ac", str(channels), "-c:a", _FFMPEG_CODEC.get(fmt, "libvorbis")]
     if fmt in ("ogg", "mp3"):
         cmd += ["-q:a", str(quality)]
     cmd += [str(path)]
     try:
-        subprocess.run(cmd, capture_output=True, check=True)
+        subprocess.run(cmd, capture_output=True, check=True, stdin=subprocess.DEVNULL)
     finally:
         tmp.unlink(missing_ok=True)
 
@@ -96,7 +96,12 @@ def read(path: str | Path) -> tuple[Samples, int]:
         if not ff:
             raise
         tmp = Path(tempfile.gettempdir()) / f"audiolib_{uuid.uuid4().hex[:8]}.wav"
-        subprocess.run([ff, "-y", "-i", str(path), str(tmp)], capture_output=True, check=True)
+        subprocess.run(
+            [ff, "-nostdin", "-y", "-i", str(path), str(tmp)],
+            capture_output=True,
+            check=True,
+            stdin=subprocess.DEVNULL,
+        )
         data, sr = sf.read(str(tmp), dtype="float32", always_2d=False)
         tmp.unlink(missing_ok=True)
     if getattr(data, "ndim", 1) > 1:
