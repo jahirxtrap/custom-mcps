@@ -94,3 +94,10 @@ Never hardcode a client, URL, or shared folder into a server.
 5. **Relative/temp paths.** Never hardcode machine paths; scratch output goes to the system
    temp dir unless an explicit `out_dir` is given. The repo is public on GitHub.
 6. **stdio only.** No long-running servers, no auth, no network transport.
+7. **Subprocess from a tool: always `stdin=subprocess.DEVNULL`.** A stdio server's stdin is the
+   JSON-RPC pipe (never EOF); a child that inherits it (git, ffmpeg, pandoc) blocks reading it and
+   hangs the tool call forever — fast as a direct call, dead through the MCP. Also neutralize stdin
+   readers explicitly: `git --no-pager`, `ffmpeg -nostdin`.
+8. **Register via the venv entry point, not `uv run`.** `scripts/register.py` points each server at
+   `.venv/Scripts/<name>-mcp`, so launch never re-syncs/rebuilds (which stalls and contends on
+   locked entry points). Run `uv sync` once after dependency changes.
