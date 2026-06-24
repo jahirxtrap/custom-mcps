@@ -1,15 +1,14 @@
-"""Software isometric/orthographic renderer for compiled primitives (flat-shaded, no GPU)."""
+"""Software isometric/orthographic renderer for compiled primitives (z-buffer, flat-shaded, no GPU)."""
 from __future__ import annotations
 
 import math
 from typing import Any
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 
 _LIGHT = np.array([-0.5, 0.85, 0.4])
 _LIGHT = _LIGHT / np.linalg.norm(_LIGHT)
-_OUTLINE = (28, 22, 18, 255)
 _BOX_FACES = [
     (4, 5, 6, 7, (0, 0, 1)), (0, 1, 2, 3, (0, 0, -1)),
     (0, 3, 7, 4, (-1, 0, 0)), (1, 2, 6, 5, (1, 0, 0)),
@@ -52,22 +51,44 @@ def _faces(prims: list[dict[str, Any]]):
     return out
 
 
-def render(prims: list[dict[str, Any]], view: str = "iso", size: int = 320, az: float = 45.0, el: float = 30.0,
-           outline: bool = True) -> Image.Image:
+def _raster(zbuf, rgb, alpha, a, b, c, color):
+    size = zbuf.shape[0]
+    min_x = max(0, int(math.floor(min(a[0], b[0], c[0]))))
+    max_x = min(size - 1, int(math.ceil(max(a[0], b[0], c[0]))))
+    min_y = max(0, int(math.floor(min(a[1], b[1], c[1]))))
+    max_y = min(size - 1, int(math.ceil(max(a[1], b[1], c[1]))))
+    if min_x > max_x or min_y > max_y:
+        return
+    denom = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+    if abs(denom) < 1e-9:
+        return
+    ys, xs = np.mgrid[min_y:max_y + 1, min_x:max_x + 1]
+    px, py = xs + 0.5, ys + 0.5
+    w0 = ((b[1] - c[1]) * (px - c[0]) + (c[0] - b[0]) * (py - c[1])) / denom
+    w1 = ((c[1] - a[1]) * (px - c[0]) + (a[0] - c[0]) * (py - c[1])) / denom
+    w2 = 1.0 - w0 - w1
+    inside = (w0 >= -1e-4) & (w1 >= -1e-4) & (w2 >= -1e-4)
+    depth = w0 * a[2] + w1 * b[2] + w2 * c[2]
+    region = zbuf[min_y:max_y + 1, min_x:max_x + 1]
+    mask = inside & (depth > region)
+    region[mask] = depth[mask]
+    rgb[min_y:max_y + 1, min_x:max_x + 1][mask] = color
+    alpha[min_y:max_y + 1, min_x:max_x + 1][mask] = True
+
+
+def render(prims: list[dict[str, Any]], view: str = "iso", size: int = 320, az: float = 45.0,
+           el: float = 30.0) -> Image.Image:
     forward, right, up = _camera(az, el)
     silhouette = view == "silhouette"
-    polys = []
+    faces = []
     points: list[tuple[float, float]] = []
     for verts, color, normal in _faces(prims):
-        sx = [float(np.dot(v, right)) for v in verts]
-        sy = [float(np.dot(v, up)) for v in verts]
-        depth = float(np.mean([np.dot(v, forward) for v in verts]))
+        pv = [(float(np.dot(v, right)), float(np.dot(v, up)), float(np.dot(v, forward))) for v in verts]
         facing = normal if np.dot(normal, forward) >= 0 else -normal
         shade = 0.35 + 0.65 * max(0.0, float(np.dot(facing, _LIGHT)))
-        shaded = tuple(max(0, min(255, int(c * shade))) for c in color)
-        poly = list(zip(sx, sy, strict=True))
-        polys.append((poly, depth, shaded))
-        points += poly
+        shaded = (0, 0, 0) if silhouette else tuple(max(0, min(255, int(c * shade))) for c in color)
+        faces.append((pv, shaded))
+        points += [(p[0], p[1]) for p in pv]
     if not points:
         return Image.new("RGBA", (size, size), (0, 0, 0, 0))
     xs = [p[0] for p in points]
@@ -77,15 +98,17 @@ def render(prims: list[dict[str, Any]], view: str = "iso", size: int = 320, az: 
     scale = (size - 2 * margin) / span
     cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
 
-    def to_screen(point: tuple[float, float]) -> tuple[float, float]:
-        return (size / 2 + (point[0] - cx) * scale, size / 2 - (point[1] - cy) * scale)
+    def screen(p: tuple[float, float, float]) -> tuple[float, float, float]:
+        return (size / 2 + (p[0] - cx) * scale, size / 2 - (p[1] - cy) * scale, p[2])
 
-    image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    polys.sort(key=lambda item: item[1])
-    for poly, _depth, shaded in polys:
-        screen = [to_screen(p) for p in poly]
-        fill = (0, 0, 0, 255) if silhouette else (*shaded, 255)
-        edge = _OUTLINE if (outline and not silhouette) else None
-        draw.polygon(screen, fill=fill, outline=edge)
-    return image
+    zbuf = np.full((size, size), -np.inf)
+    rgb = np.zeros((size, size, 3), dtype=np.uint8)
+    alpha = np.zeros((size, size), dtype=bool)
+    for pv, shaded in faces:
+        sv = [screen(p) for p in pv]
+        for i in range(1, len(sv) - 1):
+            _raster(zbuf, rgb, alpha, sv[0], sv[i], sv[i + 1], shaded)
+    out = np.zeros((size, size, 4), dtype=np.uint8)
+    out[..., :3] = rgb
+    out[..., 3] = np.where(alpha, 255, 0)
+    return Image.fromarray(out, "RGBA")
