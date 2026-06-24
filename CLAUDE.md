@@ -40,6 +40,8 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `devkit` | The user's dev conventions + checks (personal); read-only. Tools: `conventions`, `commit_style`, `commit_context`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`. |
 | library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, APA citations, concept-map render, multi-area workspace. |
 | server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `study_guide`, `concept_map`, `cite`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
+| library | `formkit` | Low-poly 3D toolkit: spec->primitives compile, software iso/silhouette renderer (Pillow+NumPy), design principles, Godot def. |
+| server | `buildkit` | Design low-poly 3D structures by data (agnostic). Tools: `design_guide`, `search_reference`, `render_preview`, `check`, `godot_def`. |
 
 ## Commands
 

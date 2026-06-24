@@ -17,6 +17,8 @@ dependencies = [
     "devkit-mcp",
     "studykit",
     "study-mcp",
+    "formkit",
+    "buildkit-mcp",
 ]
 
 [tool.uv]
@@ -38,6 +40,8 @@ convkit = { workspace = true }
 devkit-mcp = { workspace = true }
 studykit = { workspace = true }
 study-mcp = { workspace = true }
+formkit = { workspace = true }
+buildkit-mcp = { workspace = true }
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.11"]

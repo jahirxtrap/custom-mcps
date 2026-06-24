@@ -23,9 +23,10 @@ servers in `servers/` — so adding a server is a single new folder.
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
 | **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, multi-area workspaces. |
+| **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 
-`pixelart`, `sfx`, `i18n` and `study` are agnostic; `modkit` (multiloader mod dev) and `devkit`
-(your conventions) are personal/domain-specific. All are registered the same way.
+`pixelart`, `sfx`, `i18n`, `study` and `buildkit` are agnostic; `modkit` (multiloader mod dev) and
+`devkit` (your conventions) are personal/domain-specific. All are registered the same way.
 
 ## pixelart
 
@@ -166,6 +167,27 @@ toolkit and writes any API keys to a gitignored `.env`; the server never stores 
 
 See [`servers/study`](servers/study) and [`packages/studykit`](packages/studykit).
 
+## buildkit
+
+**buildkit** is the 3D counterpart of `pixelart` — it designs **low-poly 3D structures by data**
+(buildings, houses, walls, trees, props). Same loop: gather references, follow the principles, define
+the structure by spec, **preview** it, **check** it. Free and self-contained (Pillow + NumPy, **no GPU,
+no paid services**); it doesn't sculpt detailed/organic art and doesn't do a final render — the engine
+does that.
+
+- **design_guide** carries the principles: blockout first, the silhouette readability gate, real-world
+  proportion/scale, composition, limited palette, directional light, consistency.
+- **search_reference** builds a reference brief (queries incl. plans/elevations, what to extract, how
+  to translate) — it points; the host agent runs the queries with its own web tools.
+- **render_preview** projects the spec to an **isometric flat-shaded** image, or a **silhouette** for
+  the readability test — a software painter's renderer, deterministic, headless.
+- **check** validates proportion/scale, door fit and palette size.
+- **godot_def** emits a Godot-ready def — for a building it matches the keys of a runtime builder
+  (`size`, `height`, `roof_height`, `wall_color`, `door`), otherwise a primitives def + a GDScript builder.
+
+It fits a procedural Godot pipeline (spec `def` → primitives), the same shape as a project's own
+`house_builder`. See [`servers/buildkit`](servers/buildkit) and [`packages/formkit`](packages/formkit).
+
 ## Structure
 
 ```
@@ -176,14 +198,16 @@ custom-mcps/
 │   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
 │   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
 │   ├── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
-│   └── studykit/    # study library — writing checks, citations, concept maps, workspace
+│   ├── studykit/    # study library — writing checks, citations, concept maps, workspace
+│   └── formkit/     # 3D design library — spec->primitives, iso/silhouette renderer, principles
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
 │   ├── sfx/         # MCP server — synthesize sound effects
 │   ├── modkit/      # MCP server — inspect / validate multiloader mod workspaces
 │   ├── i18n/        # MCP server — keep translation locales in sync
 │   ├── devkit/      # MCP server — development conventions + checks
-│   └── study/       # MCP server — academic study work by data
+│   ├── study/       # MCP server — academic study work by data
+│   └── buildkit/    # MCP server — design low-poly 3D structures by data
 ├── scripts/         # register.py (register every server at user scope)
 └── tests/           # workspace test suite (pytest)
 ```
