@@ -39,7 +39,14 @@ APA_CSL_URL = "https://raw.githubusercontent.com/citation-style-language/styles/
 CLI_TOOLS = [
     {"bin": "pandoc", "win": "JohnMacFarlane.Pandoc", "mac": "pandoc", "linux": "pandoc"},
     {"bin": "ffmpeg", "win": "Gyan.FFmpeg", "mac": "ffmpeg", "linux": "ffmpeg"},
-    {"bin": "dot", "win": "Graphviz.Graphviz", "mac": "graphviz", "linux": "graphviz"},
+    {"bin": "dot", "label": "graphviz", "win": "Graphviz.Graphviz", "mac": "graphviz", "linux": "graphviz"},
+    {
+        "bin": "soffice",
+        "label": "libreoffice",
+        "win": "TheDocumentFoundation.LibreOffice",
+        "mac": "libreoffice",
+        "linux": "libreoffice",
+    },
 ]
 
 OPTIONAL_KEYS = [
@@ -159,12 +166,13 @@ def collect_keys(env_path: Path) -> dict[str, str]:
 def install_cli(auto: bool) -> None:
     print("\n== system CLIs ==")
     for tool in CLI_TOOLS:
+        label = tool.get("label", tool["bin"])
         if shutil.which(tool["bin"]):
-            print(f"  {tool['bin']}: already installed")
+            print(f"  {label}: already installed")
             continue
-        do = auto or confirm(f"install {tool['bin']}?")
+        do = auto or confirm(f"install {label}?")
         if not do:
-            print(f"  {tool['bin']}: skipped (see TOOLKIT.md)")
+            print(f"  {label}: skipped (see TOOLKIT.md)")
             continue
         if PLATFORM == "win" and shutil.which("winget"):
             ok = run([
@@ -177,7 +185,7 @@ def install_cli(auto: bool) -> None:
             ok = run(["sudo", "apt", "install", "-y", tool["linux"]])
         else:
             ok = False
-        print(f"  {tool['bin']}: {'installed' if ok else 'install manually (see TOOLKIT.md)'}")
+        print(f"  {label}: {'installed' if ok else 'install manually (see TOOLKIT.md)'}")
     print("  d2: manual (no verified per-OS installer); see https://d2lang.com")
 
 

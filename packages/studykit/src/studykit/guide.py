@@ -1,13 +1,15 @@
 """Embedded study guides and the ecosystem toolkit catalog."""
 from __future__ import annotations
 
-from .assets import CITATION_APA, STRUCTURE_GUIDE, VISUAL_GUIDE, WRITING_RULES
+from .assets import CITATION_APA, IMAGES_GUIDE, SLIDES_GUIDE, STRUCTURE_GUIDE, VISUAL_GUIDE, WRITING_RULES
 
 _GUIDES = {
     "writing": WRITING_RULES,
     "citations": CITATION_APA,
     "structure": STRUCTURE_GUIDE,
     "visual": VISUAL_GUIDE,
+    "images": IMAGES_GUIDE,
+    "slides": SLIDES_GUIDE,
 }
 
 _ALIASES = {
@@ -20,6 +22,18 @@ _ALIASES = {
     "organizer": "visual",
     "maps": "visual",
     "design": "visual",
+    "image": "images",
+    "photo": "images",
+    "photos": "images",
+    "picture": "images",
+    "figures": "images",
+    "slide": "slides",
+    "presentation": "slides",
+    "presentations": "slides",
+    "marp": "slides",
+    "deck": "slides",
+    "powerpoint": "slides",
+    "pptx": "slides",
 }
 
 
@@ -46,10 +60,21 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
             "what": "create and read Office documents and PDFs",
             "install": "enable the document skills in Claude Code (see docs.claude.com skills)",
         },
+    ],
+    "slides": [
         {
-            "name": "Marp / Slidev",
-            "what": "slides from Markdown",
-            "install": "npm i -g @marp-team/marp-cli  (or)  npm i -g @slidev/cli",
+            "name": "Marp (marp-cli)",
+            "what": "styled slide decks from Markdown (headless Chromium); export PDF (recommended) or PPTX",
+            "install": "npm i -g @marp-team/marp-cli  (workspace: setup.py --all installs it locally)",
+            "configure": "recommend PDF; marp deck.md --pdf -o deck.pdf | --pptx gives image slides | "
+            "add --pptx-editable for editable text (needs LibreOffice, experimental)",
+        },
+        {
+            "name": "LibreOffice (soffice)",
+            "what": "only for Marp editable PPTX (--pptx-editable); converts the rendered deck to editable shapes",
+            "install": "winget install TheDocumentFoundation.LibreOffice  |  brew install libreoffice  |  "
+            "apt install libreoffice  (setup.py --all installs it)",
+            "configure": "if soffice is not on PATH after install, set SOFFICE_PATH to the soffice binary",
         },
     ],
     "research": [
@@ -105,8 +130,24 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
     ],
     "images": [
         {
+            "name": "Wikimedia Commons",
+            "what": "search free public-domain and Creative Commons images (no key, no install)",
+            "install": "search https://commons.wikimedia.org/w/index.php?search=<q>&title=Special:MediaSearch&type=image",
+            "configure": "check the license (PD/CC0 free; CC BY/BY-SA need credit) and take the full-resolution file",
+        },
+        {
+            "name": "Openverse",
+            "what": "aggregated CC and public-domain image search (no key)",
+            "install": "search https://openverse.org/search?q=<q>  (API https://api.openverse.org/v1/images/?q=<q>)",
+        },
+        {
+            "name": "Google Images (reusable)",
+            "what": "web image search filtered to reusable licenses",
+            "install": "search https://www.google.com/search?tbm=isch&tbs=il:cl&q=<q>",
+        },
+        {
             "name": "Pollinations",
-            "what": "free text-to-image, no key, no GPU",
+            "what": "free text-to-image AI, no key, no GPU; use only when the user explicitly asks to generate/use AI",
             "install": "GET https://image.pollinations.ai/prompt/<text>",
         },
     ],

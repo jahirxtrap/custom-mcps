@@ -62,6 +62,83 @@ signatures. Avoid:
 Golden rule: it should look made by a person for a specific task, not a stock template.
 """
 
+IMAGES_GUIDE = """# Images: search free sources first, generate with AI only on request
+
+Read the user's intent before adding any image:
+- If the user explicitly asks to GENERATE an image or to USE AI ("generate a picture of...",
+  "make an AI image"), use an AI image generator.
+- Otherwise ("add an image of...", "find a photo", "search a photo of..."), SEARCH free, openly
+  licensed sources. Never AI-generate when the user asked to search.
+
+Free sources to search first (all free, most openly licensed):
+- Wikimedia Commons (public domain and Creative Commons). MediaSearch:
+  https://commons.wikimedia.org/w/index.php?search=<query>&title=Special:MediaSearch&type=image
+- Openverse (aggregates hundreds of millions of CC and public-domain images):
+  https://openverse.org/search?q=<query>
+- Wikipedia article images for a specific named subject (person, place, species, artwork).
+- Flickr Commons and open institutional collections (public domain): NASA Images, Smithsonian
+  Open Access, PhyloPic for silhouettes.
+- Google Images filtered to reusable licenses:
+  https://www.google.com/search?tbm=isch&tbs=il:cl&q=<query>
+- Free stock photos under their own license (crediting is polite): Unsplash, Pexels, Pixabay.
+
+Licensing and attribution (always):
+- Confirm the license allows your use: public domain and CC0 need no permission; CC BY and
+  CC BY-SA require credit; check NonCommercial and NoDerivs terms before reusing.
+- For CC BY and CC BY-SA, record author, work title, source URL and license, and add the
+  attribution in the caption or a credits section.
+- Prefer the full-resolution original from the file page, not a thumbnail or a watermarked preview.
+- Save the source URL and license with the figure (a caption or the reference library).
+
+AI generation (only when explicitly requested):
+- Pollinations is free and needs no key: GET https://image.pollinations.ai/prompt/<text>.
+- Any local or API generator the user already has is fine. Disclose that a figure is AI-generated
+  when the academic context calls for honesty about the source.
+
+This is guidance; the image_search tool builds the ready queries for a subject, and your host web
+tools (search and fetch) pull the actual files.
+"""
+
+SLIDES_GUIDE = """# Slides with Marp (Markdown to presentation)
+
+Marp turns Markdown into styled, customizable slide decks. Rendering uses a headless Chromium, so
+Chrome or Chromium must be available. Before building a deck, ASK the user which output they want
+and recommend PDF:
+- PDF (recommended): renders identically everywhere, keeps fonts and layout exactly as designed,
+  and looks more polished for delivery and submission. Only needs Chromium.
+- PPTX default: each slide is embedded as a rendered image (great fidelity, playable and
+  annotatable), but the text is NOT editable.
+- PPTX editable: needs the experimental --pptx-editable flag, which also requires LibreOffice
+  Impress (marp renders with Chromium, then soffice converts it) and can lose styling. Pick it only
+  when the user must keep editing the text in PowerPoint. setup.py --all can install LibreOffice; if
+  soffice is not on PATH, set SOFFICE_PATH to its binary.
+
+How Marp works:
+- One Markdown file. Separate slides with a line of three dashes (---).
+- A YAML front matter block sets the deck options:
+    ---
+    marp: true
+    theme: default        # default, gaia, uncover, or a custom CSS theme
+    paginate: true
+    size: 16:9
+    ---
+- Per-slide directives go in an HTML comment: <!-- _class: lead --> for a title slide,
+  <!-- _backgroundColor: #123 --> to tint one slide.
+- Customize with a CSS theme or an inline <style> block; keep it sober (two to four colors, one
+  accent), the same anti-AI visual rules as any graphic.
+- For images, follow the images guide: search free sources first, generate with AI only if asked.
+
+Export with marp-cli:
+- PDF:  marp deck.md --pdf --allow-local-files -o deck.pdf
+- PPTX (slides as images): marp deck.md --pptx -o deck.pptx
+- PPTX (editable text, experimental, needs LibreOffice): marp deck.md --pptx --pptx-editable -o deck.pptx
+- HTML: marp deck.md -o deck.html
+- Live preview while writing: marp -p -w deck.md
+
+Content: apply the writing rules (human voice, vary sentence length, no filler). One idea per
+slide, a readable title, few words, and let a figure or a short list carry the point.
+"""
+
 CITATION_APA = """# APA 7 quick guide
 
 In-text: (Surname, Year) or Surname (Year). Two authors: (Smith & Lee, 2020). Three or more:
@@ -112,6 +189,11 @@ can carry more than one at a time.
    source, no claim. The per-area bibliography is `areas/<X>/references.bib`.
 5. Memory: at the start of a session read `memory/*.md`. When the user gives a new instruction or
    preference, or starts a task, update the matching file in `memory/` without being asked.
+6. Figures and slides: to add an image, search free, openly licensed sources first (Wikimedia
+   Commons, Openverse, Google reusable), take the full-resolution original, and record the license
+   and credit. Generate with AI only if the user explicitly asks. Build slide decks with Marp, and
+   ask PDF (recommended) or editable PPTX before exporting. See `study_guide` topics `images` and
+   `slides`, and the `image_search` tool.
 
 ## Layout
 
@@ -124,9 +206,9 @@ can carry more than one at a time.
 
 ## Tools
 
-The `study` MCP provides writing_check, burstiness, study_guide, concept_map, cite, toolkit, and
-the workspace tools (workspace_init, area_add, reference_add, workspace_status). Call `toolkit` to
-see what else to install for documents, research, diagrams, and LaTeX.
+The `study` MCP provides writing_check, burstiness, study_guide, concept_map, cite, image_search,
+toolkit, and the workspace tools (workspace_init, area_add, reference_add, workspace_status). Call
+`toolkit` to see what else to install for documents, slides, research, diagrams, and LaTeX.
 """
 
 KNOWLEDGE_TEMPLATE = """# {area}

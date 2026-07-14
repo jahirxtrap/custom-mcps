@@ -6,6 +6,7 @@ from studykit import (
     bibtex_key,
     burstiness,
     format_citation,
+    image_search,
     in_text_citation,
     reference_add,
     render_concept_map,
@@ -102,6 +103,27 @@ def test_study_guide_and_toolkit():
     assert "apa" in study_guide("citations").lower()
     assert "openalex" in toolkit("research").lower()
     assert "Unknown" in toolkit("nope")
+
+
+def test_study_guide_images_and_slides_topics():
+    images = study_guide("images").lower()
+    assert "wikimedia" in images
+    assert "pollinations" in images
+    assert study_guide("photos") == study_guide("images")
+    slides = study_guide("slides").lower()
+    assert "marp" in slides
+    assert "pdf" in slides
+    assert study_guide("marp") == study_guide("slides")
+    assert "marp" in toolkit("slides").lower()
+
+
+def test_image_search_free_sources_and_ai_rule():
+    brief = image_search("Great Wall of China", "photo")
+    names = {provider["name"] for provider in brief["providers"]}
+    assert {"Wikimedia Commons", "Openverse"} <= names
+    assert brief["queries"][0] == "Great Wall of China"
+    assert "explicitly" in brief["ai_generation"]["when"]
+    assert all("commons.wikimedia.org" in p["search"] for p in brief["providers"] if p["name"] == "Wikimedia Commons")
 
 
 def test_workspace_lifecycle(tmp_path):

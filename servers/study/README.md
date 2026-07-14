@@ -2,9 +2,10 @@
 
 An **area-agnostic, language-agnostic** MCP server for academic and study work. It distills the
 reusable half of an academic-work assistant into tools: catch "AI tells" in writing, format
-citations, render concept maps by data, and scaffold a multi-area study **workspace**. It carries
-no subject knowledge; you choose the field. For documents, deep research, and diagrams it doesn't
-reimplement, the `toolkit` tool tells you exactly what to install.
+citations, render concept maps by data, source images from free licensed providers, and scaffold a
+multi-area study **workspace**. It carries no subject knowledge; you choose the field. For
+documents, slides, deep research, and diagrams it doesn't reimplement, the `toolkit` tool tells you
+exactly what to install.
 
 ## Tools
 
@@ -12,10 +13,11 @@ reimplement, the `toolkit` tool tells you exactly what to install.
 |---|---|---|
 | `writing_check` | `text` | Detect AI tells (EN+ES): em dashes, filler, negative parallelism, rule of three, tell-tale vocabulary, vague attributions, meta-commentary, chained transitions, stacked hedging. Score + hits by category. |
 | `burstiness` | `text` | Sentence-length variation (detectors penalize uniformity): mean, stdev, coefficient of variation, score. Language-agnostic. |
-| `study_guide` | `topic=""` | Embedded guidance: `writing` / `citations` / `structure` / `visual`. |
+| `study_guide` | `topic=""` | Embedded guidance: `writing` / `citations` / `structure` / `visual` / `images` / `slides`. |
 | `concept_map` | `spec`, `out_dir=""` | Concept map / organizer from a JSON spec to a PNG (returns the image + `path=`), following the anti-AI visual rules. |
 | `cite` | `fields=""`, `doi=""` | APA 7 reference + in-text + BibTeX from fields, or resolve a DOI to BibTeX (network). |
-| `toolkit` | `topic=""` | The ecosystem to install (documents, research, citations, diagrams, latex, images, video): commands, API keys, how to configure them. |
+| `image_search` | `subject`, `kind=""` | Brief for sourcing a real image from free, openly licensed providers (Wikimedia Commons, Openverse, Google reusable, Flickr): search/API URLs + licensing checklist; AI only when explicitly asked. |
+| `toolkit` | `topic=""` | The ecosystem to install (documents, slides, research, citations, diagrams, latex, images, video): commands, API keys, how to configure them. |
 | `workspace_init` | `path`, `areas=""` | Scaffold a multi-area study workspace (conventions, styles, memory, areas) with a generated CLAUDE.md. |
 | `area_add` | `path`, `name` | Add a study area with its knowledge base and reference library. |
 | `reference_add` | `path`, `area`, `fields`, `file=""` | Register a reference (BibTeX + index row, copy source, convert it to Markdown via pdftotext/pandoc). |
@@ -57,7 +59,8 @@ one), so it only asks when a key would raise your limits. The server never store
 everything inside one workspace. **Basics** write `.env`, `.mcp.json` (study + openalex + semantic-scholar),
 `TOOLKIT.md`, `puppeteer-config.json`, download `styles/apa.csl`, create `.claude/skills/`, and
 install `markmap` locally. **`--all`** also clones the `video-audio` MCP into `tools/`, installs
-`mermaid` + `Marp` locally, installs the system CLIs (pandoc, ffmpeg, graphviz), and installs skill
+`mermaid` + `Marp` locally, installs the system CLIs (pandoc, ffmpeg, graphviz, LibreOffice for
+editable PPTX), and installs skill
 plugins via `claude plugin install` (deep-research via superpowers). Plugin skills install at user
 scope and apply everywhere; `--skills-from` copies your own skill folders in for a portable bundle.
 

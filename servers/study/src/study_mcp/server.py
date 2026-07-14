@@ -15,6 +15,7 @@ from studykit import (
     burstiness as _burstiness,
     doi_to_bibtex,
     format_citation,
+    image_search as _image_search,
     in_text_citation,
     reference_add as _reference_add,
     render_concept_map,
@@ -52,17 +53,28 @@ def burstiness(text: str) -> str:
 
 @mcp.tool
 def study_guide(topic: str = "") -> str:
-    """Return embedded, area-agnostic study guidance, all of it or one topic:
-    writing (human voice / anti-AI) / citations (APA 7) / structure (academic) / visual (organizers)."""
+    """Return embedded, area-agnostic study guidance, all of it or one topic: writing (human voice /
+    anti-AI) / citations (APA 7) / structure (academic) / visual (organizers) / images (search free
+    sources first, AI only on request) / slides (Marp, ask PDF vs editable PPTX)."""
     return _study_guide(topic)
 
 
 @mcp.tool
 def toolkit(topic: str = "") -> str:
-    """List the ecosystem to install for full academic work (documents, research, citations,
+    """List the ecosystem to install for full academic work (documents, slides, research, citations,
     diagrams, latex, images, video, humanize): install commands, which need an API key, how to get
     it and how to configure it. Pass a group name to filter. Run servers/study/setup.py to automate it."""
     return _toolkit(topic)
+
+
+@mcp.tool
+def image_search(subject: str, kind: str = "") -> str:
+    """Build a brief for sourcing a real image of `subject` from free, openly licensed providers
+    (Wikimedia Commons, Openverse, Google reusable, Flickr Commons): ready search/API URLs, a
+    licensing and attribution checklist, and the rule to generate with AI only when the user
+    explicitly asks. kind = photo/diagram/illustration/map/portrait/logo. It does NOT fetch images:
+    run the URLs with your own web search/fetch. For AI generation, see study_guide('images')."""
+    return json.dumps(_image_search(subject, kind))
 
 
 @mcp.tool(output_schema=None)

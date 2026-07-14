@@ -22,7 +22,7 @@ servers in `servers/` — so adding a server is a single new folder.
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
-| **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, multi-area workspaces. |
+| **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 
 `pixelart`, `sfx`, `i18n`, `study` and `buildkit` are agnostic; `modkit` (multiloader mod dev) and
@@ -146,8 +146,8 @@ See [`servers/devkit`](servers/devkit) and [`packages/convkit`](packages/convkit
 
 **study** is the academic counterpart — it helps produce study and coursework **by data**, for
 **any field and any language**. It distills the reusable half of an academic-work assistant into
-tools, and for the parts it doesn't reimplement (documents, deep research, diagrams) it tells you
-exactly what to install.
+tools, and for the parts it doesn't reimplement (documents, slides, deep research, diagrams) it
+tells you exactly what to install.
 
 - **writing_check** is the heart: it catches "AI tells" in a draft — em dashes, filler, negative
   parallelism, the rule of three, tell-tale vocabulary, vague attributions, meta-commentary,
@@ -156,8 +156,12 @@ exactly what to install.
 - **concept_map** renders a graphic organizer from a JSON spec, following the anti-AI visual rules
   (the title is the topic, two to four colors, no template signatures).
 - **cite** formats APA 7 references and BibTeX from fields, or resolves a DOI to BibTeX.
-- **study_guide** carries the writing, citation, structure and visual conventions; **toolkit** is
-  the ecosystem catalog (what to install, which needs a key, how to configure it).
+- **image_search** briefs where to source a real image from free, openly licensed providers
+  (Wikimedia Commons, Openverse, Google reusable, Flickr) with a licensing checklist, and generates
+  with AI only when you explicitly ask.
+- **study_guide** carries the writing, citation, structure, visual, images and slides conventions
+  (slides via Marp, ask PDF or editable PPTX); **toolkit** is the ecosystem catalog (what to
+  install, which needs a key, how to configure it).
 - **workspace_init**, **area_add**, **reference_add** and **workspace_status** scaffold a reusable,
   **multi-area** study workspace — shared conventions and memory, one folder per subject with its
   own knowledge base and reference library.
@@ -198,7 +202,7 @@ custom-mcps/
 │   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
 │   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
 │   ├── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
-│   ├── studykit/    # study library — writing checks, citations, concept maps, workspace
+│   ├── studykit/    # study library — writing checks, citations, concept maps, image sourcing, workspace
 │   └── formkit/     # 3D design library — spec->primitives, iso/silhouette renderer, principles
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art

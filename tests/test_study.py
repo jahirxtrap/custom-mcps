@@ -17,6 +17,7 @@ def test_study_registers_tools():
         "burstiness",
         "cite",
         "concept_map",
+        "image_search",
         "reference_add",
         "study_guide",
         "toolkit",
@@ -34,6 +35,18 @@ def test_writing_check_tool():
 
     report = asyncio.run(run())
     assert report["score"] < 100
+
+
+def test_image_search_tool():
+    async def run():
+        async with Client(mcp) as client:
+            result = await client.call_tool("image_search", {"subject": "Roman aqueduct", "kind": "photo"})
+            return json.loads(result.content[0].text)
+
+    brief = asyncio.run(run())
+    assert brief["subject"] == "Roman aqueduct"
+    assert any(p["name"] == "Wikimedia Commons" for p in brief["providers"])
+    assert "AI" in brief["decision"]
 
 
 def test_concept_map_tool_returns_image(tmp_path):
