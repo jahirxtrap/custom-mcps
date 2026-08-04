@@ -100,6 +100,21 @@ def test_concept_map_renders_image():
     assert image.height > 100
 
 
+def test_concept_map_font_renders_accents():
+    from PIL import Image, ImageDraw
+    from studykit.maps import _font
+
+    font = _font(20)
+
+    def ink(text: str) -> bytes:
+        canvas = Image.new("L", (120, 40), 255)
+        ImageDraw.Draw(canvas).text((2, 2), text, font=font, fill=0)
+        return canvas.tobytes()
+
+    assert ink("á") != ink("à")
+    assert ink("ñ") != ink("n")
+
+
 def test_study_guide_and_toolkit():
     assert "em dash" in study_guide("writing").lower()
     assert "apa" in study_guide("citations").lower()

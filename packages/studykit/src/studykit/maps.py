@@ -1,6 +1,7 @@
 """Render a concept map / graphic organizer from a data spec, by Pillow."""
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
@@ -10,8 +11,33 @@ _INK = (33, 37, 41)
 _CENTRAL = (52, 58, 64)
 _BG = (255, 255, 255)
 
+_FONT_CANDIDATES = (
+    "DejaVuSans.ttf",
+    "LiberationSans-Regular.ttf",
+    "NotoSans-Regular.ttf",
+    "FreeSans.ttf",
+    "Arial Unicode.ttf",
+    "arial.ttf",
+    "Helvetica.ttc",
+)
+
+
+@lru_cache(maxsize=1)
+def _font_file() -> str | None:
+    """Pillow's bundled default lacks accented glyphs; find a system face that has them."""
+    for name in _FONT_CANDIDATES:
+        try:
+            ImageFont.truetype(name, 12)
+            return name
+        except OSError:
+            continue
+    return None
+
 
 def _font(size: int) -> ImageFont.FreeTypeFont:
+    name = _font_file()
+    if name:
+        return ImageFont.truetype(name, size)
     try:
         return ImageFont.load_default(size=size)
     except TypeError:
