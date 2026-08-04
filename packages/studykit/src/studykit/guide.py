@@ -1,7 +1,15 @@
 """Embedded study guides and the ecosystem toolkit catalog."""
 from __future__ import annotations
 
-from .assets import CITATION_APA, IMAGES_GUIDE, SLIDES_GUIDE, STRUCTURE_GUIDE, VISUAL_GUIDE, WRITING_RULES
+from .assets import (
+    CITATION_APA,
+    DOCUMENTS_GUIDE,
+    IMAGES_GUIDE,
+    SLIDES_GUIDE,
+    STRUCTURE_GUIDE,
+    VISUAL_GUIDE,
+    WRITING_RULES,
+)
 
 _GUIDES = {
     "writing": WRITING_RULES,
@@ -10,6 +18,7 @@ _GUIDES = {
     "visual": VISUAL_GUIDE,
     "images": IMAGES_GUIDE,
     "slides": SLIDES_GUIDE,
+    "documents": DOCUMENTS_GUIDE,
 }
 
 _ALIASES = {
@@ -34,6 +43,12 @@ _ALIASES = {
     "deck": "slides",
     "powerpoint": "slides",
     "pptx": "slides",
+    "document": "documents",
+    "docx": "documents",
+    "word": "documents",
+    "report": "documents",
+    "pdf": "documents",
+    "reportlab": "documents",
 }
 
 
@@ -56,12 +71,27 @@ def study_guide(topic: str = "") -> str:
 _TOOLKIT: dict[str, list[dict[str, str]]] = {
     "documents": [
         {
+            "name": "ReportLab (render_document tool)",
+            "what": "the professional, technical engine: designed PDFs with fine tables, vector charts, "
+            "navigable outline, page numbering; already installed with this server",
+            "install": "bundled (studykit dependency); nothing to install",
+            "configure": "ask the user which engine fits before building: pandoc (.docx + automatic "
+            "citations), LaTeX (strict APA), or ReportLab (designed PDF). It does not read BibTeX/CSL",
+        },
+        {
             "name": "Anthropic document skills (docx, pptx, xlsx, pdf)",
             "what": "create and read Office documents and PDFs",
             "install": "enable the document skills in Claude Code (see docs.claude.com skills)",
         },
     ],
     "slides": [
+        {
+            "name": "ReportLab (render_document tool, format='slides')",
+            "what": "the technical deck: 16:9, vector charts, reveal builds, progress bar, matching the "
+            "report palette; already installed with this server",
+            "install": "bundled (studykit dependency); nothing to install",
+            "configure": "ask the user first: a visual deck (Marp) or a precisely typeset one (ReportLab)",
+        },
         {
             "name": "Marp (marp-cli)",
             "what": "styled slide decks from Markdown (headless Chromium); export PDF (recommended) or PPTX",

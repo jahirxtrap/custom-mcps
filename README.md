@@ -22,7 +22,7 @@ servers in `servers/` — so adding a server is a single new folder.
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
-| **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, free-image sourcing, multi-area workspaces. |
+| **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 
 `pixelart`, `sfx`, `i18n`, `study` and `buildkit` are agnostic; `modkit` (multiloader mod dev) and
@@ -156,12 +156,17 @@ tells you exactly what to install.
 - **concept_map** renders a graphic organizer from a JSON spec, following the anti-AI visual rules
   (the title is the topic, two to four colors, no template signatures).
 - **cite** formats APA 7 references and BibTeX from fields, or resolves a DOI to BibTeX.
+- **render_document** typesets a professional PDF from a spec with ReportLab: a **report** (cover,
+  navigable outline, fine tables, vector charts from data, two-column sections, page numbering) or
+  a 16:9 **deck** (reveal builds, progress bar, the same palette as the report). No LaTeX, no
+  Chromium — it ships with the server.
 - **image_search** briefs where to source a real image from free, openly licensed providers
   (Wikimedia Commons, Openverse, Google reusable, Flickr) with a licensing checklist, and generates
   with AI only when you explicitly ask.
-- **study_guide** carries the writing, citation, structure, visual, images and slides conventions
-  (slides via Marp, ask PDF or editable PPTX); **toolkit** is the ecosystem catalog (what to
-  install, which needs a key, how to configure it).
+- **study_guide** carries the writing, citation, structure, visual, images, slides and documents
+  conventions, including the rule to **ask which engine** fits before building (pandoc for `.docx`
+  and automatic citations, LaTeX for strict APA, ReportLab for a designed PDF, Marp for a visual
+  deck); **toolkit** is the ecosystem catalog (what to install, which needs a key, how to configure it).
 - **workspace_init**, **area_add**, **reference_add** and **workspace_status** scaffold a reusable,
   **multi-area** study workspace — shared conventions and memory, one folder per subject with its
   own knowledge base and reference library.
@@ -202,7 +207,7 @@ custom-mcps/
 │   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
 │   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
 │   ├── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
-│   ├── studykit/    # study library — writing checks, citations, concept maps, image sourcing, workspace
+│   ├── studykit/    # study library — writing checks, citations, concept maps, PDF typesetting, workspace
 │   └── formkit/     # 3D design library — spec->primitives, iso/silhouette renderer, principles
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art

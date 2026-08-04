@@ -99,7 +99,72 @@ This is guidance; the image_search tool builds the ready queries for a subject, 
 tools (search and fetch) pull the actual files.
 """
 
-SLIDES_GUIDE = """# Slides with Marp (Markdown to presentation)
+DOCUMENTS_GUIDE = """# Documents: pick the engine before you build
+
+There is no default engine. ASK the user which one fits the job, and state the trade-off in one
+line. Three engines, three jobs:
+
+1. pandoc - the user needs an editable .docx, or automatic APA citations from a .bib file.
+   Markdown in, Word or PDF out, with --citeproc resolving the bibliography.
+   pandoc essay.md --citeproc --bibliography=references.bib --csl=styles/apa.csl -o essay.docx
+2. LaTeX (TinyTeX + apa7) - the work must follow a strict academic template: APA 7 paper, thesis,
+   journal submission. Best typography and a real bibliography engine (biblatex), heaviest install.
+3. ReportLab (the render_document tool) - the deliverable is a designed PDF: technical report,
+   executive summary, dossier, data-driven document. Full control of the page, fine tables, vector
+   charts from data, navigable outline, page numbering, two-column sections, watermark.
+
+Decide with the user, not for them:
+- "I need to keep editing it in Word" -> pandoc.
+- "It has to follow APA to the letter, with references" -> LaTeX (or pandoc + apa.csl).
+- "It must look professional and precisely laid out" -> ReportLab.
+
+Know the limit before promising: ReportLab does NOT read BibTeX and does NOT process CSL. It
+typesets the reference strings you pass it. When the document needs an automatic bibliography,
+build the references with the cite tool (or pandoc) first, then pass them as text.
+
+The render_document spec, format='report':
+{ "format": "report", "title", "subtitle", "author", "date", "abstract", "toc": true,
+  "watermark", "font": "serif"|"sans", "palette": {"primary","accent","ink","paper"},
+  "blocks": [ {"type":"heading","text","level":1|2},
+              {"type":"text","text"},
+              {"type":"quote","text"},
+              {"type":"list","items":[...]},
+              {"type":"table","header":[...],"rows":[[...]],"highlight":0,"caption"},
+              {"type":"chart","kind":"bar"|"line"|"pie","categories":[...],"values":[...],
+               "threshold":50,"label_format":"%d %%","caption"},
+              {"type":"columns","count":2},
+              {"type":"pagebreak"},
+              {"type":"references","items":[...]} ] }
+
+Keep the design sober: the palette takes four colors and the visual rules still apply. A polished
+document is not a decorated one.
+"""
+
+SLIDES_GUIDE = """# Slides: pick the engine before you build
+
+Two engines, two products. ASK the user which one they want; do not assume.
+
+- Marp - visual and fast, the modern "deck" look. Written in Markdown, themed with CSS, exports
+  PDF, PPTX and HTML, has live preview and speaker notes. Choose it when the deck should look
+  designed and be edited quickly, or when PPTX or HTML output is required.
+- ReportLab (the render_document tool with format='slides') - the technical, precisely typeset
+  option. Vector charts from data, fine tables, progress bar, reveal builds, exact positioning,
+  and the same palette as the report so a deck and its document match. PDF only.
+
+Ask it plainly: "a visual deck (Marp) or a technical, precisely laid out one (ReportLab)?"
+
+The render_document spec, format='slides':
+{ "format": "slides", "title", "progress": true, "font", "palette",
+  "slides": [ {"layout":"cover","title","subtitle","lines":[...]},
+              {"layout":"bullets","title","reveal":true,
+               "items":[{"lead":"Word.","text":"the rest of the point"}]},
+              {"layout":"table","title","header":[...],"rows":[[...]],"highlight":0,"note"},
+              {"layout":"chart","title","kind":"bar","categories":[...],"values":[...]},
+              {"layout":"closing","title","lines":[...]} ] }
+Slides are 16:9. 'reveal' emits one page per item, the Beamer way; the cover is not counted in the
+slide numbering.
+
+## Marp
 
 Marp turns Markdown into styled, customizable slide decks. Rendering uses a headless Chromium, so
 Chrome or Chromium must be available. Before building a deck, ASK the user which output they want
@@ -189,11 +254,15 @@ can carry more than one at a time.
    source, no claim. The per-area bibliography is `areas/<X>/references.bib`.
 5. Memory: at the start of a session read `memory/*.md`. When the user gives a new instruction or
    preference, or starts a task, update the matching file in `memory/` without being asked.
-6. Figures and slides: to add an image, search free, openly licensed sources first (Wikimedia
-   Commons, Openverse, Google reusable), take the full-resolution original, and record the license
-   and credit. Generate with AI only if the user explicitly asks. Build slide decks with Marp, and
-   ask PDF (recommended) or editable PPTX before exporting. See `study_guide` topics `images` and
-   `slides`, and the `image_search` tool.
+6. Images: search free, openly licensed sources first (Wikimedia Commons, Openverse, Google
+   reusable), take the full-resolution original, and record the license and credit. Generate with
+   AI only if the user explicitly asks. See `study_guide('images')` and the `image_search` tool.
+7. Engine choice: never assume one. Before building a document or a deck, ASK which engine fits.
+   Documents: pandoc (editable .docx, automatic APA citations), LaTeX/apa7 (strict academic
+   template), or ReportLab via `render_document` (designed, precisely typeset PDF). Slides: Marp
+   (visual, Markdown-fast, exports PPTX and HTML) or `render_document` with format='slides'
+   (technical, vector charts, reveal builds). With Marp also ask PDF (recommended) or editable
+   PPTX. See `study_guide` topics `documents` and `slides`.
 
 ## Layout
 
@@ -207,8 +276,9 @@ can carry more than one at a time.
 ## Tools
 
 The `study` MCP provides writing_check, burstiness, study_guide, concept_map, cite, image_search,
-toolkit, and the workspace tools (workspace_init, area_add, reference_add, workspace_status). Call
-`toolkit` to see what else to install for documents, slides, research, diagrams, and LaTeX.
+render_document, toolkit, and the workspace tools (workspace_init, area_add, reference_add,
+workspace_status). Call `toolkit` to see what else to install for documents, slides, research,
+diagrams, and LaTeX.
 """
 
 KNOWLEDGE_TEMPLATE = """# {area}

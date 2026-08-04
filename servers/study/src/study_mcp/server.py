@@ -19,6 +19,7 @@ from studykit import (
     in_text_citation,
     reference_add as _reference_add,
     render_concept_map,
+    render_document as _render_document,
     study_guide as _study_guide,
     toolkit as _toolkit,
     workspace_init as _workspace_init,
@@ -29,10 +30,10 @@ from studykit import (
 mcp = FastMCP(name="study")
 
 
-def _scratch(prefix: str, out_dir: str = "") -> Path:
+def _scratch(prefix: str, out_dir: str = "", suffix: str = "png") -> Path:
     base = Path(out_dir) if out_dir else Path(tempfile.gettempdir())
     base.mkdir(parents=True, exist_ok=True)
-    return base / f"{prefix}_{uuid.uuid4().hex[:8]}.png"
+    return base / f"{prefix}_{uuid.uuid4().hex[:8]}.{suffix}"
 
 
 @mcp.tool
@@ -87,6 +88,22 @@ def concept_map(spec: str, out_dir: str = "") -> list[Any]:
     target = Path(data["out"]) if data.get("out") else _scratch("conceptmap", out_dir)
     image.save(target)
     return [Image(path=str(target)), f"path={target} mime=image/png size={image.width}x{image.height}"]
+
+
+@mcp.tool
+def render_document(spec: str, out_dir: str = "") -> str:
+    """Typeset a professional PDF with ReportLab from a JSON spec. ASK the user which engine to use
+    before building (see study_guide('documents') and study_guide('slides')): ReportLab is the
+    technical, precisely typeset option; Marp is the visual, Markdown-fast one; pandoc/LaTeX own
+    .docx and automatic APA bibliographies. Spec: {format:'report'|'slides', title, subtitle?,
+    author?, date?, palette?, font:'serif'|'sans', out?, ...}. report adds {abstract?, toc?,
+    watermark?, blocks:[{type:heading|text|quote|list|table|chart|references|columns|pagebreak}]}
+    with a navigable outline and 'page / total'. slides adds {slides:[{layout:cover|bullets|table|
+    chart|closing, ...}]} at 16:9, with progress bar and optional 'reveal' builds."""
+    data = json.loads(spec)
+    fmt = str(data.get("format", "report")).lower()
+    target = Path(data["out"]) if data.get("out") else _scratch(fmt, out_dir, "pdf")
+    return json.dumps(_render_document(data, target))
 
 
 @mcp.tool

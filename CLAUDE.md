@@ -38,8 +38,8 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `i18n` | Keep translation locales in sync (agnostic); read-only. Tools: `locale_diff`, `completeness`, `check_format`, `find_unused`, `i18n_guide`. |
 | library | `convkit` | Developer-convention guides + git/static checks (multi-stack); no deps. |
 | server | `devkit` | The user's dev conventions + checks (personal); read-only. Tools: `conventions`, `commit_style`, `commit_context`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`. |
-| library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, APA citations, concept-map render, free-image sourcing, multi-area workspace. |
-| server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `study_guide`, `concept_map`, `cite`, `image_search`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
+| library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, APA citations, concept-map render, ReportLab report/deck typesetting, free-image sourcing, multi-area workspace. |
+| server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `study_guide`, `concept_map`, `render_document`, `cite`, `image_search`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
 | library | `formkit` | Low-poly 3D toolkit: spec->primitives compile, software iso/silhouette renderer (Pillow+NumPy), design principles, Godot def. |
 | server | `buildkit` | Design low-poly 3D structures by data (agnostic). Tools: `design_guide`, `search_reference`, `render_preview`, `check`, `godot_def`. |
 
@@ -91,8 +91,10 @@ Never hardcode a client, URL, or shared folder into a server.
 2. **English only.** Code, docstrings, READMEs, identifiers.
 3. **No comments.** Self-explanatory names; a short docstring only when it genuinely helps.
    Never inline `#` comments.
-4. **Pillow-only** raster stack. No heavyweight, native, or paid dependencies in a core server.
-   Optional integrations (e.g. an Aseprite-CLI importer) load only if the tool is on PATH.
+4. **Pure-Python, free dependencies only.** Pillow is the raster stack; ReportLab (BSD, ~7 MB,
+   `py3-none-any`) is the PDF stack in `studykit`. No native builds, no paid services, nothing that
+   needs a system install to work. Optional integrations (e.g. an Aseprite-CLI importer) load only
+   if the tool is on PATH.
 5. **Relative/temp paths.** Never hardcode machine paths; scratch output goes to the system
    temp dir unless an explicit `out_dir` is given. The repo is public on GitHub.
 6. **stdio only.** No long-running servers, no auth, no network transport.

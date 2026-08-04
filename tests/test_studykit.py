@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from studykit import (
     area_add,
     bibtex_entry,
@@ -10,6 +11,7 @@ from studykit import (
     in_text_citation,
     reference_add,
     render_concept_map,
+    render_document,
     study_guide,
     toolkit,
     workspace_init,
@@ -115,6 +117,73 @@ def test_study_guide_images_and_slides_topics():
     assert "pdf" in slides
     assert study_guide("marp") == study_guide("slides")
     assert "marp" in toolkit("slides").lower()
+
+
+def test_render_document_report(tmp_path):
+    spec = {
+        "format": "report",
+        "title": "Water quality",
+        "abstract": "Short abstract.",
+        "watermark": "DRAFT",
+        "blocks": [
+            {"type": "heading", "text": "Findings"},
+            {"type": "text", "text": "Body paragraph."},
+            {"type": "quote", "text": "A pull quote."},
+            {"type": "list", "items": ["One", "Two"]},
+            {"type": "table", "header": ["Source", "Value"], "rows": [["A", "1.0"], ["B", "2.0"]],
+             "highlight": 0, "caption": "Table 1."},
+            {"type": "chart", "kind": "bar", "categories": ["A", "B"], "values": [95, 38],
+             "threshold": 50, "caption": "Figure 1."},
+            {"type": "columns", "count": 2},
+            {"type": "heading", "level": 2, "text": "Detail"},
+            {"type": "text", "text": "Two column text."},
+            {"type": "columns", "count": 1},
+            {"type": "references", "items": ["Author, A. (2020). A title."]},
+        ],
+    }
+    out = tmp_path / "report.pdf"
+    info = render_document(spec, out)
+    assert info["format"] == "report"
+    assert info["pages"] >= 3
+    assert out.exists()
+    assert out.read_bytes().startswith(b"%PDF")
+
+
+def test_render_document_slides_reveal(tmp_path):
+    spec = {
+        "format": "slides",
+        "title": "Deck",
+        "slides": [
+            {"layout": "cover", "title": "Deck", "subtitle": "Subtitle"},
+            {"layout": "bullets", "title": "Points", "reveal": True,
+             "items": [{"lead": "One.", "text": "first"}, {"lead": "Two.", "text": "second"}]},
+            {"layout": "table", "title": "Data", "header": ["K", "V"], "rows": [["a", "1"]]},
+            {"layout": "chart", "title": "Chart", "kind": "pie", "categories": ["a", "b"],
+             "values": [60, 40]},
+            {"layout": "closing", "title": "End", "lines": ["Thanks"]},
+        ],
+    }
+    out = tmp_path / "deck.pdf"
+    info = render_document(spec, out)
+    assert info["format"] == "slides"
+    assert info["pages"] == 6
+    assert out.exists()
+
+
+def test_render_document_rejects_unknown(tmp_path):
+    with pytest.raises(ValueError):
+        render_document({"format": "poster"}, tmp_path / "x.pdf")
+    with pytest.raises(ValueError):
+        render_document({"format": "report", "blocks": [{"type": "nope"}]}, tmp_path / "y.pdf")
+
+
+def test_study_guide_documents_topic():
+    guide = study_guide("documents").lower()
+    assert "pandoc" in guide
+    assert "reportlab" in guide
+    assert "bibtex" in guide
+    assert study_guide("word") == study_guide("documents")
+    assert "reportlab" in study_guide("slides").lower()
 
 
 def test_image_search_free_sources_and_ai_rule():

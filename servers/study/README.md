@@ -2,10 +2,10 @@
 
 An **area-agnostic, language-agnostic** MCP server for academic and study work. It distills the
 reusable half of an academic-work assistant into tools: catch "AI tells" in writing, format
-citations, render concept maps by data, source images from free licensed providers, and scaffold a
-multi-area study **workspace**. It carries no subject knowledge; you choose the field. For
-documents, slides, deep research, and diagrams it doesn't reimplement, the `toolkit` tool tells you
-exactly what to install.
+citations, render concept maps by data, typeset professional PDFs and decks, source images from
+free licensed providers, and scaffold a multi-area study **workspace**. It carries no subject
+knowledge; you choose the field. For what it doesn't reimplement (Word, deep research, diagrams),
+the `toolkit` tool tells you exactly what to install.
 
 ## Tools
 
@@ -13,8 +13,9 @@ exactly what to install.
 |---|---|---|
 | `writing_check` | `text` | Detect AI tells (EN+ES): em dashes, filler, negative parallelism, rule of three, tell-tale vocabulary, vague attributions, meta-commentary, chained transitions, stacked hedging. Score + hits by category. |
 | `burstiness` | `text` | Sentence-length variation (detectors penalize uniformity): mean, stdev, coefficient of variation, score. Language-agnostic. |
-| `study_guide` | `topic=""` | Embedded guidance: `writing` / `citations` / `structure` / `visual` / `images` / `slides`. |
+| `study_guide` | `topic=""` | Embedded guidance: `writing` / `citations` / `structure` / `visual` / `images` / `slides` / `documents`. |
 | `concept_map` | `spec`, `out_dir=""` | Concept map / organizer from a JSON spec to a PNG (returns the image + `path=`), following the anti-AI visual rules. |
+| `render_document` | `spec`, `out_dir=""` | Typeset a professional PDF with ReportLab: `format='report'` (cover, outline, tables, vector charts, two columns, page numbers) or `format='slides'` (16:9, reveal builds, progress bar). |
 | `cite` | `fields=""`, `doi=""` | APA 7 reference + in-text + BibTeX from fields, or resolve a DOI to BibTeX (network). |
 | `image_search` | `subject`, `kind=""` | Brief for sourcing a real image from free, openly licensed providers (Wikimedia Commons, Openverse, Google reusable, Flickr): search/API URLs + licensing checklist; AI only when explicitly asked. |
 | `toolkit` | `topic=""` | The ecosystem to install (documents, slides, research, citations, diagrams, latex, images, video): commands, API keys, how to configure them. |
@@ -64,9 +65,27 @@ editable PPTX), and installs skill
 plugins via `claude plugin install` (deep-research via superpowers). Plugin skills install at user
 scope and apply everywhere; `--skills-from` copies your own skill folders in for a portable bundle.
 
+## Choosing an engine
+
+There is no default. Before building a document or a deck, the server's guidance tells Claude to
+**ask** which engine fits:
+
+| Deliverable | Engine |
+|---|---|
+| Editable `.docx`, automatic APA citations from `.bib` | pandoc |
+| Strict APA 7 paper or thesis | LaTeX (TinyTeX + apa7) |
+| Designed PDF: report, dossier, data-driven document | `render_document` (ReportLab) |
+| Visual deck, or PPTX / HTML output | Marp |
+| Technical deck: vector charts, reveal builds, exact layout | `render_document` (ReportLab) |
+
+ReportLab ships with the server (it is a `studykit` dependency, ~7 MB of pure Python) and needs no
+system install: no LaTeX, no Chromium. It does **not** read BibTeX or process CSL — build the
+reference strings with `cite` or pandoc first, then pass them in.
+
 ## Output contract
 
 `concept_map` returns a standard image block plus a `path=<abs> mime=image/png size=NxN` line.
-The server stays UI-agnostic; rendering the image to a user is the host agent's job.
+`render_document` writes a PDF and returns JSON with its path, format and page count. The server
+stays UI-agnostic; rendering the artifact to a user is the host agent's job.
 
 See [`packages/studykit`](../../packages/studykit) for the underlying library.

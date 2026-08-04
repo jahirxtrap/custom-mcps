@@ -1,13 +1,13 @@
 [project]
 name = "studykit"
 version = "0.1.0"
-description = "Area-agnostic study toolkit: anti-AI writing checks, APA citations, concept maps, workspace."
+description = "Area-agnostic study toolkit: anti-AI writing checks, APA citations, concept maps, typeset PDFs, workspace."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "jahirtrap" }]
-keywords = ["study", "academic", "writing", "apa", "concept-map"]
-dependencies = ["pillow>=11.0"]
+keywords = ["study", "academic", "writing", "apa", "concept-map", "pdf"]
+dependencies = ["pillow>=11.0", "reportlab>=4.2"]
 
 [build-system]
 requires = ["hatchling"]

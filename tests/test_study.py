@@ -19,6 +19,7 @@ def test_study_registers_tools():
         "concept_map",
         "image_search",
         "reference_add",
+        "render_document",
         "study_guide",
         "toolkit",
         "workspace_init",
@@ -47,6 +48,24 @@ def test_image_search_tool():
     assert brief["subject"] == "Roman aqueduct"
     assert any(p["name"] == "Wikimedia Commons" for p in brief["providers"])
     assert "AI" in brief["decision"]
+
+
+def test_render_document_tool(tmp_path):
+    async def run():
+        async with Client(mcp) as client:
+            spec = json.dumps({
+                "format": "slides",
+                "title": "Deck",
+                "slides": [{"layout": "cover", "title": "Deck"},
+                           {"layout": "bullets", "title": "Points", "items": ["one", "two"]}],
+            })
+            result = await client.call_tool("render_document", {"spec": spec, "out_dir": str(tmp_path)})
+            return json.loads(result.content[0].text)
+
+    info = asyncio.run(run())
+    assert info["format"] == "slides"
+    assert info["pages"] == 2
+    assert info["path"].endswith(".pdf")
 
 
 def test_concept_map_tool_returns_image(tmp_path):
