@@ -9,18 +9,23 @@ services) are always reported, never faked.
       Global: register the external MCP at user scope; with --all also install the CLIs,
       npm tools, and skill plugins.
 
-  uv run python servers/study/setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]
+  uv run python servers/study/setup.py --workspace <dir> [--all] [--mermaid] [--latex] [--skills-from <dir>]
       Workspace-scoped: keep config inside <dir> (.env, .mcp.json, TOOLKIT.md, .gitignore,
       styles/apa.csl, .claude/skills) and install npm tools under <dir>/node_modules.
-      Basics install markmap; --all adds mermaid, Marp, the system CLIs, and skill plugins.
+      Basics install markmap + Marp and repair pandoc when it is older than 2.11; --mermaid adds
+      mermaid, --latex adds TinyTeX, and --all adds every one of those plus the system CLIs,
+      video-audio and the skill plugins.
 """
 from __future__ import annotations
 
 import json
 import os
+import platform as platform_module
 import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -35,6 +40,30 @@ VIDEO_AUDIO_REPO = "https://github.com/misbahsy/video-audio-mcp.git"
 PLATFORM = "win" if sys.platform.startswith("win") else "mac" if sys.platform == "darwin" else "linux"
 INTERACTIVE = sys.stdin.isatty()
 APA_CSL_URL = "https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl"
+
+USER_AGENT = "study-setup"
+SEMANTIC_PIN = ["--with", "mcp[cli]<2"]
+PANDOC_MIN = (2, 11)
+PANDOC_LATEST_API = "https://api.github.com/repos/jgm/pandoc/releases/latest"
+TINYTEX_URL = "https://yihui.org/tinytex/install-bin-unix.sh"
+LATEX_PACKAGES = [
+    "apa7",
+    "biber",
+    "biblatex",
+    "biblatex-apa",
+    "booktabs",
+    "caption",
+    "csquotes",
+    "endfloat",
+    "fancyhdr",
+    "pgf",
+    "scalerel",
+    "threeparttable",
+    "babel-english",
+    "babel-spanish",
+    "hyphen-spanish",
+]
+LOCAL_BIN = Path.home() / ".local" / "bin"
 
 CLI_TOOLS = [
     {"bin": "pandoc", "win": "JohnMacFarlane.Pandoc", "mac": "pandoc", "linux": "pandoc"},
@@ -60,7 +89,11 @@ ENV_HEADER = (
 )
 
 SKILL_PLUGINS = [
-    {"plugin": "superpowers", "marketplace": "claude-plugins-official", "provides": "deep-research + brainstorming"},
+    {
+        "plugin": "superpowers",
+        "marketplace": "claude-plugins-official",
+        "provides": "brainstorming, writing-plans, systematic-debugging",
+    },
 ]
 
 SKILL_MANUAL = [
@@ -81,7 +114,8 @@ Plugin skills installed once at user scope are also available here, so most skil
 to be copied per project.
 
 Install via Claude Code plugins:
-- deep-research (+ brainstorming): claude plugin install superpowers@claude-plugins-official
+- superpowers (brainstorming, writing-plans, systematic-debugging):
+  claude plugin install superpowers@claude-plugins-official
 - humanizer: add its marketplace, then claude plugin install humanizer@<marketplace>
 - docx / pptx / xlsx / pdf: Anthropic document skills (proprietary), from their marketplace.
 
@@ -100,8 +134,10 @@ def run(command: list[str], env: dict[str, str] | None = None, cwd: str | None =
 
 
 def download(url: str, dest: Path) -> bool:
+    """Some CDNs (yihui.org among them) answer 403 to urllib's default User-Agent."""
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
-        with urllib.request.urlopen(url, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:
             dest.write_bytes(response.read())
         return True
     except Exception as error:
@@ -189,6 +225,109 @@ def install_cli(auto: bool) -> None:
     print("  d2: manual (no verified per-OS installer); see https://d2lang.com")
 
 
+def pandoc_version() -> tuple[int, ...] | None:
+    binary = shutil.which("pandoc")
+    if not binary:
+        return None
+    done = subprocess.run([binary, "--version"], capture_output=True, text=True)
+    if done.returncode != 0 or not done.stdout.strip():
+        return None
+    parts = done.stdout.splitlines()[0].split()[-1].split(".")
+    numbers = tuple(int(part) for part in parts if part.isdigit())
+    return numbers or None
+
+
+def install_pandoc_local() -> bool:
+    """Distro pandoc is often older than 2.11, where `--citeproc` replaced the separate
+    pandoc-citeproc filter; fetch the official static build into ~/.local/bin, no root needed."""
+    if PLATFORM != "linux":
+        return False
+    machine = platform_module.machine().lower()
+    arch = "arm64" if machine in ("aarch64", "arm64") else "amd64"
+    try:
+        with urllib.request.urlopen(PANDOC_LATEST_API, timeout=30) as response:
+            release = json.load(response)
+    except Exception as error:
+        print(f"  ! {error}")
+        return False
+    asset = next(
+        (item for item in release.get("assets", []) if item["name"].endswith(f"linux-{arch}.tar.gz")), None
+    )
+    if not asset:
+        print(f"  ! no linux-{arch} build in the latest release")
+        return False
+    with tempfile.TemporaryDirectory() as scratch:
+        archive = Path(scratch) / asset["name"]
+        if not download(asset["browser_download_url"], archive):
+            return False
+        with tarfile.open(archive) as bundle:
+            try:
+                bundle.extractall(scratch, filter="data")
+            except TypeError:
+                bundle.extractall(scratch)
+        found = next(Path(scratch).glob("pandoc-*/bin/pandoc"), None)
+        if not found:
+            print("  ! unexpected archive layout")
+            return False
+        LOCAL_BIN.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(found, LOCAL_BIN / "pandoc")
+        (LOCAL_BIN / "pandoc").chmod(0o755)
+    return True
+
+
+def ensure_pandoc(auto: bool) -> None:
+    print("\n== pandoc (automatic APA bibliography) ==")
+    version = pandoc_version()
+    minimum = ".".join(str(part) for part in PANDOC_MIN)
+    if version and version >= PANDOC_MIN:
+        print(f"  pandoc {'.'.join(str(part) for part in version)}: --citeproc available")
+        return
+    state = "not installed" if version is None else f"{'.'.join(str(part) for part in version)} is too old"
+    print(f"  {state}; --citeproc needs pandoc {minimum}+")
+    if not (auto or confirm(f"install the official pandoc build into {LOCAL_BIN}?")):
+        print("  skipped (see TOOLKIT.md)")
+        return
+    if install_pandoc_local():
+        print(f"  installed -> {LOCAL_BIN / 'pandoc'}  (ensure {LOCAL_BIN} is on PATH)")
+    else:
+        print("  install manually: https://github.com/jgm/pandoc/releases")
+
+
+def _tlmgr() -> str | None:
+    found = shutil.which("tlmgr")
+    if found:
+        return found
+    return next((str(path) for path in sorted((Path.home() / ".TinyTeX" / "bin").glob("*/tlmgr"))), None)
+
+
+def install_latex(auto: bool) -> None:
+    print("\n== LaTeX (TinyTeX, for strict APA 7 papers) ==")
+    if shutil.which("pdflatex") or shutil.which("xelatex"):
+        print("  already installed")
+        return
+    if PLATFORM == "win":
+        print("  manual: see https://yihui.org/tinytex/ (PowerShell installer)")
+        return
+    if not (auto or confirm("install TinyTeX (~200 MB, no root)?")):
+        print("  skipped (see TOOLKIT.md)")
+        return
+    with tempfile.TemporaryDirectory() as scratch:
+        script = Path(scratch) / "install-tinytex.sh"
+        if not download(TINYTEX_URL, script):
+            return
+        if not run(["sh", str(script)]):
+            print("  install failed; see https://yihui.org/tinytex/")
+            return
+    tlmgr = _tlmgr()
+    if not tlmgr:
+        print("  installed, but tlmgr is not on PATH yet; in a new shell run:"
+              f" tlmgr install {' '.join(LATEX_PACKAGES)}")
+        return
+    ok = run([tlmgr, "install", *LATEX_PACKAGES])
+    print(f"  TinyTeX installed; apa7 packages: {'ok' if ok else 'run tlmgr install manually'}")
+    run([tlmgr, "path", "add"])
+
+
 def install_npm(packages: list[str], prefix: Path | None = None) -> None:
     location = f"local -> {prefix.name}/node_modules" if prefix else "global"
     print(f"\n== npm tools ({location}) ==")
@@ -199,6 +338,24 @@ def install_npm(packages: list[str], prefix: Path | None = None) -> None:
     env = {**os.environ, "PUPPETEER_CACHE_DIR": str((prefix or ROOT) / ".cache" / "puppeteer")}
     ok = run(command, env=env)
     print(f"  {' '.join(packages)}: {'installed' if ok else 'FAILED (check network)'}")
+
+
+def record_chrome_path(workspace: Path) -> None:
+    """marp-cli ships no browser: it needs CHROME_PATH pointing at one. The puppeteer cache that
+    mermaid-cli fills is the only Chrome a workspace install is guaranteed to have."""
+    print("\n== Chrome for Marp (CHROME_PATH) ==")
+    cache = workspace / ".cache" / "puppeteer"
+    found = next((path for path in sorted(cache.rglob("chrome")) if path.is_file()), None)
+    if not found:
+        print("  no browser found; Marp can render HTML but not PDF/PPTX")
+        print("  fix: rerun with --mermaid (downloads Chrome), or set CHROME_PATH to your own")
+        return
+    env_path = workspace / ".env"
+    values = read_env(env_path)
+    values["CHROME_PATH"] = str(found)
+    write_env(env_path, values)
+    print(f"  CHROME_PATH={found}")
+    print(f"  recorded in {env_path.name}; export it before calling marp")
 
 
 def install_skills(auto: bool) -> None:
@@ -227,15 +384,25 @@ def register_mcps(env: dict[str, str]) -> None:
     print(f"  openalex: {'registered' if run(command) else 'FAILED (need claude + npx)'}")
 
 
+def study_command() -> dict[str, object]:
+    """Prefer the venv entry point: `uv run` re-syncs on launch and clashes with the user-scope
+    registration, which points at the same binary."""
+    scripts = ROOT / ".venv" / ("Scripts" if PLATFORM == "win" else "bin")
+    entry = scripts / ("study-mcp.exe" if PLATFORM == "win" else "study-mcp")
+    if entry.exists():
+        return {"command": str(entry), "args": []}
+    return {"command": "uv", "args": ["run", "--no-sync", "--project", str(ROOT), "study-mcp"]}
+
+
 def write_mcp_json(workspace: Path, env: dict[str, str]) -> None:
     openalex: dict[str, object] = {"command": "npx", "args": ["-y", "@cyanheads/openalex-mcp-server"]}
     if env.get("OPENALEX_API_KEY"):
         openalex["env"] = {"OPENALEX_API_KEY": env["OPENALEX_API_KEY"]}
-    semantic: dict[str, object] = {"command": "uvx", "args": ["semantic-scholar-mcp"]}
+    semantic: dict[str, object] = {"command": "uvx", "args": [*SEMANTIC_PIN, "semantic-scholar-mcp"]}
     if env.get("SEMANTIC_SCHOLAR_API_KEY"):
         semantic["env"] = {"SEMANTIC_SCHOLAR_API_KEY": env["SEMANTIC_SCHOLAR_API_KEY"]}
     servers: dict[str, object] = {
-        "study": {"command": "uv", "args": ["run", "--project", str(ROOT), "study-mcp"]},
+        "study": study_command(),
         "openalex": openalex,
         "semantic-scholar": semantic,
     }
@@ -290,7 +457,7 @@ def write_skills_dir(workspace: Path, skills_from: str) -> None:
                 print(f"  {entry.name}: copied")
 
 
-def workspace_setup(workspace: Path, all_: bool, mermaid: bool, skills_from: str) -> None:
+def workspace_setup(workspace: Path, all_: bool, mermaid: bool, latex: bool, skills_from: str) -> None:
     workspace.mkdir(parents=True, exist_ok=True)
     print(f"Workspace setup -> {workspace}  (mode: {'all' if all_ else 'basics'})")
     env = collect_keys(workspace / ".env")
@@ -318,19 +485,23 @@ def workspace_setup(workspace: Path, all_: bool, mermaid: bool, skills_from: str
 
     write_skills_dir(workspace, skills_from)
 
-    packages = ["markmap-cli"]
+    packages = ["markmap-cli", "@marp-team/marp-cli"]
     if all_ or mermaid:
         packages.append("@mermaid-js/mermaid-cli")
-    if all_:
-        packages.append("@marp-team/marp-cli")
     install_npm(packages, prefix=workspace)
+    record_chrome_path(workspace)
+
+    ensure_pandoc(auto=all_)
+    if all_ or latex:
+        install_latex(auto=True)
 
     if all_:
         install_cli(auto=True)
         install_skills(auto=True)
     else:
         install_skills(auto=False)
-        print("\nbasics done. Run with --all to also clone video-audio, install mermaid, Marp, CLIs and skills.")
+        print("\nbasics done. Run with --all to also clone video-audio, install mermaid, the system"
+              " CLIs, LaTeX and skills.")
     print("\nOpen this folder in Claude Code; .mcp.json loads study, openalex, semantic-scholar"
           " (and video-audio if cloned).")
 
@@ -342,12 +513,16 @@ def global_setup(all_: bool) -> None:
     register_mcps(env)
     if all_:
         install_cli(auto=True)
+        ensure_pandoc(auto=True)
+        install_latex(auto=True)
         install_npm(["@mermaid-js/mermaid-cli", "markmap-cli", "@marp-team/marp-cli"])
         install_skills(auto=True)
     else:
         install_cli(auto=False)
+        ensure_pandoc(auto=False)
+        install_latex(auto=False)
         install_skills(auto=False)
-        print("\nbasics done. Run with --all to install CLIs, npm tools and skills without prompts.")
+        print("\nbasics done. Run with --all to install CLIs, LaTeX, npm tools and skills without prompts.")
 
 
 def _flag_value(args: list[str], name: str) -> str:
@@ -364,9 +539,15 @@ def main() -> int:
     if "--workspace" in args:
         target = _flag_value(args, "--workspace")
         if not target:
-            print("usage: setup.py --workspace <dir> [--all] [--mermaid] [--skills-from <dir>]")
+            print("usage: setup.py --workspace <dir> [--all] [--mermaid] [--latex] [--skills-from <dir>]")
             return 1
-        workspace_setup(Path(target).expanduser(), all_, "--mermaid" in args, _flag_value(args, "--skills-from"))
+        workspace_setup(
+            Path(target).expanduser(),
+            all_,
+            "--mermaid" in args,
+            "--latex" in args,
+            _flag_value(args, "--skills-from"),
+        )
     else:
         global_setup(all_)
     return 0

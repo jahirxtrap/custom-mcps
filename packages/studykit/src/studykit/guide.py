@@ -95,9 +95,11 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
         {
             "name": "Marp (marp-cli)",
             "what": "styled slide decks from Markdown (headless Chromium); export PDF (recommended) or PPTX",
-            "install": "npm i -g @marp-team/marp-cli  (workspace: setup.py --all installs it locally)",
-            "configure": "recommend PDF; marp deck.md --pdf -o deck.pdf | --pptx gives image slides | "
-            "add --pptx-editable for editable text (needs LibreOffice, experimental)",
+            "install": "npm i -g @marp-team/marp-cli  (workspace: setup.py installs it locally by default)",
+            "configure": "marp-cli bundles no browser: export CHROME_PATH first (setup.py records it "
+            "in the workspace .env) or PDF export hangs. Then recommend PDF; marp deck.md --pdf -o "
+            "deck.pdf | --pptx gives image slides | add --pptx-editable for editable text "
+            "(needs LibreOffice, experimental)",
         },
         {
             "name": "LibreOffice (soffice)",
@@ -131,9 +133,12 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
     "citations": [
         {
             "name": "pandoc + citeproc",
-            "what": "format citations and convert Markdown to docx/pdf",
-            "install": "winget install JohnMacFarlane.Pandoc  |  brew install pandoc  |  apt install pandoc",
-            "configure": "pandoc essay.md --citeproc --bibliography=references.bib --csl=styles/apa.csl -o essay.docx",
+            "what": "format citations and convert Markdown to docx/pdf; --citeproc needs pandoc 2.11+ "
+            "(older distro builds expect the removed pandoc-citeproc filter and fail)",
+            "install": "winget install JohnMacFarlane.Pandoc  |  brew install pandoc  |  "
+            "apt install pandoc (often too old; setup.py drops the official build in ~/.local/bin)",
+            "configure": "check `pandoc --version` first, then: pandoc essay.md --citeproc "
+            "--bibliography=references.bib --csl=styles/apa.csl -o essay.docx",
         },
         {
             "name": "apa.csl",
@@ -155,7 +160,8 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
         {
             "name": "TinyTeX",
             "what": "LaTeX (pdflatex/xelatex/latexmk, class apa7) for strict APA PDFs",
-            "install": "see https://yihui.org/tinytex/ ; then tlmgr install apa7 biblatex-apa",
+            "install": "setup.py --latex (no root) ; or https://yihui.org/tinytex/ then "
+            "tlmgr install apa7 biblatex-apa",
         },
     ],
     "images": [
