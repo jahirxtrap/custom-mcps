@@ -40,6 +40,32 @@ def _make_repo(tmp_path):
 def test_topics():
     found = topics()
     assert {"commit", "hardcoding", "spacing", "format", "patterns", "naming"} <= set(found)
+    assert {"ssot", "boundaries", "scope", "data", "i18n", "runtime", "verify"} <= set(found)
+
+
+def test_guide_new_principles():
+    assert "authoritative definition per fact" in guide("ssot")
+    assert "exclusive capability" in guide("boundaries")
+    assert "dead code" in guide("scope")
+    assert "does production need this row" in guide("data")
+    assert "while True: sleep(n); check()" in guide("runtime")
+    assert "not evidence" in guide("verify")
+
+
+def test_guide_i18n_pluralization():
+    text = guide("i18n")
+    assert "key_one / key_other" in text
+    assert "Intl.PluralRules" in text
+    assert "Interpolate, never concatenate" in text
+    assert "name_es / name_en" in text
+    assert "camelCase names the KEY, never the suffix" in text
+    assert "countOne" in text
+
+
+def test_guide_prefers_no_envelope():
+    text = guide("patterns")
+    assert "Prefer NO response envelope" in text
+    assert "orval + zod" in text
 
 
 def test_guide_all_and_topic():

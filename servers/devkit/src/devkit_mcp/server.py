@@ -19,8 +19,9 @@ mcp = FastMCP(name="devkit")
 
 @mcp.tool
 def conventions(topic: str = "") -> str:
-    """Return the embedded developer conventions, all of them or one topic:
-    commit / code / dry / hardcoding / design / patterns / docs / naming."""
+    """Return the embedded developer conventions, all of them or one topic: commit / code / ssot /
+    dry / boundaries / scope / hardcoding / data / i18n / runtime / verify / design / spacing /
+    format / patterns / docs / naming."""
     return _guide(topic)
 
 
