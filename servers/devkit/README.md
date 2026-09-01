@@ -22,6 +22,10 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 ## What it encodes (verified against real projects)
 
 - **commit**: conventional, short, lowercase; never Co-Authored-By; changelog from commits.
+  Issue references go in a **footer** (`Closes: #12` / `Refs: #12`), one line per issue — a
+  comma-separated list closes only the first; the colon form is the one `git interpret-trailers`
+  reads. Breaking changes are marked (`feat!:` or a `BREAKING CHANGE:` footer) so the derived
+  changelog leads with them.
 - **code**: no comments (the two exceptions are documentation as data: DB `COMMENT` and i18n
   files), one-line descriptive docstrings, English, latest stable versions, terse.
 - **ssot**: one authoritative definition per fact, referenced or derived and never copied; a

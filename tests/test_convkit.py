@@ -43,6 +43,16 @@ def test_topics():
     assert {"ssot", "boundaries", "scope", "data", "i18n", "runtime", "verify"} <= set(found)
 
 
+def test_guide_commit_issue_footers():
+    text = guide("commit")
+    assert "Closes: #12" in text
+    assert "Refs: #12" in text
+    assert "closes only the first number" in text
+    assert "git interpret-trailers" in text
+    assert "BREAKING CHANGE" in text
+    assert "Co-Authored-By" in text
+
+
 def test_guide_new_principles():
     assert "authoritative definition per fact" in guide("ssot")
     assert "exclusive capability" in guide("boundaries")

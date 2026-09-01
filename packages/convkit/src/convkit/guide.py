@@ -5,6 +5,28 @@ _TOPICS: dict[str, list[str]] = {
     "commit": [
         "Conventional commits: feat / fix / chore / refactor / docs. Short, lowercase subject "
         "(e.g. 'feat: tab system', 'fix: some fixes').",
+        "Issue references live in a footer, one blank line after the subject, never in the subject "
+        "itself: 'Closes: #12' when the commit finishes it, 'Refs: #12' when it only advances it. "
+        "The one-line rule governs the SUBJECT only -- when a commit answers an issue the footer "
+        "is REQUIRED, not an optional extra.",
+        "One footer line per issue ('Closes: #12' then 'Closes: #14'). A comma-separated list "
+        "closes only the first number. Another repo takes 'Closes: owner/repo#12' and needs push "
+        "access there.",
+        "Closing keywords are close/closes/closed, fix/fixes/fixed, resolve/resolves/resolved "
+        "(GitHub and GitLab). Use the colon form: both work, but only 'Closes: #12' is a real git "
+        "trailer that git interpret-trailers and git commit --trailer can read.",
+        "From a commit the keyword only fires once it lands on the default branch, and it does not "
+        "create the linked-pull-request entry in the PR sidebar -- only the PR description does "
+        "that. 'Refs:' closes nothing; it just leaves a cross-reference on the issue.",
+        "The type still describes the change, not the issue: a reported bug is 'fix:', a requested "
+        "capability is 'feat:'. The footer is what ties it to the report.",
+        "A change that breaks a consumer is marked -- '!' after the type (feat!: drop java 17) or a "
+        "'BREAKING CHANGE: <what breaks>' footer: a removed public method, a changed signature, a "
+        "renamed config key, an incompatible save format. It bumps no version here (releases track "
+        "the platform version, not semver); it is what makes the derived changelog lead with the "
+        "break, and what warns the dependents of a published library.",
+        "An issue somebody else opened is closed from the tracker with a comment naming the release "
+        "that carries it -- the keyword closes it silently and the reporter learns nothing.",
         "NEVER add Co-Authored-By or any attribution footer.",
         "If a just-made commit has a small error or omission and is not yet pushed, fix it by "
         "amending that commit (git commit --amend) instead of adding a separate fixup commit.",

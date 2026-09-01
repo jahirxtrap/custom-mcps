@@ -35,7 +35,8 @@ def commit_style(repo: str = "", count: int = 30) -> str:
 @mcp.tool
 def commit_context(repo: str = "", rev_range: str = "") -> str:
     """Gather what's needed to write a commit message in the repo's style: staged (or rev_range)
-    diffstat, changed files, recent subjects, and the commit_style summary. Never add Co-Authored-By."""
+    diffstat, changed files, recent subjects, and the commit_style summary. Never add Co-Authored-By.
+    When the change answers an issue, add the required footer (conventions('commit'))."""
     return json.dumps(_commit_context(repo, rev_range))
 
 
