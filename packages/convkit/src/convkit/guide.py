@@ -4,35 +4,32 @@ from __future__ import annotations
 _TOPICS: dict[str, list[str]] = {
     "commit": [
         "Conventional commits: feat / fix / chore / refactor / docs. Short, lowercase subject "
-        "(e.g. 'feat: tab system', 'fix: some fixes').",
-        "Issue references live in a footer, one blank line after the subject, never in the subject "
-        "itself: 'Closes: #12' when the commit finishes it, 'Refs: #12' when it only advances it. "
-        "The one-line rule governs the SUBJECT only -- when a commit answers an issue the footer "
-        "is REQUIRED, not an optional extra.",
-        "One footer line per issue ('Closes: #12' then 'Closes: #14'). A comma-separated list "
-        "closes only the first number. Another repo takes 'Closes: owner/repo#12' and needs push "
-        "access there.",
-        "Closing keywords are close/closes/closed, fix/fixes/fixed, resolve/resolves/resolved "
-        "(GitHub and GitLab). Use the colon form: both work, but only 'Closes: #12' is a real git "
-        "trailer that git interpret-trailers and git commit --trailer can read.",
-        "From a commit the keyword only fires once it lands on the default branch, and it does not "
-        "create the linked-pull-request entry in the PR sidebar -- only the PR description does "
-        "that. 'Refs:' closes nothing; it just leaves a cross-reference on the issue.",
-        "The type still describes the change, not the issue: a reported bug is 'fix:', a requested "
-        "capability is 'feat:'. The footer is what ties it to the report.",
-        "A change that breaks a consumer is marked -- '!' after the type (feat!: drop java 17) or a "
-        "'BREAKING CHANGE: <what breaks>' footer: a removed public method, a changed signature, a "
-        "renamed config key, an incompatible save format. It bumps no version here (releases track "
-        "the platform version, not semver); it is what makes the derived changelog lead with the "
-        "break, and what warns the dependents of a published library.",
-        "An issue somebody else opened is closed from the tracker with a comment naming the release "
-        "that carries it -- the keyword closes it silently and the reporter learns nothing.",
+        "('feat: tab system'). Match the repo's existing style first (run commit_style).",
+        "Issue references go in a footer, one blank line after the subject, never in the subject: "
+        "'Closes: #12' when the commit finishes it, 'Refs: #12' when it only advances it. The "
+        "one-line rule governs the SUBJECT only -- when a commit answers an issue the footer is "
+        "required.",
+        "One footer line per issue ('Closes: #12' then 'Closes: #14'); a comma-separated list "
+        "closes only the first. Another repo takes 'Closes: owner/repo#12' and needs push access "
+        "there.",
+        "Keywords: close/closes/closed, fix/fixes/fixed, resolve/resolves/resolved (GitHub and "
+        "GitLab). Use the colon form -- both work, but only 'Closes: #12' is a git trailer "
+        "interpret-trailers can read. It fires only once the commit lands on the default branch, "
+        "and it does not create the linked-pull-request entry (only the PR description does). "
+        "'Refs:' closes nothing; it leaves a cross-reference.",
+        "The type describes the change, not the issue: a reported bug is 'fix:', a requested "
+        "capability is 'feat:'. The footer ties it to the report.",
+        "A change that breaks a consumer is marked -- 'feat!:' or a 'BREAKING CHANGE: <what "
+        "breaks>' footer: a removed method, a changed signature, a renamed config key, an "
+        "incompatible save format. It bumps no version (releases track the platform version, not "
+        "semver); it makes the derived changelog lead with the break and warns a published "
+        "library's dependents.",
+        "An issue somebody else opened is closed from the tracker with a comment naming the "
+        "release that carries it -- the keyword closes it silently and the reporter learns nothing.",
         "NEVER add Co-Authored-By or any attribution footer.",
-        "If a just-made commit has a small error or omission and is not yet pushed, fix it by "
-        "amending that commit (git commit --amend) instead of adding a separate fixup commit.",
-        "Changelog: plain past-tense bullets (Added/Fixed/Updated/Removed), no headers/versions/"
+        "A just-made commit that is not pushed yet is fixed by amending it, never by a fixup commit.",
+        "Changelog: plain past-tense bullets (Added/Fixed/Updated/Removed), no headers, versions or "
         "dates, derived from the commits since the last release; replace the whole file.",
-        "Match the repo's existing style before committing (run commit_style).",
     ],
     "code": [
         "No comments. Self-explanatory names; a short docstring only when a constraint cannot be "
@@ -43,6 +40,7 @@ _TOPICS: dict[str, list[str]] = {
         "is mandatory: the database COMMENT on every table and column, and the i18n label files. "
         "A migration without them is incomplete.",
         "English for code and diagnostics; respond to the user in Spanish.",
+        "No emoji or pictographs anywhere in the source, in either language.",
         "Latest stable versions of everything; nothing obsolete.",
         "Terse, expression-oriented; trust platform guarantees over defensive boilerplate.",
         "Imports at the top of the file.",
@@ -87,6 +85,10 @@ _TOPICS: dict[str, list[str]] = {
         "URL, navigation, screens). Never duplicate shared logic inside an app.",
         "Within a module the port (interface + value objects) lives in the domain layer and its "
         "adapter in the infrastructure layer.",
+        "Each layer knows only the one below: the route holds the HTTP surface, the service holds "
+        "the decision in the product's own words, the repository is the ONLY place that speaks "
+        "SQL. Routes and services do not import the ORM at all -- a repository publishes an "
+        "interface and a test hands the service an in-memory twin.",
         "Modules that own separate capabilities do not import each other; they talk through "
         "published contracts and events.",
     ],
@@ -129,6 +131,9 @@ _TOPICS: dict[str, list[str]] = {
         "timestamp; only edit the generated up/down.",
         "The schema is defined by the migrations. The ORM reflects the database, never the reverse "
         "-- never generate DDL from ORM metadata, and when you change one, change the other.",
+        "Derived values are computed by the database (triggers), not recomputed in application "
+        "code: an endpoint that recalculates a total is a second source of truth. Keep the list of "
+        "triggers written down and complete, the same way every column carries its comment.",
         "Timestamps are timezone-aware; every table and column carries an English comment; "
         "connection and schema come from the environment.",
         "In development migrations are NOT immutable -- fix them in place, reconcile the recorded "
@@ -194,6 +199,10 @@ _TOPICS: dict[str, list[str]] = {
         "in a row, is not logged -- the data is the record.",
         "That covers your own logger calls, not the framework's startup banner or access log -- "
         "never silence those.",
+        "No console.* in the frontend, ever: in production it is noise in the user's console and a "
+        "way to leak a token or a user object.",
+        "State is a row, not a log line. A transition, a status, a ledger movement -- that is the "
+        "record, and it is queryable, ordered and auditable in a way a log line never is.",
     ],
     "verify": [
         "Lint, type-check and tests passing is not evidence that it works. Run it live against the "
@@ -204,6 +213,15 @@ _TOPICS: dict[str, list[str]] = {
         "can stop populating the attribute you were reading and the inspection quietly lies.",
         "Audit by parsing the AST and looking inside the thing that actually does the work; a "
         "file-level grep is not an audit.",
+        "A test arrives with the capability it tests, never in a later sweep. Unit tests run "
+        "against in-memory doubles and touch no database, so the suite is seconds long and a "
+        "failure is always about the rule, never the environment; what doubles cannot reach -- "
+        "trigger behaviour, a provider's wire format, a migration applying -- is the smoke "
+        "script's job.",
+        "A silenced rule is not a passing rule. Either the code is wrong, or the rule is and then "
+        "the rule gets fixed for everybody -- never a disable comment to get green.",
+        "A convention worth having is worth enforcing: put it in the linter, not only in a "
+        "document. Docs advise; the linter is what blocks a merge.",
         "Verify the code before repeating a claim about it -- a status list that is repeated "
         "instead of re-checked goes stale and misleads.",
         "Report the reasoning, not just the change: say what duplication was avoided and why.",
@@ -239,10 +257,17 @@ _TOPICS: dict[str, list[str]] = {
         "reformat the whole file. Prefer the project's formatter (ruff/prettier/ktlint) over ad-hoc style.",
     ],
     "patterns": [
-        "Prefer NO response envelope: return the typed model directly so the client and its "
-        "validation schemas can be generated from the contract (OpenAPI -> orval + zod). An "
-        "envelope makes every generated response data: unknown and throws the types away. In a "
-        "project that already has one, stay consistent with it there.",
+        "An endpoint returns its typed model directly and an error carries its real HTTP status, "
+        "so the client and its validation schemas generate from the contract (OpenAPI -> orval + "
+        "zod). That means a response_model on EVERY endpoint, a readable operation_id derived from "
+        "the function name, and the generator running in CI so any drift fails the build. Two "
+        "routes may never share an operation_id -- the client keys off it and a collision silently "
+        "drops one hook.",
+        "The contract loop runs in order, in the same commit: export the OpenAPI, regenerate the "
+        "client, typecheck. The front breaking there is the point. Commit the OpenAPI file: its "
+        "diff IS the review of what the API change did to every consumer.",
+        "Generated and vendored code is regenerated, never authored: editing it by hand is the "
+        "bug, not the shortcut. Do not lint it either -- fix the generator or the source.",
         "Auto-discovery: drop a file (router / MCP tool / server) and it registers itself; no manual wiring.",
         "Data-driven: add content via JSON + a registry, with base/patch inheritance; never a class per item.",
         "Extract logic to reusable modules (services / RefCounted); the UI stays in the panel.",

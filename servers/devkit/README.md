@@ -32,10 +32,13 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
   derived fact is never hand-entered; config read in one module; forms validate with the schema
   generated from the contract, never a restated constraint.
 - **dry / patterns**: extract logic to reusable modules, thin routers → services, search before
-  writing a helper, prefer a maintained library; prefer **no** response envelope so the client and
-  its zod schemas generate from the contract; auto-discovery, data-driven content (JSON + registry).
+  writing a helper, prefer a maintained library; endpoints return their typed model directly so the
+  client and its zod schemas generate from the contract (`response_model` everywhere, readable
+  `operation_id`, the generator in CI); generated code is regenerated, never authored;
+  auto-discovery, data-driven content (JSON + registry).
 - **boundaries**: shared code holds mechanisms, a module's exclusive capability stays with it;
-  share the logic and inject the platform.
+  share the logic and inject the platform; each layer knows only the one below, and only the
+  repository speaks SQL.
 - **scope**: nothing left dangling — no system wired to nobody; preparing ground needs a real,
   named consumer; build the destination, not the legacy state.
 - **hardcoding / design**: text → i18n, colors/sizes → one token file, catalogued components, no
@@ -47,9 +50,10 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
   pluralization is a CLDR rule (`count` → `_one`/`_other`/`_few`/`_many`), never an `if`;
   interpolate, never concatenate; format dates/numbers with `Intl`.
 - **runtime**: fail closed and never silently; push, never poll (no `while True: sleep(n)`); only
-  real errors are logged.
+  real errors are logged, no `console.*` in the frontend; state is a row, not a log line.
 - **verify**: lint + types + tests is not evidence — run it live; smoke scripts get run, not
-  written and left; audit the AST, not a grep; verify before repeating a claim.
+  written and left; a test arrives with its capability and touches no database; a silenced rule is
+  not a passing rule; a convention worth having goes in the linter, not only in a document.
 - **spacing**: one spacing scale and one type scale (gaps/margins/paddings on a base grid, text
   sizes from the theme); symmetry and rhythm; reuse one token per semantic role.
 - **format**: imports at the top, never inline fully-qualified names, no unused imports; consistent

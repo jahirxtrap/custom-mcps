@@ -47,10 +47,27 @@ def test_guide_commit_issue_footers():
     text = guide("commit")
     assert "Closes: #12" in text
     assert "Refs: #12" in text
-    assert "closes only the first number" in text
-    assert "git interpret-trailers" in text
+    assert "closes only the first" in text
+    assert "interpret-trailers" in text
     assert "BREAKING CHANGE" in text
     assert "Co-Authored-By" in text
+
+
+def test_guide_multistore_principles():
+    assert "No emoji or pictographs" in guide("code")
+    assert "Each layer knows only the one below" in guide("boundaries")
+    assert "Derived values are computed by the database" in guide("data")
+    runtime = guide("runtime")
+    assert "No console.* in the frontend" in runtime
+    assert "State is a row, not a log line" in runtime
+    patterns = guide("patterns")
+    assert "response_model on EVERY endpoint" in patterns
+    assert "diff IS the review" in patterns
+    assert "regenerated, never authored" in patterns
+    verify = guide("verify")
+    assert "A silenced rule is not a passing rule" in verify
+    assert "put it in the linter" in verify
+    assert "touch no database" in verify
 
 
 def test_guide_new_principles():
@@ -72,10 +89,12 @@ def test_guide_i18n_pluralization():
     assert "countOne" in text
 
 
-def test_guide_prefers_no_envelope():
-    text = guide("patterns")
-    assert "Prefer NO response envelope" in text
-    assert "orval + zod" in text
+def test_guide_never_mentions_an_envelope():
+    text = guide()
+    assert "envelope" not in text.lower()
+    patterns = guide("patterns")
+    assert "returns its typed model directly" in patterns
+    assert "response_model on EVERY endpoint" in patterns
 
 
 def test_guide_all_and_topic():
