@@ -34,7 +34,7 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `sfx` | Synthesize sound effects by data; principles embedded. Tools: `sfx_guide`, `synth_sfx`, `waveform`, `encode`, `inspect`. |
 | library | `loaderkit` | Read-only multiloader-workspace toolkit: scan mods/versions, parse gradle.properties, compare loaders, conventions. |
 | server | `modkit` | Domain-specific (multiloader mod dev); read-only. Tools: `list_mods`, `mod_info`, `loader_sync`, `check_structure`, `check_json`, `check_access`, `find_symbol`, `decompile_guide`. |
-| library | `i18nkit` | Read-only translation checks: parse flat/nested locales, diff, completeness, placeholders, unused keys. |
+| library | `i18nkit` | Read-only translation checks: flat and namespaced layouts, plural-aware diff, completeness, placeholders, unused keys. |
 | server | `i18n` | Keep translation locales in sync (agnostic); read-only. Tools: `locale_diff`, `completeness`, `check_format`, `find_unused`, `i18n_guide`. |
 | library | `convkit` | Developer-convention guides + git/static checks (multi-stack); no deps. |
 | server | `devkit` | Development conventions + the checks that verify them; read-only. Tools: `conventions`, `commit_style`, `commit_context`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`. |
