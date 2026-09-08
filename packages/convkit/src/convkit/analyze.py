@@ -18,14 +18,32 @@ _TAILWIND = re.compile(
 
 _CODE_EXT = (".java", ".kt", ".kts", ".ts", ".tsx", ".js", ".jsx", ".gd", ".py")
 _DEFAULT_ALLOW = ("themes.", "theme.", "palette.", "accents.", "colors.", "tokens.", "tailwind.config")
+_TOKEN_DIRS = {"theme", "themes", "tokens", "palette"}
 _SKIP_DIRS = {
-    ".venv", "venv", "node_modules", ".git", "__pycache__", "build", "dist", ".gradle",
-    "target", ".idea", ".next", "out", ".ruff_cache", ".pytest_cache",
+    ".cache", ".expo", ".git", ".gradle", ".idea", ".mypy_cache", ".next", ".nuxt",
+    ".pytest_cache", ".ruff_cache", ".svelte-kit", ".turbo", ".venv", "__pycache__", "build",
+    "coverage", "dist", "generated", "node_modules", "out", "site-packages", "target",
+    "third_party", "vendor", "venv",
 }
+_VENDORED_PATHS = ("components/ui/", "components/rnr/", "src/generated/")
 
 
-def _vendored(path: Path) -> bool:
-    return any(part in _SKIP_DIRS for part in path.parts)
+def _fragments(exclude: str | None) -> list[str]:
+    extra = [item.strip().replace("\\", "/") for item in (exclude or "").split(",")]
+    return list(_VENDORED_PATHS) + [item for item in extra if item]
+
+
+def _vendored(path: Path, fragments: list[str] | None = None) -> bool:
+    if any(part in _SKIP_DIRS for part in path.parts):
+        return True
+    posix = path.as_posix()
+    return any(fragment in posix for fragment in (fragments or _VENDORED_PATHS))
+
+
+def _is_token_file(path: Path, allow_list: list[str]) -> bool:
+    return path.parent.name.lower() in _TOKEN_DIRS or any(
+        token in path.name.lower() for token in allow_list
+    )
 
 
 def _code_lines(text: str):
@@ -47,17 +65,18 @@ def _code_lines(text: str):
         yield number, line
 
 
-def find_hardcoded(path: str, allow: list[str] | None = None) -> dict[str, Any]:
+def find_hardcoded(path: str, allow: list[str] | None = None, exclude: str = "") -> dict[str, Any]:
     """Flag hardcoded colors (hex, Color(0xFF...)), sizes (px/rem/.dp/.sp) and raw Tailwind classes."""
     base = Path(path)
     allow_list = [a.lower() for a in (list(_DEFAULT_ALLOW) + (allow or []))]
+    fragments = _fragments(exclude)
     files = base.rglob("*") if base.is_dir() else [base]
     hits: list[dict[str, Any]] = []
     scanned = 0
     for f in files:
-        if not f.is_file() or f.suffix not in _CODE_EXT or _vendored(f):
+        if not f.is_file() or f.suffix not in _CODE_EXT or _vendored(f, fragments):
             continue
-        if any(token in f.name.lower() for token in allow_list):
+        if _is_token_file(f, allow_list):
             continue
         scanned += 1
         rel = str(f.relative_to(base)) if base.is_dir() else str(f)
@@ -77,8 +96,10 @@ def find_hardcoded(path: str, allow: list[str] | None = None) -> dict[str, Any]:
         "scanned_files": scanned,
         "hit_count": len(hits),
         "hits": hits[:300],
-        "note": "Colors (any stack) and web px/rem sizes. Compose .dp/.sp spacing is idiomatic "
-        "and intentionally not flagged. Token files (themes/palette/...) and comments are skipped.",
+        "excluded": fragments,
+        "note": "Colors (any stack) and web px/rem sizes. Compose .dp/.sp spacing is idiomatic and "
+        "intentionally not flagged. Skipped: comments, token files (by name or by a theme/tokens/"
+        "palette parent folder) and the vendored paths in `excluded` -- pass more through `exclude`.",
     }
 
 
@@ -86,7 +107,23 @@ _DP = re.compile(r"\b(\d+(?:\.\d+)?)\.dp\b")
 _SP = re.compile(r"\b(\d+(?:\.\d+)?)\.sp\b")
 _CSS_FONT = re.compile(r"font-size\s*:\s*(\d+(?:\.\d+)?)(?:px|rem)", re.IGNORECASE)
 _TW_ARBITRARY = re.compile(r"\b[a-z]+-\[(\d+(?:\.\d+)?)(?:px|rem)\]")
+_TW_SPACE = re.compile(
+    r"\b(?:gap-x|gap-y|space-x|space-y|gap|px|py|pt|pb|pl|pr|ps|pe|mx|my|mt|mb|ml|mr|ms|me|p|m)"
+    r"-(\d+(?:\.\d+)?|[a-z]{1,4})\b"
+)
+_TW_TEXT = re.compile(r"\btext-(xs|sm|base|lg|xl|[2-9]xl)\b")
+_TW_NOT_SCALE = {"auto", "full", "px", "min", "max", "fit"}
 _SCALE_SKIP = ("dimens", "spacing", "type.", "typography", "theme", "tokens", "palette")
+
+
+def _token_report(counter: Counter[str], rare: int) -> dict[str, Any]:
+    values = sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
+    return {
+        "distinct": len(counter),
+        "total": sum(counter.values()),
+        "values": [[v, c] for v, c in values[:40]],
+        "outliers": sorted(v for v, c in counter.items() if c <= rare)[:40],
+    }
 
 
 def _scale_report(counter: Counter[str], rare: int, grid: int) -> dict[str, Any]:
@@ -105,18 +142,22 @@ def _scale_report(counter: Counter[str], rare: int, grid: int) -> dict[str, Any]
     }
 
 
-def find_inconsistent(path: str, rare: int = 2, grid: int = 4) -> dict[str, Any]:
+def find_inconsistent(path: str, rare: int = 2, grid: int = 4, exclude: str = "") -> dict[str, Any]:
     """Measure the spacing and text-size scales actually in use and flag what breaks consistency:
     rare one-off values (used <= `rare` times), values off a base `grid` (default 4), and Tailwind
-    arbitrary values. Sources: Compose .dp (spacing) / .sp (text), CSS font-size, `-[Npx]` classes."""
+    arbitrary values. Sources: Compose .dp (spacing) / .sp (text), CSS font-size, Tailwind and
+    NativeWind utility classes (p/m/gap/space and text-*), and `-[Npx]` classes."""
     base = Path(path)
     spacing: Counter[str] = Counter()
     text: Counter[str] = Counter()
+    utility: Counter[str] = Counter()
+    utility_text: Counter[str] = Counter()
     arbitrary: list[dict[str, Any]] = []
+    fragments = _fragments(exclude)
     scanned = 0
     files = base.rglob("*") if base.is_dir() else [base]
     for f in files:
-        if not f.is_file() or f.suffix not in _CODE_EXT or _vendored(f):
+        if not f.is_file() or f.suffix not in _CODE_EXT or _vendored(f, fragments):
             continue
         if any(token in f.name.lower() for token in _SCALE_SKIP):
             continue
@@ -126,16 +167,22 @@ def find_inconsistent(path: str, rare: int = 2, grid: int = 4) -> dict[str, Any]
             spacing.update(_DP.findall(line))
             text.update(_SP.findall(line))
             text.update(_CSS_FONT.findall(line))
+            utility.update(v for v in _TW_SPACE.findall(line) if v not in _TW_NOT_SCALE)
+            utility_text.update(_TW_TEXT.findall(line))
             if _TW_ARBITRARY.search(line):
                 arbitrary.append({"file": rel, "line": number, "text": line.strip()[:120]})
     return {
         "scanned_files": scanned,
         "spacing": _scale_report(spacing, rare, grid),
         "text_size": _scale_report(text, rare, grid),
+        "utility_spacing": _token_report(utility, rare),
+        "utility_text": _token_report(utility_text, rare),
         "arbitrary": arbitrary[:100],
-        "note": "Scale snapshot, not errors. Converge rare/off-grid spacing onto the base grid and "
-        "inline text sizes onto one type scale; route Tailwind arbitrary values back to the scale. "
-        "Token files (dimens/type/theme/...) are skipped.",
+        "excluded": fragments,
+        "note": "Scale snapshot, not errors. spacing/text_size are numeric scales (Compose, CSS) "
+        "and carry the grid check; utility_* are the Tailwind/NativeWind classes in use, where the "
+        "tokens ARE the scale so only rare one-offs matter. An arbitrary `-[Npx]` is worth routing "
+        "back to a token only when a token already covers that value.",
     }
 
 
@@ -188,7 +235,7 @@ def _imported_names(line: str, suffix: str) -> list[str]:
     return []
 
 
-def find_format(path: str) -> dict[str, Any]:
+def find_format(path: str, exclude: str = "") -> dict[str, Any]:
     """Flag AI-typical format breaks formatters miss: inline fully-qualified class names (Java/Kotlin),
     unused imports (Java/Kotlin/TS), tab+space mixed indentation, and JSON files whose indent style
     differs from the rest of the tree."""
@@ -199,8 +246,9 @@ def find_format(path: str) -> dict[str, Any]:
     json_styles: Counter[str] = Counter()
     json_files: list[dict[str, Any]] = []
     code_scanned = json_scanned = 0
+    fragments = _fragments(exclude)
     for f in (base.rglob("*") if base.is_dir() else [base]):
-        if not f.is_file() or _vendored(f):
+        if not f.is_file() or _vendored(f, fragments):
             continue
         rel = str(f.relative_to(base)) if base.is_dir() else str(f)
         text = f.read_text(encoding="utf-8", errors="replace")
@@ -253,13 +301,14 @@ def find_format(path: str) -> dict[str, Any]:
     }
 
 
-def find_duplication(path: str, window: int = 6) -> dict[str, Any]:
+def find_duplication(path: str, window: int = 6, exclude: str = "") -> dict[str, Any]:
     """Find identical normalized line blocks (~window lines) repeated across the code (DRY candidates)."""
     base = Path(path)
+    fragments = _fragments(exclude)
     files = [
         f
         for f in (base.rglob("*") if base.is_dir() else [base])
-        if f.is_file() and f.suffix in _CODE_EXT and not _vendored(f)
+        if f.is_file() and f.suffix in _CODE_EXT and not _vendored(f, fragments)
     ]
     seen: dict[str, list[dict[str, Any]]] = {}
     for f in files:

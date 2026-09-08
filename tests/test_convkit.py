@@ -127,6 +127,50 @@ def test_find_hardcoded_skips_vendored(tmp_path):
     assert find_hardcoded(str(tmp_path))["scanned_files"] == 0
 
 
+def test_find_hardcoded_skips_token_folder_and_vendored_components(tmp_path):
+    tokens = tmp_path / "theme" / "themes"
+    tokens.mkdir(parents=True)
+    (tokens / "brand.ts").write_text('export const bg = "#1B1E24"\n', encoding="utf-8")
+    ui = tmp_path / "app" / "components" / "ui" / "badge"
+    ui.mkdir(parents=True)
+    (ui / "index.tsx").write_text('const c = "#ffffff"\n', encoding="utf-8")
+    mine = tmp_path / "app" / "screens"
+    mine.mkdir(parents=True)
+    (mine / "Home.tsx").write_text('const c = "#ffffff"\n', encoding="utf-8")
+
+    report = find_hardcoded(str(tmp_path))
+    files = {hit["file"] for hit in report["hits"]}
+    assert any("Home.tsx" in f for f in files)
+    assert not any("brand.ts" in f for f in files)
+    assert not any("badge" in f for f in files)
+
+
+def test_find_hardcoded_exclude_fragment(tmp_path):
+    data = tmp_path / "data" / "shared"
+    data.mkdir(parents=True)
+    (data / "dump.ts").write_text('const c = "#ffffff"\n', encoding="utf-8")
+    assert find_hardcoded(str(tmp_path))["hit_count"] == 1
+    assert find_hardcoded(str(tmp_path), exclude="data/")["hit_count"] == 0
+
+
+def test_find_inconsistent_reads_utility_classes(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    markup = (
+        '<Box className="gap-md px-lg py-md">\n'
+        '<Text className="gap-md px-lg text-sm">x</Text>\n'
+        '<View className="gap-xxl gap-x-md space-y-lg" />\n'
+    )
+    (src / "Screen.tsx").write_text(markup, encoding="utf-8")
+    report = find_inconsistent(str(src), rare=1)
+    used = dict(report["utility_spacing"]["values"])
+    assert used["md"] == 4
+    assert used["lg"] == 3
+    assert "x" not in used and "y" not in used
+    assert "xxl" in report["utility_spacing"]["outliers"]
+    assert dict(report["utility_text"]["values"])["sm"] == 1
+
+
 def test_find_inconsistent(tmp_path):
     src = tmp_path / "src"
     src.mkdir()
