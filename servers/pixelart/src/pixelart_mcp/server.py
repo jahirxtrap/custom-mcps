@@ -23,7 +23,17 @@ from pixellib import (
 from .builder import build_from_spec
 from .imaging import count_colors, image_to_payload, payload_to_grid, validate
 
-mcp = FastMCP(name="pixelart")
+mcp = FastMCP(
+    name="pixelart",
+    instructions=(
+        "Pixel art by data: build a sprite from a spec, then inspect and verify it. Any size, "
+        "engine-agnostic.\n"
+        "Tools: pixel_guide, search_reference, render_sprite, from_grid, to_grid, preview, "
+        "palette, check.\n"
+        "Reach for it when the subject is pixel art -- a character, creature, item or tile. Read "
+        "pixel_guide first; previews verify the result, they are never the drawing method."
+    ),
+)
 
 
 def _scratch(prefix: str, out_dir: str = "") -> Path:

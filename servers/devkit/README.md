@@ -1,8 +1,8 @@
 # devkit MCP server
 
-A **personal** MCP server that carries the user's **development conventions** and the checks
-that verify them — across stacks (Java, Kotlin/Jetpack Compose, TypeScript/React, GDScript,
-Python). Guides say what to follow; tools look at the real code/history. All read-only.
+An MCP server that carries **development conventions** and the checks that verify them — across
+stacks (Java, Kotlin/Jetpack Compose, TypeScript/React, GDScript, Python). Guides say what to
+follow; tools look at the real code/history. All read-only.
 
 Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 [`convkit`](../../packages/convkit) library.

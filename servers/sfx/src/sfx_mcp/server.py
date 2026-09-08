@@ -13,7 +13,14 @@ from fastmcp.utilities.types import Image
 
 from .builder import build_from_spec
 
-mcp = FastMCP(name="sfx")
+mcp = FastMCP(
+    name="sfx",
+    instructions=(
+        "Sound effects synthesized by data, engine-agnostic. No sample library and no download.\n"
+        "Tools: sfx_guide, synth_sfx, waveform, encode, inspect.\n"
+        "Reach for it when a game or UI sound is needed. Read sfx_guide first."
+    ),
+)
 
 _MIME = {"ogg": "audio/ogg", "opus": "audio/ogg", "wav": "audio/wav", "mp3": "audio/mpeg", "flac": "audio/flac"}
 

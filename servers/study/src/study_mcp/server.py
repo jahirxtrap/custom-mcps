@@ -27,7 +27,20 @@ from studykit import (
     writing_check as _writing_check,
 )
 
-mcp = FastMCP(name="study")
+mcp = FastMCP(
+    name="study",
+    instructions=(
+        "Academic and study work by data, for any field and any language. It carries no subject "
+        "knowledge.\n"
+        "Tools: writing_check, burstiness, study_guide, concept_map, render_document, cite, "
+        "image_search, toolkit, workspace_init, area_add, reference_add, workspace_status.\n"
+        "Work inside a workspace: workspace_init scaffolds one (conventions, styles, memory and "
+        "per-area knowledge and bibliography) and writes its own CLAUDE.md; area_add adds a "
+        "subject to it. The external dependencies live outside this server -- toolkit is the "
+        "catalog of what to install (pandoc, LaTeX, Marp, diagram CLIs, research MCPs) and which "
+        "ones need a key. Read study_guide before writing or building anything."
+    ),
+)
 
 
 def _scratch(prefix: str, out_dir: str = "", suffix: str = "png") -> Path:

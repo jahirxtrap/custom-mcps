@@ -1,7 +1,7 @@
 [project]
 name = "study-mcp"
 version = "0.1.0"
-description = "Area-agnostic study MCP: anti-AI writing checks, APA citations, concept maps, workspaces."
+description = "Area-agnostic study MCP: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, workspaces."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

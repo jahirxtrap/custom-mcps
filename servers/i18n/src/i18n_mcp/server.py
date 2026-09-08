@@ -12,7 +12,15 @@ from i18nkit import (
     locale_diff as _locale_diff,
 )
 
-mcp = FastMCP(name="i18n")
+mcp = FastMCP(
+    name="i18n",
+    instructions=(
+        "Translation locales kept in sync, complete and consistent. Flat or nested JSON, "
+        "framework-agnostic, read-only: it reports, it never edits a locale.\n"
+        "Tools: locale_diff, completeness, check_format, find_unused, i18n_guide.\n"
+        "Reach for it whenever locale files change or a language is added."
+    ),
+)
 
 
 @mcp.tool

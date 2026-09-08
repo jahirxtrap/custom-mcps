@@ -1,7 +1,7 @@
 [project]
 name = "devkit-mcp"
 version = "0.1.0"
-description = "Personal MCP server for development conventions: guides, commit style, hardcoded/dup checks."
+description = "MCP server for development conventions: 17 guide topics plus commit, hardcoding, spacing, format and duplication checks."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

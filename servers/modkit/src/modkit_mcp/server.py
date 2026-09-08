@@ -15,7 +15,17 @@ from loaderkit import (
     mod_info as _mod_info,
 )
 
-mcp = FastMCP(name="modkit")
+mcp = FastMCP(
+    name="modkit",
+    instructions=(
+        "Multiloader Minecraft mod workspaces (fabric / forge / neoforge): inspect and validate. "
+        "Domain-specific but project-agnostic, it scans whatever tree it is given. Read-only.\n"
+        "Tools: list_mods, mod_info, loader_sync, check_structure, check_json, check_access, "
+        "find_symbol, decompile_guide.\n"
+        "Reach for it before and after editing a mod; loader_sync is what catches code that "
+        "drifted between the three loaders."
+    ),
+)
 
 
 @mcp.tool

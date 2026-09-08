@@ -14,7 +14,17 @@ from convkit import (
 )
 from fastmcp import FastMCP
 
-mcp = FastMCP(name="devkit")
+mcp = FastMCP(
+    name="devkit",
+    instructions=(
+        "Development conventions and the checks that verify them, across stacks "
+        "(Java, Kotlin/Compose, TypeScript/React, Python, GDScript). Read-only.\n"
+        "Tools: conventions, commit_style, commit_context, find_hardcoded, find_inconsistent, "
+        "find_format, find_duplication.\n"
+        "Read conventions before writing code and again before committing; run the find_* checks "
+        "over the code you touched."
+    ),
+)
 
 
 @mcp.tool

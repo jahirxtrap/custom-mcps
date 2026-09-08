@@ -18,7 +18,16 @@ from formkit import (
     render,
 )
 
-mcp = FastMCP(name="buildkit")
+mcp = FastMCP(
+    name="buildkit",
+    instructions=(
+        "Low-poly 3D designed by data and previewed before anything reaches an engine. "
+        "Engine-agnostic spec; Godot is only the handoff format.\n"
+        "Tools: design_guide, search_reference, render_preview, check, godot_def.\n"
+        "Reach for it when blocking out a building, prop or tree. Read design_guide first, and "
+        "preview before handing anything over."
+    ),
+)
 
 
 def _scratch(prefix: str, out_dir: str = "") -> Path:

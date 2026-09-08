@@ -26,7 +26,7 @@ servers in `servers/` — so adding a server is a single new folder.
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 
 `pixelart`, `sfx`, `i18n`, `study` and `buildkit` are agnostic; `modkit` (multiloader mod dev) and
-`devkit` (your conventions) are personal/domain-specific. All are registered the same way.
+`devkit` (conventions and their checks) are domain-specific. All are registered the same way.
 
 ## pixelart
 
