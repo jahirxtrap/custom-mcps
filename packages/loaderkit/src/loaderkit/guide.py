@@ -65,8 +65,11 @@ registries, capabilities) is NOT in it. Do both:
 4. Verify: search_mod_code for "PayloadRegistrar|RegisterPayloadHandlersEvent" must return hits."""
 
 _MIGRATION = """## Version migration references
-- NeoForge primers (Java/API breaks), per target version:
-  https://github.com/ChampionAsh5357/neoforged-github/blob/update/<v>/primers/<v>/index.md
+- NeoForge primers (Java/API breaks), per target version. The branch prefix is NOT stable, try BOTH:
+  https://github.com/ChampionAsh5357/neoforged-github/blob/port/<v>/primers/<v>/index.md     (26.2 onward)
+  https://github.com/ChampionAsh5357/neoforged-github/blob/update/<v>/primers/<v>/index.md   (26.1 and earlier)
+  A 404 on one prefix is not proof of absence. If both miss, list the real branches:
+  git ls-remote --heads https://github.com/ChampionAsh5357/neoforged-github.git
 - misode changelog (data/pack/registry/component changes; check on EVERY bump, incl. minor & snapshots):
   https://misode.github.io/versions/?id=<v>&tab=changelog
 - mcasset.cloud (vanilla assets; copy Mojang phrasing per locale for translation):
