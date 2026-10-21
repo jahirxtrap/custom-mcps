@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "devkit": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/devkit", "devkit-mcp"]
+    }
+  }
+}

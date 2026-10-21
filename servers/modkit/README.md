@@ -50,3 +50,11 @@ mcmodding-mcp is intentionally not installed: it is optional, rarely needed, and
 uv run modkit-mcp                    # run over stdio
 uv run python scripts/register.py    # register every server (this one included) at user scope
 ```
+
+## Install as a Claude Code plugin
+
+```
+/plugin install modkit --marketplace jahirxtrap/custom-mcps
+```
+
+The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). The minecraft-dev setup above is still its own step. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

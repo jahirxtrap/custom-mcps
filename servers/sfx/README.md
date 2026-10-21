@@ -68,3 +68,11 @@ own setup `uv run python servers/sfx/setup.py`. `sfx_guide` repeats this under "
 uv run sfx-mcp                       # run over stdio
 uv run python scripts/register.py    # register every server (this one included) at user scope
 ```
+
+## Install as a Claude Code plugin
+
+```
+/plugin install sfx --marketplace jahirxtrap/custom-mcps
+```
+
+The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

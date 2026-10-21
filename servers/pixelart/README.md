@@ -72,3 +72,11 @@ uv run pixelart-mcp                 # run the server over stdio
 # register for every Claude Code session (user scope)
 claude mcp add pixelart -s user -- uv run --project /path/to/custom-mcps pixelart-mcp
 ```
+
+## Install as a Claude Code plugin
+
+```
+/plugin install pixelart --marketplace jahirxtrap/custom-mcps
+```
+
+The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

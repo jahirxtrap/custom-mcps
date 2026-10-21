@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "i18n": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/i18n", "i18n-mcp"]
+    }
+  }
+}

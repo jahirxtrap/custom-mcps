@@ -49,3 +49,11 @@ designs and previews that spec, and `godot_def` emits it in the same shape.
 line. The server stays UI-agnostic; showing the image is the host agent's job.
 
 See [`packages/formkit`](../../packages/formkit) for the underlying library.
+
+## Install as a Claude Code plugin
+
+```
+/plugin install buildkit --marketplace jahirxtrap/custom-mcps
+```
+
+The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

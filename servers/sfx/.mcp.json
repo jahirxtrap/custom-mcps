@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sfx": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/sfx", "sfx-mcp"]
+    }
+  }
+}

@@ -9,13 +9,22 @@ host app dependency. Shared code lives in `packages/`, servers in `servers/`.
 
 ```
 custom-mcps/                      # uv workspace root (virtual project, package = false)
+├── .claude-plugin/marketplace.json   # the plugin marketplace: one entry per server
 ├── packages/<lib>/               # shared libraries (src layout, py.typed, hatchling)
 │   └── src/<lib>/
 └── servers/<name>/               # MCP servers (own pyproject + [project.scripts] + README)
+    ├── .claude-plugin/plugin.json    # the server as a Claude Code plugin
+    ├── .mcp.json                 # what the plugin launches: uvx from this repo's GitHub
     └── src/<pkg>_mcp/
         ├── server.py             # FastMCP instance + @mcp.tool tools + main()
         └── __main__.py           # python -m entry
 ```
+
+- **Plugin marketplace.** Every server is also a Claude Code plugin (author `jahirtrap`; `jahirxtrap`
+  is only the GitHub user). Its `.mcp.json` runs `uvx --from git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/<name> <name>-mcp`:
+  uvx resolves the workspace packages from the clone, the first start installs (8-12 s), a cached one
+  takes 2-3 s. The root form (no `#subdirectory`) fails to build: the root is a virtual project.
+  `tests/test_marketplace.py` keeps `plugin.json`, `.mcp.json`, `marketplace.json` and `pyproject.toml` in agreement.
 
 - **Transport.** Every server is **stdio** (`mcp.run()`); the client launches the process
   on demand and tears it down on close. No port, no FastAPI/uvicorn, nothing long-running.
@@ -51,6 +60,7 @@ uv run pytest               # tests (tests/)
 uv run ruff check .         # lint
 uv run <name>-mcp           # run a server over stdio
 uv run python scripts/register.py   # register every server with Claude Code (user scope)
+claude plugin validate .            # the plugin marketplace (and claude plugin validate servers/<name> per plugin)
 ```
 
 Register a server for every Claude Code session (`uv sync` once first; `--no-sync` keeps each
@@ -70,7 +80,13 @@ claude mcp add <name> -s user -- uv run --no-sync --project <abs-repo-path> <nam
    what it does, a `Tools:` line naming every tool, and when to reach for it.
    `tests/test_server_instructions.py` fails if a server has none or forgets a tool there.
 3. Reuse `pixellib` or add a package under `packages/`; wire it with `[tool.uv.sources]`.
-4. `uv sync`, add tests under `tests/`, update both READMEs and the table above, then register it.
+4. Make it a plugin: `servers/<name>/.claude-plugin/plugin.json` (name, version as in its
+   `pyproject.toml`, description, author `jahirtrap`, homepage, repository, license, keywords),
+   `servers/<name>/.mcp.json` (the uvx line above) and its entry in `.claude-plugin/marketplace.json`
+   (same description and version, `source: "./servers/<name>"`, keywords as `tags`). Add the
+   one-step install line to its README.
+5. `uv sync`, add tests under `tests/`, update both READMEs and the table above, run
+   `claude plugin validate .`, then register it.
 
 ## The pixelart model (reference for new graphics servers)
 
@@ -108,4 +124,5 @@ Never hardcode a client, URL, or shared folder into a server.
    readers explicitly: `git --no-pager`, `ffmpeg -nostdin`.
 8. **Register via the venv entry point, not `uv run`.** `scripts/register.py` points each server at
    `.venv/Scripts/<name>-mcp`, so launch never re-syncs/rebuilds (which stalls and contends on
-   locked entry points). Run `uv sync` once after dependency changes.
+   locked entry points). Run `uv sync` once after dependency changes. This is the local route;
+   the plugin route (uvx from GitHub) is for installs without a checkout. Use one per server.

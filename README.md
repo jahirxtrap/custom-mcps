@@ -13,6 +13,10 @@ client launches a server on demand and tears it down when the turn is done.
 It's a [uv](https://docs.astral.sh/uv/) workspace — shared libraries in `packages/`,
 servers in `servers/` — so adding a server is a single new folder.
 
+It's also a Claude Code **plugin marketplace**: every server installs as a plugin in one step
+(see [Install as a Claude Code plugin](#install-as-a-claude-code-plugin)), while it stays a
+standalone server any MCP client can register.
+
 ## Servers
 
 | Server | What it does |
@@ -201,6 +205,7 @@ It fits a procedural Godot pipeline (spec `def` → primitives), the same shape 
 
 ```
 custom-mcps/
+├── .claude-plugin/  # marketplace.json (every server as a Claude Code plugin)
 ├── packages/
 │   ├── pixellib/    # pixel-art drawing library — grid, ramps, shading, outline, preview
 │   ├── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
@@ -253,7 +258,7 @@ claude mcp add pixelart -s user -- uv run --no-sync --project /path/to/custom-mc
 Or run it straight from the repo, without a local checkout:
 
 ```bash
-claude mcp add pixelart -s user -- uvx --from git+https://github.com/jahirxtrap/custom-mcps pixelart-mcp
+claude mcp add pixelart -s user -- uvx --from "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/pixelart" pixelart-mcp
 ```
 
 Or register **every** server in the workspace at once — it discovers each one under
@@ -266,12 +271,34 @@ uv sync                              # once, so the venv entry points exist
 uv run python scripts/register.py
 ```
 
+## Install as a Claude Code plugin
+
+Every server is also a plugin in this repository's marketplace (`custom-mcps`), so it installs
+in one step, with no checkout and no `claude mcp add`:
+
+```
+/plugin install devkit --marketplace jahirxtrap/custom-mcps
+```
+
+Or add the marketplace once and install the ones you want:
+
+```bash
+claude plugin marketplace add jahirxtrap/custom-mcps
+claude plugin install devkit@custom-mcps
+```
+
+The plugin starts its server with `uvx`, straight from GitHub (it needs
+[uv](https://docs.astral.sh/uv/)): the first start installs it (about 10 s), later ones take about
+2 s. Its tools show up as `mcp__plugin_devkit_devkit__*`. Use one route per server, the plugin or
+`claude mcp add`, not both. The per-server setup scripts above are still their own step.
+
 ## Add a server
 
 Drop a folder under `servers/<name>/` with its own `pyproject.toml` and a
 `FastMCP` instance exposing `main()`, reuse `pixellib` (or add a package under
-`packages/`), run `uv sync`, and register it. The contributor guide lives in
-[CLAUDE.md](CLAUDE.md).
+`packages/`), run `uv sync`, and register it. Give it a `.claude-plugin/plugin.json`, a
+`.mcp.json` and its entry in `.claude-plugin/marketplace.json` too (the test suite checks the three
+agree). The contributor guide lives in [CLAUDE.md](CLAUDE.md).
 
 ## License
 

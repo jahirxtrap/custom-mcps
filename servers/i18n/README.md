@@ -50,3 +50,11 @@ skipped.
 ## Output contract
 
 Every tool returns structured JSON (it reports; it never rewrites translations).
+
+## Install as a Claude Code plugin
+
+```
+/plugin install i18n --marketplace jahirxtrap/custom-mcps
+```
+
+The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).
