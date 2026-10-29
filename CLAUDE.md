@@ -51,6 +51,8 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `study_guide`, `concept_map`, `render_document`, `cite`, `image_search`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
 | library | `formkit` | Low-poly 3D toolkit: spec->primitives compile, software iso/silhouette renderer (Pillow+NumPy), design principles, Godot def. |
 | server | `buildkit` | Design low-poly 3D structures by data (agnostic). Tools: `design_guide`, `search_reference`, `render_preview`, `check`, `godot_def`. |
+| library | `tokenkit` | Design tokens read from any theme shape, paired from real code (naming, variant maps, classes used together) and measured against WCAG; no deps. |
+| server | `uikit` | Interface design measured against WCAG (agnostic); read-only. Tools: `design_guide`, `read_tokens`, `find_pairs`, `check_contrast`, `contrast`. |
 
 ## Commands
 

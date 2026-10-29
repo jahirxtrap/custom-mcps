@@ -1,0 +1,23 @@
+[project]
+name = "uikit-mcp"
+version = "0.1.0"
+description = "Standalone MCP server for interface design: tokens, real pairs and WCAG contrast."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "jahirtrap" }]
+keywords = ["mcp", "design", "contrast", "wcag", "accessibility", "fastmcp"]
+dependencies = ["fastmcp>=3.4", "tokenkit"]
+
+[project.scripts]
+uikit-mcp = "uikit_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uikit_mcp"]
+
+[tool.uv.sources]
+tokenkit = { workspace = true }

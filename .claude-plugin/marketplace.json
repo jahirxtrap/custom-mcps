@@ -1,6 +1,6 @@
 {
   "name": "custom-mcps",
-  "description": "Standalone MCP servers by jahirtrap (pixel art, sound effects, conventions, translations, study, 3D design, mod workspaces), each installable as a Claude Code plugin.",
+  "description": "Standalone MCP servers by jahirtrap (pixel art, sound effects, conventions, translations, study, 3D design, interface contrast, mod workspaces), each installable as a Claude Code plugin.",
   "owner": {
     "name": "jahirtrap",
     "url": "https://github.com/jahirxtrap"
@@ -61,6 +61,14 @@
       "source": "./servers/study",
       "category": "Productivity",
       "tags": ["mcp", "study", "writing", "citations"]
+    },
+    {
+      "name": "uikit",
+      "description": "Interface design measured, not argued: design tokens, the color pairs the code really uses, and WCAG contrast.",
+      "version": "0.1.0",
+      "source": "./servers/uikit",
+      "category": "Development",
+      "tags": ["mcp", "design", "contrast", "wcag", "accessibility"]
     }
   ]
 }

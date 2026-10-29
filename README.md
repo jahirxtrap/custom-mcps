@@ -28,9 +28,10 @@ standalone server any MCP client can register.
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
 | **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
+| **uikit** | Interface design measured against WCAG: tokens, the color pairs the code really uses, contrast. |
 
-`pixelart`, `sfx`, `i18n`, `study` and `buildkit` are agnostic; `modkit` (multiloader mod dev) and
-`devkit` (conventions and their checks) are domain-specific. All are registered the same way.
+`pixelart`, `sfx`, `i18n`, `study`, `buildkit` and `uikit` are agnostic; `modkit` (multiloader mod
+dev) and `devkit` (conventions and their checks) are domain-specific. All are registered the same way.
 
 ## pixelart
 
@@ -201,6 +202,33 @@ does that.
 It fits a procedural Godot pipeline (spec `def` → primitives), the same shape as a project's own
 `house_builder`. See [`servers/buildkit`](servers/buildkit) and [`packages/formkit`](packages/formkit).
 
+## uikit
+
+**uikit** is interface design **measured, not argued**. It reads a theme's design tokens, works out
+which colors the code really puts together, and checks those pairs against WCAG. Framework-agnostic,
+dependency-free and read-only.
+
+The contrast maths is four lines; the reason this exists is the other half. A report is only worth
+reading when the pairs in it are the ones the interface actually draws, and those are written in the
+code, not in a table somebody typed. So the pairs come from three places: the **naming** (a token
+called `on-surface` says where it belongs), a **variant map** (in a `tva`/`cva` block, the variant
+that styles a surface and the one that styles its text), and **classes used together** in the same
+attribute.
+
+- **read_tokens** reads the three shapes a theme ships in: a source object (`light: {...}` /
+  `dark: {...}`), a theme JSON (a `colors` map, as a pack carries it) and CSS custom properties.
+  Colors may be `#hex`, `rgb()`, `hsl()`, `oklch()` or `oklab()`.
+- **find_pairs** reports which pairs are in play and **how each one was found**, with file and line.
+- **check_contrast** measures every pair of every theme: 4.5:1 for text, 3:1 for large text and for
+  anything that reads as a border. A translucent token is composited onto what sits behind it, so a
+  `#ffffff0d` hover is measured as the eye sees it; decorative tokens (logo, shadow, scrollbar) are
+  skipped, because a brand mark owes no ratio.
+- **design_guide** carries the usability heuristics, the psychology laws each from its primary
+  source, and the thresholds behind the numbers (WCAG 2.2, Material).
+- **contrast** is the one-off: two colors in, the ratio and the AA/AAA verdicts out.
+
+See [`servers/uikit`](servers/uikit) and [`packages/tokenkit`](packages/tokenkit).
+
 ## Structure
 
 ```
@@ -213,7 +241,8 @@ custom-mcps/
 │   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
 │   ├── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
 │   ├── studykit/    # study library — writing checks, citations, concept maps, PDF typesetting, workspace
-│   └── formkit/     # 3D design library — spec->primitives, iso/silhouette renderer, principles
+│   ├── formkit/     # 3D design library — spec->primitives, iso/silhouette renderer, principles
+│   └── tokenkit/    # design-token library — theme readers, pair detection, WCAG contrast
 ├── servers/
 │   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
 │   ├── sfx/         # MCP server — synthesize sound effects
@@ -221,7 +250,8 @@ custom-mcps/
 │   ├── i18n/        # MCP server — keep translation locales in sync
 │   ├── devkit/      # MCP server — development conventions + checks
 │   ├── study/       # MCP server — academic study work by data
-│   └── buildkit/    # MCP server — design low-poly 3D structures by data
+│   ├── buildkit/    # MCP server — design low-poly 3D structures by data
+│   └── uikit/       # MCP server — interface design measured against WCAG
 ├── scripts/         # register.py (register every server at user scope)
 └── tests/           # workspace test suite (pytest)
 ```

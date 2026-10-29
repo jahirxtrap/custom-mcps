@@ -1,0 +1,13 @@
+{
+  "name": "uikit",
+  "version": "0.1.0",
+  "description": "Interface design measured, not argued: design tokens, the color pairs the code really uses, and WCAG contrast.",
+  "author": {
+    "name": "jahirtrap",
+    "url": "https://github.com/jahirxtrap"
+  },
+  "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/uikit",
+  "repository": "https://github.com/jahirxtrap/custom-mcps",
+  "license": "MIT",
+  "keywords": ["mcp", "design", "contrast", "wcag", "accessibility"]
+}
