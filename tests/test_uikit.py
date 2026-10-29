@@ -27,7 +27,17 @@ def test_uikit_registers_tools():
         "design_guide",
         "find_pairs",
         "read_tokens",
+        "review_context",
     ]
+
+
+def test_review_context_tool(tmp_path):
+    (tmp_path / "Panel.tsx").write_text(
+        "<Button onPress={() => deleteItem(id)}>x</Button>\n", encoding="utf-8"
+    )
+    report = json.loads(_call("review_context", {"path": str(tmp_path)}))
+    assert report["signals"]["destructive_without_confirm"]["count"] == 1
+    assert report["total"] >= 1
 
 
 def test_contrast_tool():

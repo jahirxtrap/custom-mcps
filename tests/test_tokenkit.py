@@ -16,6 +16,7 @@ from tokenkit import (
     parse,
     read_theme,
     read_tokens,
+    review_context,
     to_hex,
     used_pairs,
     variant_pairs,
@@ -186,6 +187,36 @@ def test_contrast_of_two_colors():
     assert report["aa_text"] and report["aaa_text"]
     assert contrast_of("#777777", "#ffffff")["aa_text"] is False
     assert "error" in contrast_of("nope", "#fff")
+
+
+def test_review_context_finds_the_four_signals(tmp_path):
+    _write(tmp_path / "Panel.tsx",
+           '<Button onPress={() => deleteItem(id)}>x</Button>\n'
+           'const save = useMutation(api.save);\n'
+           'return <Text>{error.message}</Text>;\n')
+    _write(tmp_path / "Empty.tsx", '<Box><Text>No hay resultados</Text></Box>\n')
+    signals = review_context(tmp_path)["signals"]
+    assert signals["destructive_without_confirm"]["count"] >= 1
+    assert signals["status_without_feedback"]["count"] >= 1
+    assert signals["raw_error_shown"]["count"] >= 1
+    assert any("No hay resultados" in hit["text"] for hit in signals["text_outside_i18n"]["hits"])
+
+
+def test_review_context_clears_a_line_the_file_answers(tmp_path):
+    _write(tmp_path / "Safe.tsx",
+           'const onDelete = () => removeItem(id);\n'
+           'const busy = isPending;\n'
+           'const ask = () => ConfirmDialog.open();\n'
+           'const save = useMutation(api.save);\n')
+    signals = review_context(tmp_path)["signals"]
+    assert signals["destructive_without_confirm"]["count"] == 0
+    assert signals["status_without_feedback"]["count"] == 0
+
+
+def test_review_context_ignores_translated_text(tmp_path):
+    _write(tmp_path / "Ok.tsx", '<Text>{t("empty.results")}</Text>\n')
+    _write(tmp_path / "i18n" / "es.json", '{"empty": {"results": "No hay resultados"}}\n')
+    assert review_context(tmp_path)["signals"]["text_outside_i18n"]["count"] == 0
 
 
 def test_design_guide_topics_and_aliases():

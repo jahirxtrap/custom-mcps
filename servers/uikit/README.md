@@ -15,6 +15,7 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 | `read_tokens` | Every theme under a path, with its tokens normalized to hex. Reads source objects, theme JSON and CSS variables. |
 | `find_pairs` | Which foreground/background pairs are really in play, and how each one was found. |
 | `check_contrast` | Measures every pair of every theme against WCAG 2.2, failures first. |
+| `review_context` | The evidence a usability review needs, for the four heuristics that leave a trace in the code. |
 | `contrast` | Two colors in, the ratio and the AA/AAA verdicts out. |
 
 ## Why the pairs matter more than the maths
@@ -29,6 +30,24 @@ So the pairs come from the code, three ways:
 - **A variant map ties it:** in a `tva` / `cva` block, the variant that styles a surface and
   the one that styles its text belong together.
 - **The classes appear together:** a `bg-*` and a `text-*` in the same class attribute.
+
+## The heuristics half
+
+Most of Nielsen's ten are a read, not a measurement: no parser decides whether there is an
+accelerator for the frequent user. Four of them do leave a trace, so `review_context` gathers
+it and stops there => the tool supplies the evidence, the reviewer supplies the judgement, the
+same split `commit_context` makes.
+
+| Signal | Heuristic | What it looks for |
+|---|---|---|
+| `status_without_feedback` | 1. Visibility of system status | a mutation in a file with no loading state anywhere |
+| `destructive_without_confirm` | 5. Error prevention | a delete bound to a UI event, with no confirmation in the file |
+| `raw_error_shown` | 9. Recovering from errors | an exception rendered as it came |
+| `text_outside_i18n` | 2. The user's language | copy in markup that never passes through `t()` |
+
+It is deliberately conservative: the file is judged as a whole, so a confirmation or a spinner
+elsewhere in it clears the line, and anything that reads as code is dropped. Measured on two real
+front ends it reports single digits, which is the point => a list nobody reads finds nothing.
 
 ## Usage
 

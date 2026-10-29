@@ -23,7 +23,8 @@ _TAILWIND_WORDS = {
 }
 
 
-def _files(base: Path):
+def source_files(base: Path):
+    """Every source file under `base`, skipping vendored and generated trees."""
     if base.is_file():
         yield base
         return
@@ -31,9 +32,12 @@ def _files(base: Path):
         if entry.name in _SKIP_DIRS:
             continue
         if entry.is_dir():
-            yield from _files(entry)
+            yield from source_files(entry)
         elif entry.suffix in _SOURCE_EXT:
             yield entry
+
+
+_files = source_files
 
 
 def _token(name: str, prefix: str) -> str | None:

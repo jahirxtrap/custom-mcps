@@ -225,6 +225,10 @@ attribute.
   skipped, because a brand mark owes no ratio.
 - **design_guide** carries the usability heuristics, the psychology laws each from its primary
   source, and the thresholds behind the numbers (WCAG 2.2, Material).
+- **review_context** gathers the evidence for the four heuristics that leave a trace in the code
+  (a mutation with no loading state, a delete with no confirmation, an exception rendered raw,
+  copy outside i18n) and stops there — the tool supplies the evidence, the reviewer the judgement,
+  the same split `commit_context` makes. The other six are a read, not a measurement.
 - **contrast** is the one-off: two colors in, the ratio and the AA/AAA verdicts out.
 
 See [`servers/uikit`](servers/uikit) and [`packages/tokenkit`](packages/tokenkit).

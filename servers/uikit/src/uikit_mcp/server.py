@@ -10,6 +10,7 @@ from tokenkit import (
     design_guide as _design_guide,
     find_pairs as _find_pairs,
     read_tokens as _read_tokens,
+    review_context as _review_context,
 )
 
 mcp = FastMCP(
@@ -18,11 +19,12 @@ mcp = FastMCP(
         "Interface design measured, not argued: it reads a theme's design tokens, works out "
         "which colors the code actually puts together, and checks them against WCAG. "
         "Framework-agnostic and read-only.\n"
-        "Tools: design_guide, read_tokens, find_pairs, check_contrast, contrast.\n"
+        "Tools: design_guide, read_tokens, find_pairs, check_contrast, review_context, contrast.\n"
         "Reach for it when building or reviewing a UI, adding a theme, or picking a color. "
         "Run check_contrast on the token file with the source folder, so the pairs come from "
-        "variant maps and real class usage instead of a guessed table; read design_guide for "
-        "the usability heuristics and the thresholds behind the numbers."
+        "variant maps and real class usage instead of a guessed table; run review_context for "
+        "the heuristics that leave a trace in the code, and read design_guide for the rubric "
+        "and the thresholds behind the numbers."
     ),
 )
 
@@ -67,6 +69,18 @@ def check_contrast(path: str, src: str = "", prefix: str = "", include_decorativ
     measuring. Decorative tokens (logo, shadow, scrollbar, hover) are skipped unless
     `include_decorative`. Returns the failures first, each with its ratio and where it is used."""
     return json.dumps(_check_contrast(path, src or None, prefix, include_decorative))
+
+
+@mcp.tool
+def review_context(path: str) -> str:
+    """Gather the evidence a usability review needs, for the four heuristics that leave a trace
+    in the code: an action with no loading state (visibility of system status), a destructive
+    call with no confirmation nearby (error prevention), an exception rendered as it came
+    (helping the user recover), and user-facing text outside i18n (speaking the user's
+    language). It reports places to look, never verdicts, and clears a line when the file holds
+    the missing piece elsewhere. Walk the hits with design_guide('heuristics') as the rubric;
+    the other six heuristics are read, not measured."""
+    return json.dumps(_review_context(path))
 
 
 @mcp.tool
