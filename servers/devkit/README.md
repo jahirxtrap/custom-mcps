@@ -5,7 +5,7 @@ stacks (Java, Kotlin/Jetpack Compose, TypeScript/React, GDScript, Python). Guide
 follow; tools look at the real code/history. All read-only.
 
 Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
-[`convkit`](../../packages/convkit) library.
+[`convkit`](src/convkit) library.
 
 ## Tools
 
@@ -80,4 +80,4 @@ Every tool returns structured JSON / text and never writes anything.
 /plugin install devkit --marketplace jahirxtrap/custom-mcps
 ```
 
-The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).
+The plugin runs the copy Claude Code installed, with `uvx` (it needs [uv](https://docs.astral.sh/uv/)), and stays on that version until you update the plugin. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

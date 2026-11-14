@@ -10,8 +10,8 @@ client launches a server on demand and tears it down when the turn is done.
 [Any Claude Code client] ──stdio──> [a custom-mcps server, on demand]
 ```
 
-It's a [uv](https://docs.astral.sh/uv/) workspace — shared libraries in `packages/`,
-servers in `servers/` — so adding a server is a single new folder.
+It's a [uv](https://docs.astral.sh/uv/) workspace of servers in `servers/`, each folder carrying
+its own library, so a server and its plugin are a single folder.
 
 It's also a Claude Code **plugin marketplace**: every server installs as a plugin in one step
 (see [Install as a Claude Code plugin](#install-as-a-claude-code-plugin)), while it stays a
@@ -63,7 +63,7 @@ game the art is for. Tools that produce an image return both the picture and a
 `path=` line, so whatever host you're in can show it.
 
 See [`servers/pixelart`](servers/pixelart) for the full spec and tool reference, and
-[`packages/pixellib`](packages/pixellib) for the underlying drawing library.
+[`servers/pixelart/src/pixellib`](servers/pixelart/src/pixellib) for the underlying drawing library.
 
 ## sfx
 
@@ -83,7 +83,7 @@ configurable (format, sample rate, channels, normalization) with sane defaults (
 ogg, 44100, mono). It prefers **ffmpeg** when available and falls back to **soundfile**, so
 it always works.
 
-See [`servers/sfx`](servers/sfx) and [`packages/audiolib`](packages/audiolib).
+See [`servers/sfx`](servers/sfx) and [`servers/sfx/src/audiolib`](servers/sfx/src/audiolib).
 
 ## modkit
 
@@ -105,7 +105,7 @@ tools are read-only.
   step), vanilla source, and migration references (primers, misode, mcasset). It points; it never
   decompiles itself.
 
-See [`servers/modkit`](servers/modkit) and [`packages/loaderkit`](packages/loaderkit).
+See [`servers/modkit`](servers/modkit) and [`servers/modkit/src/loaderkit`](servers/modkit/src/loaderkit).
 
 ## i18n
 
@@ -122,7 +122,7 @@ nested objects to dot-paths so both compare the same way. Read-only.
   (dead), with configurable `t()`/`tr()` patterns.
 - **i18n_guide** carries the conventions (no hardcoded strings, locales in sync, key naming).
 
-See [`servers/i18n`](servers/i18n) and [`packages/i18nkit`](packages/i18nkit).
+See [`servers/i18n`](servers/i18n) and [`servers/i18n/src/i18nkit`](servers/i18n/src/i18nkit).
 
 ## devkit
 
@@ -145,7 +145,7 @@ tools look at the real code and history. Read-only.
 
 The conventions were extracted from your real projects (backstube-web, cconnect, vorenth, mods).
 
-See [`servers/devkit`](servers/devkit) and [`packages/convkit`](packages/convkit).
+See [`servers/devkit`](servers/devkit) and [`servers/devkit/src/convkit`](servers/devkit/src/convkit).
 
 ## study
 
@@ -179,7 +179,7 @@ tells you exactly what to install.
 It carries **no subject knowledge** — you pick the field. `servers/study/setup.py` installs the
 toolkit and writes any API keys to a gitignored `.env`; the server never stores secrets.
 
-See [`servers/study`](servers/study) and [`packages/studykit`](packages/studykit).
+See [`servers/study`](servers/study) and [`servers/study/src/studykit`](servers/study/src/studykit).
 
 ## buildkit
 
@@ -200,7 +200,7 @@ does that.
   (`size`, `height`, `roof_height`, `wall_color`, `door`), otherwise a primitives def + a GDScript builder.
 
 It fits a procedural Godot pipeline (spec `def` → primitives), the same shape as a project's own
-`house_builder`. See [`servers/buildkit`](servers/buildkit) and [`packages/formkit`](packages/formkit).
+`house_builder`. See [`servers/buildkit`](servers/buildkit) and [`servers/buildkit/src/formkit`](servers/buildkit/src/formkit).
 
 ## uikit
 
@@ -231,32 +231,23 @@ attribute.
   the same split `commit_context` makes. The other six are a read, not a measurement.
 - **contrast** is the one-off: two colors in, the ratio and the AA/AAA verdicts out.
 
-See [`servers/uikit`](servers/uikit) and [`packages/tokenkit`](packages/tokenkit).
+See [`servers/uikit`](servers/uikit) and [`servers/uikit/src/tokenkit`](servers/uikit/src/tokenkit).
 
 ## Structure
 
 ```
 custom-mcps/
 ├── .claude-plugin/  # marketplace.json (every server as a Claude Code plugin)
-├── packages/
-│   ├── pixellib/    # pixel-art drawing library — grid, ramps, shading, outline, preview
-│   ├── audiolib/    # sound-effect synthesis library — oscillators, noise, envelopes, I/O
-│   ├── loaderkit/   # multiloader-workspace library — scan, gradle.properties, loader compare, checks
-│   ├── i18nkit/     # translation-health library — parse locales, diff, completeness, placeholders
-│   ├── convkit/     # conventions library — guides, commit style, hardcoded/duplication checks
-│   ├── studykit/    # study library — writing checks, citations, concept maps, PDF typesetting, workspace
-│   ├── formkit/     # 3D design library — spec->primitives, iso/silhouette renderer, principles
-│   └── tokenkit/    # design-token library — theme readers, pair detection, WCAG contrast
-├── servers/
-│   ├── pixelart/    # MCP server — draw / inspect / verify pixel art
-│   ├── sfx/         # MCP server — synthesize sound effects
-│   ├── modkit/      # MCP server — inspect / validate multiloader mod workspaces
-│   ├── i18n/        # MCP server — keep translation locales in sync
-│   ├── devkit/      # MCP server — development conventions + checks
-│   ├── study/       # MCP server — academic study work by data
-│   ├── buildkit/    # MCP server — design low-poly 3D structures by data
-│   └── uikit/       # MCP server — interface design measured against WCAG
-├── scripts/         # register.py (register every server at user scope)
+├── servers/         # each one a server, its library in src/, and a plugin
+│   ├── pixelart/    # draw / inspect / verify pixel art — pixellib: grid, ramps, shading, outline, preview
+│   ├── sfx/         # synthesize sound effects — audiolib: oscillators, noise, envelopes, I/O
+│   ├── modkit/      # inspect / validate multiloader mod workspaces — loaderkit: scan, gradle.properties, loader compare
+│   ├── i18n/        # keep translation locales in sync — i18nkit: parse locales, diff, completeness, placeholders
+│   ├── devkit/      # development conventions + checks — convkit: guides, commit style, hardcoded/duplication checks
+│   ├── study/       # academic study work by data — studykit: writing checks, citations, concept maps, PDFs, workspace
+│   ├── buildkit/    # design low-poly 3D structures — formkit: spec->primitives, iso/silhouette renderer, principles
+│   └── uikit/       # interface design against WCAG — tokenkit: theme readers, pair detection, WCAG contrast
+├── scripts/         # register.py (every server at user scope), pin.py (each plugin's constraints.txt)
 └── tests/           # workspace test suite (pytest)
 ```
 
@@ -321,16 +312,17 @@ claude plugin marketplace add jahirxtrap/custom-mcps
 claude plugin install devkit@custom-mcps
 ```
 
-The plugin starts its server with `uvx`, straight from GitHub (it needs
-[uv](https://docs.astral.sh/uv/)): the first start installs it (about 10 s), later ones take about
-2 s. Its tools show up as `mcp__plugin_devkit_devkit__*`. Use one route per server, the plugin or
+The plugin carries its server and runs the copy Claude Code installed, with `uvx` (it needs
+[uv](https://docs.astral.sh/uv/)), so it stays on the version you installed until you update the
+plugin. The first start installs the third-party packages its `constraints.txt` pins (7 to 10 s);
+later ones take about 2 s. Its tools show up as `mcp__plugin_devkit_devkit__*`. Use one route per server, the plugin or
 `claude mcp add`, not both. The per-server setup scripts above are still their own step.
 
 ## Add a server
 
-Drop a folder under `servers/<name>/` with its own `pyproject.toml` and a
-`FastMCP` instance exposing `main()`, reuse `pixellib` (or add a package under
-`packages/`), run `uv sync`, and register it. Give it a `.claude-plugin/plugin.json`, a
+Drop a folder under `servers/<name>/` with its own `pyproject.toml`, a
+`FastMCP` instance exposing `main()` and its library next to it in `src/`, run `uv sync` and
+`scripts/pin.py`, and register it. Give it a `.claude-plugin/plugin.json`, a
 `.mcp.json` and its entry in `.claude-plugin/marketplace.json` too (the test suite checks the three
 agree). The contributor guide lives in [CLAUDE.md](CLAUDE.md).
 

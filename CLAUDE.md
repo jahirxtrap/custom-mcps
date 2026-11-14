@@ -3,28 +3,33 @@
 A personal collection of **standalone MCP servers** (most engine-agnostic, some
 domain-specific), managed as a [uv](https://docs.astral.sh/uv/) workspace. Each server runs on its own over **stdio**
 and is registered at user scope so every Claude Code client can use it — there is no
-host app dependency. Shared code lives in `packages/`, servers in `servers/`.
+host app dependency. Each server lives in `servers/<name>/` with its own library, and that
+folder is also its plugin.
 
 ## Architecture
 
 ```
 custom-mcps/                      # uv workspace root (virtual project, package = false)
 ├── .claude-plugin/marketplace.json   # the plugin marketplace: one entry per server
-├── packages/<lib>/               # shared libraries (src layout, py.typed, hatchling)
-│   └── src/<lib>/
-└── servers/<name>/               # MCP servers (own pyproject + [project.scripts] + README)
+└── servers/<name>/               # one server = one plugin (own pyproject + [project.scripts] + README)
     ├── .claude-plugin/plugin.json    # the server as a Claude Code plugin
-    ├── .mcp.json                 # what the plugin launches: uvx from this repo's GitHub
-    └── src/<pkg>_mcp/
-        ├── server.py             # FastMCP instance + @mcp.tool tools + main()
-        └── __main__.py           # python -m entry
+    ├── .mcp.json                 # what the plugin launches: its own installed copy
+    ├── constraints.txt           # third-party versions pinned from uv.lock (scripts/pin.py)
+    └── src/
+        ├── <pkg>_mcp/
+        │   ├── server.py         # FastMCP instance + @mcp.tool tools + main()
+        │   └── __main__.py       # python -m entry
+        └── <lib>/                # its library (py.typed), packaged in the same wheel
 ```
 
 - **Plugin marketplace.** Every server is also a Claude Code plugin (author `jahirtrap`; `jahirxtrap`
-  is only the GitHub user). Its `.mcp.json` runs `uvx --from git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/<name> <name>-mcp`:
-  uvx resolves the workspace packages from the clone, the first start installs (8-12 s), a cached one
-  takes 2-3 s. The root form (no `#subdirectory`) fails to build: the root is a virtual project.
-  `tests/test_marketplace.py` keeps `plugin.json`, `.mcp.json`, `marketplace.json` and `pyproject.toml` in agreement.
+  is only the GitHub user). The plugin carries the server: its `.mcp.json` runs
+  `uvx --from ${CLAUDE_PLUGIN_ROOT} --constraints ${CLAUDE_PLUGIN_ROOT}/constraints.txt <name>-mcp`,
+  the copy Claude Code installed, so it stays on that version until the plugin is updated, and
+  nothing is fetched from GitHub when it starts. The first start installs the pinned third-party
+  packages (7-10 s); later ones take about 2 s. A server needs nothing outside its folder: no
+  workspace sources, its library inside `src/`. `tests/test_marketplace.py` keeps `plugin.json`,
+  `.mcp.json`, `marketplace.json`, `pyproject.toml` and `constraints.txt` in agreement.
 
 - **Transport.** Every server is **stdio** (`mcp.run()`); the client launches the process
   on demand and tears it down on close. No port, no FastAPI/uvicorn, nothing long-running.
@@ -62,6 +67,7 @@ uv run pytest               # tests (tests/)
 uv run ruff check .         # lint
 uv run <name>-mcp           # run a server over stdio
 uv run python scripts/register.py   # register every server with Claude Code (user scope)
+uv run python scripts/pin.py        # rewrite each plugin's constraints.txt after uv.lock changes
 claude plugin validate .            # the plugin marketplace (and claude plugin validate servers/<name> per plugin)
 ```
 
@@ -81,14 +87,16 @@ claude mcp add <name> -s user -- uv run --no-sync --project <abs-repo-path> <nam
    client that has none of this repo's docs still knows what the server is for. Three lines:
    what it does, a `Tools:` line naming every tool, and when to reach for it.
    `tests/test_server_instructions.py` fails if a server has none or forgets a tool there.
-3. Reuse `pixellib` or add a package under `packages/`; wire it with `[tool.uv.sources]`.
+3. Its library goes in `src/<lib>/` beside `src/<pkg>_mcp/` and in the wheel's `packages`; its
+   dependencies go in the server's own `dependencies`. Nothing outside the folder: the plugin is a copy of it.
 4. Make it a plugin: `servers/<name>/.claude-plugin/plugin.json` (name, version as in its
    `pyproject.toml`, description, author `jahirtrap`, homepage, repository, license, keywords),
    `servers/<name>/.mcp.json` (the uvx line above) and its entry in `.claude-plugin/marketplace.json`
    (same description and version, `source: "./servers/<name>"`, keywords as `tags`). Add the
    one-step install line to its README.
-5. `uv sync`, add tests under `tests/`, update both READMEs and the table above, run
-   `claude plugin validate .`, then register it.
+5. `uv sync`, `scripts/pin.py`, add tests under `tests/`, update both READMEs and the table above, run
+   `claude plugin validate .`, then register it. Every change to a server bumps its version (pyproject,
+   `plugin.json`, marketplace entry): that is what an installed plugin updates to.
 
 ## The pixelart model (reference for new graphics servers)
 
@@ -127,4 +135,4 @@ Never hardcode a client, URL, or shared folder into a server.
 8. **Register via the venv entry point, not `uv run`.** `scripts/register.py` points each server at
    `.venv/Scripts/<name>-mcp`, so launch never re-syncs/rebuilds (which stalls and contends on
    locked entry points). Run `uv sync` once after dependency changes. This is the local route;
-   the plugin route (uvx from GitHub) is for installs without a checkout. Use one per server.
+   the plugin route (the installed copy) is for installs without a checkout. Use one per server.

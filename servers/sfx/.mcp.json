@@ -2,7 +2,7 @@
   "mcpServers": {
     "sfx": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/sfx", "sfx-mcp"]
+      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}", "--constraints", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "sfx-mcp"]
     }
   }
 }

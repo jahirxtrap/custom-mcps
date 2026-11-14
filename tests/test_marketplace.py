@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import json
 import tomllib
+from importlib import util
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
+PIN_SPEC = util.spec_from_file_location("pin", ROOT / "scripts" / "pin.py")
+PIN = util.module_from_spec(PIN_SPEC)
+PIN_SPEC.loader.exec_module(PIN)
 AUTHOR = "jahirtrap"
 REPOSITORY = "https://github.com/jahirxtrap/custom-mcps"
 SERVERS = sorted(path.name for path in (ROOT / "servers").iterdir() if (path / "pyproject.toml").is_file())
@@ -47,10 +51,27 @@ def test_plugin_manifest_matches_its_server(name):
 
 
 @pytest.mark.parametrize("name", SERVERS)
-def test_plugin_launches_its_own_server_from_the_repository(name):
+def test_plugin_launches_its_installed_copy(name):
     launched = _read_json(ROOT / "servers" / name / ".mcp.json")["mcpServers"]
     script = next(iter(_project(name)["scripts"]))
+    installed = "${CLAUDE_PLUGIN_ROOT}"
 
-    assert launched == {
-        name: {"command": "uvx", "args": ["--from", f"git+{REPOSITORY}#subdirectory=servers/{name}", script]}
-    }
+    constraints = f"{installed}/{PIN.CONSTRAINTS}"
+
+    assert launched == {name: {"command": "uvx", "args": ["--from", installed, "--constraints", constraints, script]}}
+
+
+@pytest.mark.parametrize("name", SERVERS)
+def test_plugin_needs_nothing_outside_its_folder(name):
+    server = ROOT / "servers" / name
+    tool = tomllib.loads((server / "pyproject.toml").read_text(encoding="utf-8"))["tool"]
+
+    assert "sources" not in tool.get("uv", {})
+    assert all((server / package).is_dir() for package in tool["hatch"]["build"]["targets"]["wheel"]["packages"])
+
+
+@pytest.mark.parametrize("name", SERVERS)
+def test_plugin_pins_what_the_lock_pins(name):
+    server = ROOT / "servers" / name
+
+    assert (server / PIN.CONSTRAINTS).read_text(encoding="utf-8") == PIN.pinned(server)

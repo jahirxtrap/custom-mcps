@@ -88,7 +88,7 @@ reference strings with `cite` or pandoc first, then pass them in.
 `render_document` writes a PDF and returns JSON with its path, format and page count. The server
 stays UI-agnostic; rendering the artifact to a user is the host agent's job.
 
-See [`packages/studykit`](../../packages/studykit) for the underlying library.
+See [`src/studykit`](src/studykit) for the underlying library.
 
 ## Install as a Claude Code plugin
 
@@ -96,4 +96,4 @@ See [`packages/studykit`](../../packages/studykit) for the underlying library.
 /plugin install study --marketplace jahirxtrap/custom-mcps
 ```
 
-The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). Its optional toolkit setup is still its own step. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).
+The plugin runs the copy Claude Code installed, with `uvx` (it needs [uv](https://docs.astral.sh/uv/)), and stays on that version until you update the plugin. Its optional toolkit setup is still its own step. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

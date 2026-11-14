@@ -5,7 +5,7 @@ colors the code really puts together, and checks those pairs against WCAG. Frame
 agnostic and entirely read-only.
 
 Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
-[`tokenkit`](../../packages/tokenkit) library.
+[`tokenkit`](src/tokenkit) library.
 
 ## Tools
 
@@ -74,4 +74,4 @@ unless `include_decorative` is set, because a brand mark owes no contrast ratio.
 
 Every tool returns structured JSON and never writes anything.
 
-See [`packages/tokenkit`](../../packages/tokenkit) for the underlying library.
+See [`src/tokenkit`](src/tokenkit) for the underlying library.

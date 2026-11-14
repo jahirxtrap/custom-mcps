@@ -7,7 +7,7 @@ project, engine or game. The SFX-design principles are embedded, so it needs no 
 skill.
 
 Built on [`fastmcp`](https://gofastmcp.com) on top of the shared
-[`audiolib`](../../packages/audiolib) library (NumPy + Pillow + soundfile, ffmpeg optional).
+[`audiolib`](src/audiolib) library (NumPy + Pillow + soundfile, ffmpeg optional).
 
 ## Tools
 
@@ -75,4 +75,4 @@ uv run python scripts/register.py    # register every server (this one included)
 /plugin install sfx --marketplace jahirxtrap/custom-mcps
 ```
 
-The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).
+The plugin runs the copy Claude Code installed, with `uvx` (it needs [uv](https://docs.astral.sh/uv/)), and stays on that version until you update the plugin. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

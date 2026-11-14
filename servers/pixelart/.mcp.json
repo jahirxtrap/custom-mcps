@@ -2,7 +2,7 @@
   "mcpServers": {
     "pixelart": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/pixelart", "pixelart-mcp"]
+      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}", "--constraints", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "pixelart-mcp"]
     }
   }
 }

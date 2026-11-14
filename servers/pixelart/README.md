@@ -7,7 +7,7 @@ for reference-driven design and sprite animation it points to the complementary
 [pixel-art-sprites](https://github.com/omer-metin/skills-for-antigravity) skill.
 
 Built on [`fastmcp`](https://gofastmcp.com) + [`pillow`](https://python-pillow.org),
-on top of the shared [`pixellib`](../../packages/pixellib) library.
+on top of its [`pixellib`](src/pixellib) library.
 
 ## Tools
 
@@ -79,4 +79,4 @@ claude mcp add pixelart -s user -- uv run --project /path/to/custom-mcps pixelar
 /plugin install pixelart --marketplace jahirxtrap/custom-mcps
 ```
 
-The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).
+The plugin runs the copy Claude Code installed, with `uvx` (it needs [uv](https://docs.astral.sh/uv/)), and stays on that version until you update the plugin. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

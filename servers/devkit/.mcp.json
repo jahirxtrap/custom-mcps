@@ -2,7 +2,7 @@
   "mcpServers": {
     "devkit": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jahirxtrap/custom-mcps#subdirectory=servers/devkit", "devkit-mcp"]
+      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}", "--constraints", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "devkit-mcp"]
     }
   }
 }

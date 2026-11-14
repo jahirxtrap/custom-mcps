@@ -16,7 +16,7 @@ suffix**, so a locale carrying more CLDR forms than the base (Spanish `_many` ag
 which silently breaks the `count` lookup, is.
 
 Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
-[`i18nkit`](../../packages/i18nkit) library.
+[`i18nkit`](src/i18nkit) library.
 
 ## Tools
 
@@ -57,4 +57,4 @@ Every tool returns structured JSON (it reports; it never rewrites translations).
 /plugin install i18n --marketplace jahirxtrap/custom-mcps
 ```
 
-The plugin starts this server with `uvx`, straight from the repository (it needs [uv](https://docs.astral.sh/uv/)). To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).
+The plugin runs the copy Claude Code installed, with `uvx` (it needs [uv](https://docs.astral.sh/uv/)), and stays on that version until you update the plugin. To register it on its own for any MCP client instead, see the [root README](../../README.md#use-it-from-claude-code).

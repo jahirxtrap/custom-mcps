@@ -1,6 +1,6 @@
 {
   "name": "sfx",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Synthesize sound effects (.ogg) by data, any kind, with a waveform image to check them at a glance.",
   "author": {
     "name": "jahirtrap",

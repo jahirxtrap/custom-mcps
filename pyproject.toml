@@ -5,21 +5,13 @@ description = "Personal collection of standalone, engine-agnostic MCP servers."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pixellib",
     "pixelart-mcp",
-    "audiolib",
     "sfx-mcp",
-    "loaderkit",
     "modkit-mcp",
-    "i18nkit",
     "i18n-mcp",
-    "convkit",
     "devkit-mcp",
-    "studykit",
     "study-mcp",
-    "formkit",
     "buildkit-mcp",
-    "tokenkit",
     "uikit-mcp",
 ]
 
@@ -27,24 +19,16 @@ dependencies = [
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*", "servers/*"]
+members = ["servers/*"]
 
 [tool.uv.sources]
-pixellib = { workspace = true }
 pixelart-mcp = { workspace = true }
-audiolib = { workspace = true }
 sfx-mcp = { workspace = true }
-loaderkit = { workspace = true }
 modkit-mcp = { workspace = true }
-i18nkit = { workspace = true }
 i18n-mcp = { workspace = true }
-convkit = { workspace = true }
 devkit-mcp = { workspace = true }
-studykit = { workspace = true }
 study-mcp = { workspace = true }
-formkit = { workspace = true }
 buildkit-mcp = { workspace = true }
-tokenkit = { workspace = true }
 uikit-mcp = { workspace = true }
 
 [dependency-groups]

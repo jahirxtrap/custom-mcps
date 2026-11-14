@@ -9,7 +9,7 @@
     {
       "name": "buildkit",
       "description": "Design low-poly 3D structures by data: principles, references, spec, iso and silhouette preview, Godot def.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/buildkit",
       "category": "Creative",
       "tags": ["mcp", "3d", "low-poly", "godot"]
@@ -17,7 +17,7 @@
     {
       "name": "devkit",
       "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format and duplication.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/devkit",
       "category": "Development",
       "tags": ["mcp", "conventions", "lint", "commits"]
@@ -25,7 +25,7 @@
     {
       "name": "i18n",
       "description": "Keep translation locales in sync, complete and consistent (read-only): key diff, completeness, placeholders, unused keys.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/i18n",
       "category": "Development",
       "tags": ["mcp", "i18n", "translations", "locales"]
@@ -33,7 +33,7 @@
     {
       "name": "modkit",
       "description": "Inspect and validate multiloader Minecraft mod workspaces (Fabric, Forge, NeoForge): list, inspect, loader sync, structure and JSON checks.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/modkit",
       "category": "Development",
       "tags": ["mcp", "minecraft", "modding", "multiloader"]
@@ -41,7 +41,7 @@
     {
       "name": "pixelart",
       "description": "Draw, inspect and verify pixel art by data, any size, with an upscaled preview you can actually read.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/pixelart",
       "category": "Creative",
       "tags": ["mcp", "pixel-art", "sprites", "images"]
@@ -49,7 +49,7 @@
     {
       "name": "sfx",
       "description": "Synthesize sound effects (.ogg) by data, any kind, with a waveform image to check them at a glance.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/sfx",
       "category": "Creative",
       "tags": ["mcp", "audio", "sound-effects", "games"]
@@ -57,7 +57,7 @@
     {
       "name": "study",
       "description": "Academic study work by data: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/study",
       "category": "Productivity",
       "tags": ["mcp", "study", "writing", "citations"]
@@ -65,7 +65,7 @@
     {
       "name": "uikit",
       "description": "Interface design measured, not argued: design tokens, the color pairs the code really uses, and WCAG contrast.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./servers/uikit",
       "category": "Development",
       "tags": ["mcp", "design", "contrast", "wcag", "accessibility"]

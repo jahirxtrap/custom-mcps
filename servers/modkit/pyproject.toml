@@ -1,13 +1,13 @@
 [project]
 name = "modkit-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Personal MCP server for multiloader mod workspaces: list, inspect, sync-check, validate."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "jahirtrap" }]
 keywords = ["mcp", "minecraft", "modding", "multiloader", "fastmcp"]
-dependencies = ["fastmcp>=3.4", "loaderkit"]
+dependencies = ["fastmcp>=3.4"]
 
 [project.scripts]
 modkit-mcp = "modkit_mcp.server:main"
@@ -17,7 +17,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/modkit_mcp"]
-
-[tool.uv.sources]
-loaderkit = { workspace = true }
+packages = ["src/modkit_mcp", "src/loaderkit"]
