@@ -1,6 +1,6 @@
 {
   "name": "sfx",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Synthesize sound effects (.ogg) by data, any kind, with a waveform image to check them at a glance.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/sfx",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "audio", "sound-effects", "games"]
 }

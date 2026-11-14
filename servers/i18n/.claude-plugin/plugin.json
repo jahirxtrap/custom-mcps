@@ -1,6 +1,6 @@
 {
   "name": "i18n",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Keep translation locales in sync, complete and consistent (read-only): key diff, completeness, placeholders, unused keys.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/i18n",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "i18n", "translations", "locales"]
 }

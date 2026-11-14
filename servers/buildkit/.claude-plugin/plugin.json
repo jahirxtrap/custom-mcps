@@ -1,6 +1,6 @@
 {
   "name": "buildkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Design low-poly 3D structures by data: principles, references, spec, iso and silhouette preview, Godot def.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/buildkit",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "3d", "low-poly", "godot"]
 }

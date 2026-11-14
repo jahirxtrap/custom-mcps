@@ -1,6 +1,6 @@
 [project]
 name = "buildkit-mcp"
-version = "0.2.0"
+version = "0.2.1"
 description = "MCP for spec-driven low-poly 3D design: principles, references, preview, check, Godot def."
 readme = "README.md"
 requires-python = ">=3.11"

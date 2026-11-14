@@ -1,6 +1,6 @@
 {
   "name": "modkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Inspect and validate multiloader Minecraft mod workspaces (Fabric, Forge, NeoForge): list, inspect, loader sync, structure and JSON checks.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/modkit",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "minecraft", "modding", "multiloader"]
 }

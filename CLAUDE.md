@@ -90,7 +90,8 @@ claude mcp add <name> -s user -- uv run --no-sync --project <abs-repo-path> <nam
 3. Its library goes in `src/<lib>/` beside `src/<pkg>_mcp/` and in the wheel's `packages`; its
    dependencies go in the server's own `dependencies`. Nothing outside the folder: the plugin is a copy of it.
 4. Make it a plugin: `servers/<name>/.claude-plugin/plugin.json` (name, version as in its
-   `pyproject.toml`, description, author `jahirtrap`, homepage, repository, license, keywords),
+   `pyproject.toml`, description, author `jahirtrap`, homepage, repository, license, `icon` pointing at
+   `./assets/icon.svg`, keywords),
    `servers/<name>/.mcp.json` (the uvx line above) and its entry in `.claude-plugin/marketplace.json`
    (same description and version, `source: "./servers/<name>"`, keywords as `tags`). Add the
    one-step install line to its README.

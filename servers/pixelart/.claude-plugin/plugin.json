@@ -1,6 +1,6 @@
 {
   "name": "pixelart",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Draw, inspect and verify pixel art by data, any size, with an upscaled preview you can actually read.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/pixelart",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "pixel-art", "sprites", "images"]
 }

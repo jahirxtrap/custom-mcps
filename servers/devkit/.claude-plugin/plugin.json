@@ -1,6 +1,6 @@
 {
   "name": "devkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format and duplication.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/devkit",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "conventions", "lint", "commits"]
 }

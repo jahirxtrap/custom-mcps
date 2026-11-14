@@ -1,6 +1,6 @@
 {
   "name": "study",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Academic study work by data: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces.",
   "author": {
     "name": "jahirtrap",
@@ -9,5 +9,6 @@
   "homepage": "https://github.com/jahirxtrap/custom-mcps/tree/master/servers/study",
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
+  "icon": "./assets/icon.svg",
   "keywords": ["mcp", "study", "writing", "citations"]
 }

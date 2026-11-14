@@ -1,6 +1,6 @@
 [project]
 name = "modkit-mcp"
-version = "0.2.0"
+version = "0.2.1"
 description = "Personal MCP server for multiloader mod workspaces: list, inspect, sync-check, validate."
 readme = "README.md"
 requires-python = ">=3.11"

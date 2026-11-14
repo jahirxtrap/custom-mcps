@@ -47,6 +47,8 @@ def test_plugin_manifest_matches_its_server(name):
     assert manifest["author"]["name"] == AUTHOR
     assert manifest["repository"] == REPOSITORY
     assert manifest["homepage"] == f"{REPOSITORY}/tree/master/servers/{name}"
+    assert manifest["icon"] == "./assets/icon.svg"
+    assert (ROOT / "servers" / name / "assets" / "icon.svg").is_file()
     assert entry["source"] == f"./servers/{name}"
 
 
