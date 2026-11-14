@@ -1,6 +1,6 @@
 [project]
 name = "uikit-mcp"
-version = "0.2.1"
+version = "0.2.2"
 description = "Standalone MCP server for interface design: tokens, real pairs and WCAG contrast."
 readme = "README.md"
 requires-python = ">=3.11"

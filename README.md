@@ -312,10 +312,10 @@ claude plugin marketplace add jahirxtrap/custom-mcps
 claude plugin install devkit@custom-mcps
 ```
 
-The plugin carries its server and runs the copy Claude Code installed, with `uvx` (it needs
+The plugin carries its server and runs the copy Claude Code installed, with `uv run` (it needs
 [uv](https://docs.astral.sh/uv/)), so it stays on the version you installed until you update the
-plugin. The first start installs the third-party packages its `constraints.txt` pins (7 to 10 s);
-later ones take about 2 s. Its tools show up as `mcp__plugin_devkit_devkit__*`. Use one route per server, the plugin or
+plugin. The first start installs the third-party packages its `constraints.txt` pins (6 to 13 s);
+later ones, a new version of the plugin included, take about 2 s. Its tools show up as `mcp__plugin_devkit_devkit__*`. Use one route per server, the plugin or
 `claude mcp add`, not both. The per-server setup scripts above are still their own step.
 
 ## Add a server

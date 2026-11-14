@@ -19,17 +19,20 @@ custom-mcps/                      # uv workspace root (virtual project, package 
         ├── <pkg>_mcp/
         │   ├── server.py         # FastMCP instance + @mcp.tool tools + main()
         │   └── __main__.py       # python -m entry
-        └── <lib>/                # its library (py.typed), packaged in the same wheel
+        └── <lib>/                # its library (py.typed); the plugin runs both from src/
 ```
 
 - **Plugin marketplace.** Every server is also a Claude Code plugin (author `jahirtrap`; `jahirxtrap`
   is only the GitHub user). The plugin carries the server: its `.mcp.json` runs
-  `uvx --from ${CLAUDE_PLUGIN_ROOT} --constraints ${CLAUDE_PLUGIN_ROOT}/constraints.txt <name>-mcp`,
-  the copy Claude Code installed, so it stays on that version until the plugin is updated, and
-  nothing is fetched from GitHub when it starts. The first start installs the pinned third-party
-  packages (7-10 s); later ones take about 2 s. A server needs nothing outside its folder: no
-  workspace sources, its library inside `src/`. `tests/test_marketplace.py` keeps `plugin.json`,
-  `.mcp.json`, `marketplace.json`, `pyproject.toml` and `constraints.txt` in agreement.
+  `uv run --no-project --python <requires-python> --with-requirements ${CLAUDE_PLUGIN_ROOT}/constraints.txt python -m <pkg>_mcp`
+  with `PYTHONPATH=${CLAUDE_PLUGIN_ROOT}/src`: the source of the copy Claude Code installed, so it
+  stays on that version until the plugin is updated, and nothing is fetched from GitHub when it starts.
+  Nothing is built either: the environment depends only on the pinned packages, so a new version of
+  the plugin reuses it and starts in about 2 s (4 on the VPS); only the first start of a new set of
+  pins installs them (6-13 s). A plugin that built itself on every new version (`uvx --from`) went past
+  the CLI's 30 s connect limit on the VPS when several updated at once. A server needs nothing outside
+  its folder: no workspace sources, its library inside `src/`. `tests/test_marketplace.py` keeps
+  `plugin.json`, `.mcp.json`, `marketplace.json`, `pyproject.toml` and `constraints.txt` in agreement.
 
 - **Transport.** Every server is **stdio** (`mcp.run()`); the client launches the process
   on demand and tears it down on close. No port, no FastAPI/uvicorn, nothing long-running.

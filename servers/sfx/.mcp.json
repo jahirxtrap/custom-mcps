@@ -1,8 +1,9 @@
 {
   "mcpServers": {
     "sfx": {
-      "command": "uvx",
-      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}", "--constraints", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "sfx-mcp"]
+      "command": "uv",
+      "args": ["run", "--no-project", "--python", ">=3.11", "--with-requirements", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "python", "-m", "sfx_mcp"],
+      "env": { "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src" }
     }
   }
 }

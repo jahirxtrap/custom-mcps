@@ -1,6 +1,6 @@
 {
   "name": "devkit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format and duplication.",
   "author": {
     "name": "jahirtrap",

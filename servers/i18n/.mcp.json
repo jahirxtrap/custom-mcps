@@ -1,8 +1,9 @@
 {
   "mcpServers": {
     "i18n": {
-      "command": "uvx",
-      "args": ["--from", "${CLAUDE_PLUGIN_ROOT}", "--constraints", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "i18n-mcp"]
+      "command": "uv",
+      "args": ["run", "--no-project", "--python", ">=3.11", "--with-requirements", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "python", "-m", "i18n_mcp"],
+      "env": { "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src" }
     }
   }
 }

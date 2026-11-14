@@ -1,6 +1,6 @@
 {
   "name": "i18n",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Keep translation locales in sync, complete and consistent (read-only): key diff, completeness, placeholders, unused keys.",
   "author": {
     "name": "jahirtrap",

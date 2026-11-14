@@ -55,12 +55,14 @@ def test_plugin_manifest_matches_its_server(name):
 @pytest.mark.parametrize("name", SERVERS)
 def test_plugin_launches_its_installed_copy(name):
     launched = _read_json(ROOT / "servers" / name / ".mcp.json")["mcpServers"]
-    script = next(iter(_project(name)["scripts"]))
+    project = _project(name)
+    module = next(iter(project["scripts"].values())).split(".")[0]
     installed = "${CLAUDE_PLUGIN_ROOT}"
+    run = ["run", "--no-project", "--python", project["requires-python"]]
+    pinned = ["--with-requirements", f"{installed}/{PIN.CONSTRAINTS}"]
+    source = {"PYTHONPATH": f"{installed}/src"}
 
-    constraints = f"{installed}/{PIN.CONSTRAINTS}"
-
-    assert launched == {name: {"command": "uvx", "args": ["--from", installed, "--constraints", constraints, script]}}
+    assert launched == {name: {"command": "uv", "args": [*run, *pinned, "python", "-m", module], "env": source}}
 
 
 @pytest.mark.parametrize("name", SERVERS)
