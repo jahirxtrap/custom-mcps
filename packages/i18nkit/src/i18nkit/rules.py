@@ -21,8 +21,10 @@ _RULES = [
     "Enum values are never displayed as they arrive: one key per value.",
     "Every locale stays in sync, and adding a language is data only -- a folder of JSON and "
     "nothing else, no code change on either side.",
-    "Spanish: neutral, no voseo ('Pega' not 'Pegá', 'Aquí' not 'Acá').",
-    "Where a source or vanilla locale exists, match its phrasing and capitalization.",
+    "A language-only locale (es, pt) stays neutral; regional words and forms belong in a "
+    "regional locale (es-AR, pt-BR).",
+    "When the platform or product being extended already ships a translation, match its terms, "
+    "phrasing and capitalization.",
 ]
 
 
