@@ -37,7 +37,9 @@ custom-mcps/                      # uv workspace root (virtual project, package 
   ship hooks in `hooks/hooks.json`, in exec form (`command` + `args`, no shell) so they run the
   same on Windows and Linux: devkit prints its core conventions at `SessionStart` through
   `uv run --no-project ... python ${CLAUDE_PLUGIN_ROOT}/hooks/digest.py`, which renders the same
-  data the tool serves.
+  data the tool serves, and its `PostToolUse` hook on `Edit|Write|MultiEdit` (`hooks/comments.py`)
+  answers `{"decision": "block", "reason": ...}` only when the edit introduced comments, running the
+  same detector as `find_comments`; silence otherwise, so a clean edit costs no context.
   `tests/test_marketplace.py` keeps `plugin.json`, `.mcp.json`, `marketplace.json`, `pyproject.toml`
   and `constraints.txt` in agreement, including the pins and that every option is declared and used.
 
@@ -60,8 +62,8 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `modkit` | Domain-specific (multiloader mod dev); read-only. Tools: `list_mods`, `mod_info`, `loader_sync`, `check_structure`, `check_json`, `check_access`, `find_symbol`, `decompile_guide`. |
 | library | `i18nkit` | Read-only translation checks: flat and namespaced layouts, plural-aware diff, completeness, placeholders, unused keys. |
 | server | `i18n` | Keep translation locales in sync (agnostic); read-only. Tools: `locale_diff`, `completeness`, `check_format`, `find_unused`, `i18n_guide`. |
-| library | `convkit` | Developer-convention guides (topic, index, core digest) + git/static checks (multi-stack); no deps. |
-| server | `devkit` | Development conventions + the checks that verify them; read-only. Tools: `conventions`, `commit_style`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`. Its `hooks/hooks.json` prints the core digest at `SessionStart`. |
+| library | `convkit` | Developer-convention guides (topic, index, core digest) + git/static checks (multi-stack) + comment/docstring detector (Python by tokenizer and ast, the rest by comment family); no deps. |
+| server | `devkit` | Development conventions + the checks that verify them; read-only. Tools: `conventions`, `commit_style`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`, `find_comments`. Its `hooks/hooks.json` prints the core digest at `SessionStart` and warns from `PostToolUse` when an edit adds comments. |
 | library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, LanguageTool grammar check (optional, by URL or jar, Markdown stripped first), extracted-text cleanup, APA citations, concept-map render, ReportLab report/deck typesetting, Word and PowerPoint on a template (python-docx, python-pptx) with template inspection, free-image sourcing, multi-area workspace with a derived inventory. |
 | server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `grammar_check`, `final_check`, `study_guide`, `concept_map`, `render_document`, `template_inspect`, `cite`, `image_search`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
 | library | `formkit` | Low-poly 3D toolkit: spec->primitives compile, software iso/silhouette renderer (Pillow+NumPy), design principles, Godot def. |

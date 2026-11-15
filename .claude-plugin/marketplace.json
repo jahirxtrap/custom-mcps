@@ -16,8 +16,8 @@
     },
     {
       "name": "devkit",
-      "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format and duplication. The core rules reach every session at its start and after each compaction.",
-      "version": "0.3.0",
+      "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format, duplication and comments. The core rules reach every session at its start and after each compaction, and an edit that adds comments gets a notice.",
+      "version": "0.4.0",
       "source": "./servers/devkit",
       "category": "Development",
       "tags": ["mcp", "conventions", "lint", "commits"]

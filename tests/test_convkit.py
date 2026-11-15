@@ -7,11 +7,13 @@ import pytest
 from convkit import (
     commit_style,
     digest,
+    find_comments,
     find_duplication,
     find_format,
     find_hardcoded,
     find_inconsistent,
     guide,
+    review_text,
     topics,
 )
 
@@ -272,3 +274,74 @@ def test_commit_style_takes_any_folder_inside_the_repo(tmp_path):
     report = commit_style(str(inner), 30)
     assert report["sampled"] == 2 and report["path"] == str(inner)
     assert "error" in commit_style(str(tmp_path / "nowhere"), 30)
+
+
+def test_review_text_python_reads_comments_and_docstrings():
+    text = (
+        '"""Tokens read from a theme."""\n'
+        "import re  # noqa: F401\n"
+        "# The API rejects a body over this size\n"
+        "LIMIT = 10  # bytes\n"
+        'MARK = "# not a comment"\n'
+        "\n\n"
+        "def read_tokens(path):\n"
+        '    """Read the tokens."""\n'
+        "    return path\n\n\n"
+        "def parse(text):\n"
+        '    """Parse the text.\n\n    Handles both layouts.\n    """\n'
+        "    return text\n\n\n"
+        "def load(cache):\n"
+        '    """Warm the cache first, because the first read is slow."""\n'
+        "    return cache\n\n\n"
+        "def measure(pairs):\n"
+        '    """Contrast ratio of every pair, failures first."""\n'
+        "    return pairs\n\n\n"
+        "@tool\n"
+        "def described():\n"
+        '    """Measure the tree.\n\n    The client shows this text, because it is the tool description.\n    """\n'
+        "    return 1\n"
+    )
+    found = review_text(text, ".py")
+    assert [(item["line"], item["kind"]) for item in found] == [
+        (3, "comment"), (4, "comment"), (9, "doc_repeats_name"), (14, "doc_lines"), (22, "doc_rationale"),
+    ]
+    assert found[1]["text"] == "LIMIT = 10  # bytes" and found[2]["name"] == "read_tokens"
+
+
+def test_review_text_typescript_doc_blocks_and_directives():
+    text = (
+        "// @ts-expect-error legacy\n"
+        "// Datacenter IPs get a captcha from YouTube; cookies\n"
+        "// are the way around it.\n"
+        'const url = "http://example.com";\n'
+        "/** Reads tokens. */\n"
+        "export function readTokens() {}\n"
+        "/**\n * Pads a node so its height lands on a whole pixel.\n * Keeps what follows still.\n */\n"
+        "export function pad() {}\n"
+        "/** Keeps every child height on a whole device pixel. */\n"
+        "export const settle = () => {};\n"
+        "{/* layout */}\n"
+    )
+    found = review_text(text, ".tsx")
+    assert [(item["line"], item["kind"], item.get("lines")) for item in found] == [
+        (2, "comment", 2), (5, "doc_repeats_name", None), (7, "doc_lines", 2), (14, "comment", 1),
+    ]
+
+
+def test_review_text_markup_sql_and_unknown_files():
+    svelte = "<!-- svelte-ignore a11y -->\n<!-- header -->\n<div></div>\n"
+    assert [item["line"] for item in review_text(svelte, ".svelte")] == [2]
+    assert [item["line"] for item in review_text("-- name: get_user\n-- the slow one\nselect 1;\n", ".sql")] == [2]
+    assert review_text("# Title\n", ".md") == []
+
+
+def test_find_comments_counts_a_tree_and_skips_vendored(tmp_path):
+    (tmp_path / "a.py").write_text("# why\nx = 1\n", encoding="utf-8")
+    (tmp_path / "b.kt").write_text("/** Builds the row. */\nfun buildRow() = 1\n", encoding="utf-8")
+    (tmp_path / "node_modules").mkdir()
+    (tmp_path / "node_modules" / "c.js").write_text("// vendored\n", encoding="utf-8")
+    report = find_comments(str(tmp_path))
+    assert report["scanned_files"] == 2
+    assert report["comment_count"] == 1 and report["comment"][0]["file"] == "a.py"
+    assert report["doc_repeats_name_count"] == 1 and report["doc_repeats_name"][0]["name"] == "buildRow"
+    assert report["doc_lines_count"] == 0 and report["doc_rationale_count"] == 0

@@ -25,7 +25,7 @@ standalone server any MCP client can register.
 | **sfx** | Synthesize sound effects (`.ogg`) by data — any kind, no project assumptions. |
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
-| **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
+| **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY, comments), and a notice when an edit adds comments. |
 | **study** | Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, editable Word and PowerPoint on the institution's template, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 | **uikit** | Interface design measured against WCAG: tokens, the color pairs the code really uses, contrast, and a mockup checked against the app's own design. |
@@ -148,6 +148,11 @@ tools look at the real code and history. Read-only.
 - **find_duplication** surfaces repeated blocks to unify (DRY): occurrences per file and the
   largest blocks, with a `detail` switch for the full list. **find_format** cuts its lists the same
   way and keeps every count complete.
+- **find_comments** finds what the no-comments rule forbids: every comment line or block, directives
+  excepted, and the docstrings that run over one line, only repeat the name they describe or carry
+  rationale. Python is read with its tokenizer and ast; `//`, `/* */`, `<!-- -->`, `--` and `#`
+  families by line. The same detector runs from a `PostToolUse` hook after every `Edit` or `Write`:
+  when the edit introduced comments it answers with the lines and the rule, otherwise it stays silent.
 
 The conventions were extracted from your real projects (backstube-web, cconnect, vorenth, mods).
 
@@ -275,7 +280,7 @@ custom-mcps/
 │   ├── sfx/         # synthesize sound effects — audiolib: oscillators, noise, envelopes, I/O
 │   ├── modkit/      # inspect / validate multiloader mod workspaces — loaderkit: scan, gradle.properties, loader compare
 │   ├── i18n/        # keep translation locales in sync — i18nkit: parse locales, diff, completeness, placeholders
-│   ├── devkit/      # development conventions + checks — convkit: guides, commit style, hardcoded/duplication checks
+│   ├── devkit/      # development conventions + checks — convkit: guides, commit style, hardcoded/duplication/comment checks
 │   ├── study/       # academic study work by data — studykit: writing checks, citations, concept maps, PDFs, workspace
 │   ├── buildkit/    # design low-poly 3D structures — formkit: spec->primitives, iso/silhouette renderer, principles
 │   └── uikit/       # interface design against WCAG — tokenkit: theme readers, pair detection, WCAG contrast, mockup check

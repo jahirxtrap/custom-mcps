@@ -5,6 +5,7 @@ import json
 
 from convkit import (
     commit_style as _commit_style,
+    find_comments as _find_comments,
     find_duplication as _find_duplication,
     find_format as _find_format,
     find_hardcoded as _find_hardcoded,
@@ -19,12 +20,14 @@ mcp = FastMCP(
         "Development conventions and the checks that verify them, across stacks "
         "(Java, Kotlin/Compose, TypeScript/React, Python, GDScript). Read-only.\n"
         "Tools: conventions, commit_style, find_hardcoded, find_inconsistent, find_format, "
-        "find_duplication.\n"
+        "find_duplication, find_comments.\n"
         "The conventions are these, never what the code you see happens to do: do not infer them "
         "from the code. The core ones (code, commit, ssot, dry) arrive in your context when the "
         "session starts and after every compaction, so call conventions(topic) only for the other "
         "topics. Run commit_style on the repo before committing. Run the find_* checks once over "
-        "the code you touched when the task is done, not after every edit."
+        "the code you touched when the task is done, not after every edit. An edit that adds a "
+        "comment, or a docstring over one line, repeating its name or explaining why, gets a notice "
+        "from the plugin's PostToolUse hook: remove what it names."
     ),
 )
 
@@ -86,6 +89,19 @@ def find_duplication(path: str, window: int = 6, exclude: str = "", detail: bool
     occurrence. `exclude` adds path fragments to skip, which matters on a tree carrying generated or
     uploaded files."""
     return json.dumps(_find_duplication(path, window, exclude, detail))
+
+
+@mcp.tool
+def find_comments(path: str, exclude: str = "", detail: bool = False) -> str:
+    """Find what the no-comments convention forbids in the code under `path`: every comment line or
+    block (directives such as noqa, ts-expect-error, shebangs and attributes excepted) and the
+    docstrings that run over one line, only repeat the name they describe or carry rationale
+    (because, so that, workaround, TODO). Python is read with its tokenizer and ast, so a `#` inside
+    a string never counts and the docstring of a decorated definition (a tool's description, a
+    route's) is data, not checked; Java/Kotlin/TS/JS/Rust/Go/C#/CSS (`//`, `/* */`), HTML/Svelte/Vue
+    (`<!-- -->`), SQL (`--`) and GDScript/shell (`#`) by line. Complete counts; each list shows 25
+    entries, or 100 with detail=true. `exclude` adds path fragments to skip."""
+    return json.dumps(_find_comments(path, exclude, detail))
 
 
 def main() -> None:

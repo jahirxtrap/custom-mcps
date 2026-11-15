@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .analyze import find_duplication, find_format, find_hardcoded, find_inconsistent
+from .comments import find_comments, review_text
 from .git import commit_style, recent_subjects
 from .guide import digest, guide, index, topics
 
@@ -16,4 +17,6 @@ __all__ = [
     "find_duplication",
     "find_inconsistent",
     "find_format",
+    "find_comments",
+    "review_text",
 ]

@@ -20,10 +20,11 @@ _CODE_EXT = (".java", ".kt", ".kts", ".ts", ".tsx", ".js", ".jsx", ".gd", ".py")
 _DEFAULT_ALLOW = ("themes.", "theme.", "palette.", "accents.", "colors.", "tokens.", "tailwind.config")
 _TOKEN_DIRS = {"theme", "themes", "tokens", "palette"}
 _SKIP_DIRS = {
-    ".cache", ".expo", ".git", ".gradle", ".idea", ".mypy_cache", ".next", ".nuxt",
-    ".pytest_cache", ".ruff_cache", ".svelte-kit", ".turbo", ".venv", "__pycache__", "build",
-    "coverage", "dist", "generated", "node_modules", "out", "site-packages", "target",
-    "third_party", "vendor", "venv",
+    ".angular", ".cache", ".cxx", ".dart_tool", ".eggs", ".expo", ".git", ".gradle", ".idea", ".kotlin",
+    ".mypy_cache", ".next", ".nox", ".nuxt", ".parcel-cache", ".pnpm-store", ".pytest_cache", ".ruff_cache",
+    ".serena", ".svelte-check", ".svelte-kit", ".tox", ".turbo", ".venv", ".yarn", "__pycache__", "build",
+    "coverage", "dist",
+    "generated", "node_modules", "out", "site-packages", "target", "third_party", "vendor", "venv",
 }
 _VENDORED_PATHS = ("components/ui/", "components/rnr/", "src/generated/")
 _SUMMARY_LIMIT = 25
@@ -149,10 +150,7 @@ def _scale_report(counter: Counter[str], rare: int, grid: int) -> dict[str, Any]
 
 
 def find_inconsistent(path: str, rare: int = 2, grid: int = 4, exclude: str = "") -> dict[str, Any]:
-    """Measure the spacing and text-size scales actually in use and flag what breaks consistency:
-    rare one-off values (used <= `rare` times), values off a base `grid` (default 4), and Tailwind
-    arbitrary values. Sources: Compose .dp (spacing) / .sp (text), CSS font-size, Tailwind and
-    NativeWind utility classes (p/m/gap/space and text-*), and `-[Npx]` classes."""
+    """The spacing and text-size scales in use, with the rare, off-grid and arbitrary values that break them."""
     base = Path(path)
     spacing: Counter[str] = Counter()
     text: Counter[str] = Counter()
@@ -242,9 +240,7 @@ def _imported_names(line: str, suffix: str) -> list[str]:
 
 
 def find_format(path: str, exclude: str = "", detail: bool = False) -> dict[str, Any]:
-    """Flag AI-typical format breaks formatters miss: inline fully-qualified class names (Java/Kotlin),
-    unused imports (Java/Kotlin/TS), tab+space mixed indentation, and JSON files whose indent style
-    differs from the rest of the tree."""
+    """The format breaks formatters miss: inline fully-qualified names, unused imports, mixed indent, JSON style."""
     base = Path(path)
     limit = _DETAIL_LIMIT if detail else _SUMMARY_LIMIT
     inline_fqn: list[dict[str, Any]] = []

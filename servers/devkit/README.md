@@ -17,6 +17,7 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 | `find_inconsistent` | Snapshot the spacing and text-size scales in use; flag rare one-offs, off-grid spacing, and Tailwind arbitrary values. |
 | `find_format` | AI-typical format breaks: inline fully-qualified names, unused imports, mixed tab/space indent, JSON indent outliers. Complete counts, lists of 25 (100 with `detail`). |
 | `find_duplication` | Repeated normalized line blocks → DRY candidates (heuristic). Occurrences per file and the ten largest blocks; `detail` lists up to fifty with every occurrence. |
+| `find_comments` | What the no-comments rule forbids: every comment (directives excepted) and the docstrings over one line, repeating their name or carrying rationale. Python by tokenizer and ast; `//`, `/* */`, `<!-- -->`, `--`, `#` families by line. |
 
 ## The core rules arrive on their own
 
@@ -25,6 +26,25 @@ The plugin ships a `SessionStart` hook (`hooks/hooks.json`) that prints the four
 over real use, `conventions` was called hundreds of times per long session to reread those same
 topics after each compaction; now they are always there, and `conventions(topic)` is for the rest.
 The digest comes from the same data as the tool (`convkit.digest`), so there is one text to maintain.
+
+## An edit that adds comments gets a notice
+
+A `PostToolUse` hook on `Edit`, `Write` and `MultiEdit` (`hooks/comments.py`) runs the same detector
+as `find_comments` over the file just written and keeps only the lines the edit introduced: what was
+in `old_string`, or already in the committed version of the file, is not Claude's. When something is
+left it answers with the lines, by number and kind, and the rule in one sentence; when nothing is, it
+says nothing and costs no context. Measured over 60 days of real sessions, 100 of 27,727 edits added
+comments, so the notice is rare by construction. It warns and does not block: the comment is removed
+by the next edit.
+
+What counts as a comment is syntax, not intent: a line or block starting with the family's marker
+(`#`, `//`, `/* */`, `<!-- -->`, `--`), minus directives (`# noqa`, `# type:`, `// @ts-expect-error`,
+shebangs, Rust attributes, C preprocessor, `-- name:`). A docstring is what sits on a definition
+(`"""…"""`, `/** … */`, `///`, `##` in GDScript) and is allowed, so only its form is checked: over
+one line, every word already in the name it describes, or rationale words (because, so that, to
+avoid, workaround, TODO). The docstring of a decorated Python definition is data for the decorator
+(an MCP tool's description, a route's) and is not checked. Whether a one-line descriptive docstring
+was needed stays a judgement.
 
 ## What it encodes (verified against real projects)
 
@@ -76,6 +96,7 @@ find_hardcoded   path=app/src   allow=brand     # extra filename substrings to s
 find_inconsistent path=app/src   rare=2 grid=4   # spacing/text-size scale snapshot + outliers
 find_format       path=app/src   detail=false    # inline FQN, unused imports, indent, JSON style
 find_duplication path=src        window=6 detail=false
+find_comments    path=src        detail=false    # comments; docstrings over one line, repeating the name, with rationale
 ```
 
 Every tool returns structured JSON / text and never writes anything.

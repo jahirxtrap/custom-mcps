@@ -20,6 +20,7 @@ def test_devkit_registers_tools():
     assert asyncio.run(run()) == [
         "commit_style",
         "conventions",
+        "find_comments",
         "find_duplication",
         "find_format",
         "find_hardcoded",
@@ -52,3 +53,26 @@ def test_session_start_hook_prints_the_core_digest():
         assert section in done.stdout
     assert "## naming" not in done.stdout and "conventions(topic)" in done.stdout
     assert len(done.stdout) < 10000
+
+
+def test_post_tool_use_hook_warns_only_about_new_comments(tmp_path):
+    hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+    handler = hooks["PostToolUse"][0]
+    assert handler["matcher"] == "Edit|Write|MultiEdit"
+    assert handler["hooks"][0]["args"][-1] == "${CLAUDE_PLUGIN_ROOT}/hooks/comments.py"
+    target = tmp_path / "app.py"
+    target.write_text("# legacy note\nLIMIT = 10  # bytes\n", encoding="utf-8")
+
+    def run(tool_input):
+        event = {"tool_name": "Edit", "tool_input": {"file_path": str(target), **tool_input}}
+        return subprocess.run(
+            [sys.executable, "-I", str(PLUGIN / "hooks" / "comments.py")],
+            input=json.dumps(event), capture_output=True, text=True, encoding="utf-8",
+        )
+
+    noisy = run({"old_string": "LIMIT = 10", "new_string": "LIMIT = 10  # bytes"})
+    assert noisy.returncode == 0
+    reason = json.loads(noisy.stdout)["reason"]
+    assert "line 2" in reason and "# bytes" in reason and "legacy" not in reason
+    quiet = run({"old_string": "# legacy note", "new_string": "LIMIT = 10"})
+    assert quiet.returncode == 0 and quiet.stdout == ""
