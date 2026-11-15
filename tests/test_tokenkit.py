@@ -5,6 +5,7 @@ import json
 import pytest
 from tokenkit import (
     check_contrast,
+    check_mockup,
     contrast,
     contrast_of,
     declared_pairs,
@@ -14,6 +15,7 @@ from tokenkit import (
     luminance,
     over,
     parse,
+    read_design,
     read_theme,
     read_tokens,
     review_context,
@@ -220,10 +222,94 @@ def test_review_context_ignores_translated_text(tmp_path):
 
 
 def test_design_guide_topics_and_aliases():
-    assert {"heuristics", "laws", "contrast", "targets", "tokens"} == set(guide_topics())
+    assert {"heuristics", "laws", "contrast", "targets", "tokens", "mockup"} == set(guide_topics())
     assert "Nielsen" in design_guide("heuristics")
     assert design_guide("nielsen") == design_guide("heuristics")
     assert design_guide("wcag") == design_guide("contrast")
+    assert design_guide("redesign") == design_guide("mockup")
+    assert "ask the user first" in design_guide("mockup") and "check_mockup" in design_guide("mockup")
     assert "4.5:1" in design_guide("contrast")
     assert "Fitts" in design_guide("laws")
     assert "Unknown topic" in design_guide("nope")
+
+
+def _web_app(tmp_path):
+    app = tmp_path / "web"
+    deps = {"@lucide/svelte": "^1", "@fontsource-variable/inter": "^5"}
+    _write(app / "package.json", json.dumps({"dependencies": deps}))
+    _write(app / "src" / "app.css", ":root { --surface: #15181e; --text-body-md: 0.875rem; --radius-panel: 12px;\n"
+           "  --font-sans: 'Inter Variable', sans-serif; --shadow-float: 0 4px 12px rgb(0 0 0 / 0.3); }\n"
+           ".row { padding: 8px 12px; height: 52px; border-radius: 6px; }\n")
+    _write(app / "tailwind.config.js",
+           "export default { theme: { fontFamily: { sans: ['Inter Variable', 'sans-serif'],\n"
+           "  mono: ['JetBrains Mono', 'monospace'] } } }\n")
+    _write(app / "src" / "Panel.svelte", '<script>import X from "@lucide/svelte/icons/x";</script>\n'
+           '<div class="flex gap-2 px-3 h-8 rounded-lg text-sm shadow-sm"><X size={16} /></div>\n')
+    return app
+
+
+def _compose_app(tmp_path):
+    app = tmp_path / "android"
+    _write(app / "app" / "build.gradle.kts", 'implementation("androidx.compose.material:material-icons-extended")\n')
+    _write(app / "app" / "src" / "Theme.kt",
+           "val Surface = Color(0xFF15181E)\nval CornerPanel = 12.dp\nval Gap = 8.dp\n"
+           "val Body = TextStyle(fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.inter)))\n")
+    _write(app / "app" / "src" / "Row.kt",
+           "Row(Modifier.padding(16.dp).height(52.dp).clip(RoundedCornerShape(CornerPanel)))\n"
+           "Icon(Icons.Default.Add, null)\n")
+    return app
+
+
+def test_read_design_reads_web_and_compose_the_same_way(tmp_path):
+    web = read_design(_web_app(tmp_path)).summary()
+    assert web["colors"] == 2 and web["variables"] == 5
+    assert web["fonts"] == ["inter", "jetbrains mono"]
+    assert web["lengths"] == {"spacing": 2, "size": 2, "type": 1, "radius": 3}
+    assert web["shadows"] == 2 and web["icons"] == ["@lucide/svelte", "lucide"]
+
+    android = read_design(_compose_app(tmp_path)).summary()
+    assert android["colors"] == 1 and android["fonts"] == ["inter"]
+    assert android["lengths"]["type"] == 1 and android["lengths"]["spacing"] == 1
+    assert android["icons"] == ["material-icons"]
+
+
+def test_check_mockup_reports_only_what_the_app_never_uses(tmp_path):
+    app = _web_app(tmp_path)
+    mockup = tmp_path / "mock.html"
+    mockup.write_text(
+        '<link href="https://unpkg.com/lucide@latest/dist/lucide.css" rel="stylesheet">\n'
+        '<script src="https://kit.fontawesome.com/abc.js"></script>\n'
+        "<style>:root { --bg: #15181e; --mine: #c084fc; }\n"
+        ".card { background: var(--bg); color: var(--surface); border: 1px solid var(--ghost);\n"
+        "  outline-color: var(--scripted); caret-color: var(--flagged);\n"
+        "  font: 500 14px/20px 'Inter Variable', sans-serif; padding: 8px 13px; border-radius: 7px;\n"
+        "  width: 1180px; height: 52px; box-shadow: 0 1px 2px #00000040; }\n"
+        ".title { font-family: 'Comic Neue', Roboto, sans-serif; font-size: 17px; margin-top: 300px; }\n"
+        ".pill { font-family: ui-monospace, Consolas, monospace; border-radius: 999px; }</style>\n"
+        '<div class="card rounded-xl p-2 gap-5"></div>\n'
+        '<script>el.style.cssText = "--scripted:" + tint; el.style.setProperty("--flagged", tint);</script>\n',
+        encoding="utf-8",
+    )
+    report = check_mockup(str(mockup), str(app))
+    assert report["mockup"] == "mock.html"
+    assert [item["value"] for item in report["findings"]["colors"]] == ["#c084fc"]
+    assert report["findings"]["variables"] == [{"value": "--ghost"}]
+    assert [item["value"] for item in report["findings"]["fonts"]] == ["comic neue"]
+    assert report["findings"]["spacing"] == [
+        {"value": 13.0, "count": 1, "closest": 12.0},
+        {"value": 20.0, "count": 1, "closest": 12.0},
+    ]
+    assert report["findings"]["type"] == [{"value": 17.0, "count": 1, "closest": 14.0}]
+    assert report["findings"]["radius"] == [{"value": 7.0, "count": 1, "closest": 6.0}]
+    assert "size" not in report["findings"]
+    assert report["findings"]["icons"] == [{"value": "fontawesome", "count": 1}]
+    assert "shadows" not in report["findings"]
+    assert report["total"] == 8
+
+
+def test_check_mockup_against_compose_counts_bare_literals(tmp_path):
+    app = _compose_app(tmp_path)
+    html = "<style>.row { padding: 16px; height: 52px; border-radius: 12px; font-size: 14px; margin: 9px; }</style>"
+    report = check_mockup(html, str(app))
+    assert report["findings"] == {"spacing": [{"value": 9.0, "count": 1, "closest": 8.0}]}
+    assert report["total"] == 1

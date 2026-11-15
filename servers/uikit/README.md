@@ -1,8 +1,8 @@
 # uikit MCP server
 
 Interface design **measured, not argued**. It reads a theme's design tokens, works out which
-colors the code really puts together, and checks those pairs against WCAG. Framework
-agnostic and entirely read-only.
+colors the code really puts together, checks those pairs against WCAG, and measures a mockup
+against the design the app's code really uses. Framework agnostic and entirely read-only.
 
 Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 [`tokenkit`](src/tokenkit) library.
@@ -11,12 +11,13 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 
 | Tool | Purpose |
 |---|---|
-| `design_guide` | The embedded guidance: `heuristics` / `laws` / `contrast` / `targets` / `tokens`. |
+| `design_guide` | The embedded guidance: `heuristics` / `laws` / `contrast` / `targets` / `tokens` / `mockup`. |
 | `read_tokens` | Every theme under a path, with its tokens normalized to hex. Reads source objects, theme JSON and CSS variables. |
 | `find_pairs` | Which foreground/background pairs are really in play, and how each one was found. |
 | `check_contrast` | Measures every pair of every theme against WCAG 2.2, failures first. |
 | `review_context` | The evidence a usability review needs, for the four heuristics that leave a trace in the code. |
 | `contrast` | Two colors in, the ratio and the AA/AAA verdicts out. |
+| `check_mockup` | Every design value a mockup uses that the app's own code never does, with the closest value the app does use. |
 
 ## Why the pairs matter more than the maths
 
@@ -49,10 +50,41 @@ It is deliberately conservative: the file is judged as a whole, so a confirmatio
 elsewhere in it clears the line, and anything that reads as code is dropped. Measured on two real
 front ends it reports single digits, which is the point => a list nobody reads finds nothing.
 
+## Mockups measured against the code
+
+A mockup decides a design before any code, so it has to be drawn with the app's design and not
+with a framework's defaults. The server's instructions carry the rule: a new screen, a new panel
+or a redesign that touches more than one component starts by asking the user whether to make a
+mockup, and waits for the answer, because a mockup takes time; a change to a single control needs
+none. `design_guide('mockup')` is the procedure once the answer is yes: discover the app's design
+by reading and counting (the tokens file, the root stylesheet, the font packages and the icon
+library; for Compose, the theme, typography and shapes files), build with the values found, show
+the states that decide, deliver one self-contained HTML file where the user asked for it, and
+measure it. How a client displays the file is the client's business.
+
+`check_mockup` is the measurement, and it knows no app. It reads what the code says about its own
+look: CSS and preprocessor files, Tailwind classes on their default scale, Compose `dp`/`sp` and
+`Color(0x...)`, theme JSON, and `package.json` or Gradle for the font and icon packages. Then it
+lists every color, CSS variable, font family, length (spacing, size, type, radius, in px), shadow
+and icon library the mockup uses that the app never does, each with the closest value the app does
+use. It judges nothing and does not measure composition.
+
+Not reported, because they are not design values: spacings and sizes above 200 px (layout), pill
+radii of 999 px and up, black and white at any opacity, and the fallbacks of a font stack (only
+its first family counts). A value a library supplies without the app writing it shows up too:
+pass that folder in `extra`, or judge it.
+
+Measured on six real mockups against the two apps they were drawn for (a Svelte and Tailwind
+desktop client, a Compose player) it reports between 12 and 62 findings each, and every one is a
+value the mockup really uses off the app's scale: a 30 px control where the app draws 32, type at
+13.5 px, paddings of 7 and 22, a palette copied from another product.
+
 ## Usage
 
 ```
 design_guide    topic=contrast
+design_guide    topic=mockup
+check_mockup    mockup=mockups/settings.html  path=src  extra=packages/ui
 read_tokens     path=packages/theme/src/themes/brand.ts
 check_contrast  path=packages/theme/src/themes/brand.ts  src=apps  prefix=app
 check_contrast  path=backend/core/packs/cconnect/themes

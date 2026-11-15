@@ -1896,7 +1896,7 @@ wheels = [
 
 [[package]]
 name = "uikit-mcp"
-version = "0.2.2"
+version = "0.3.0"
 source = { editable = "servers/uikit" }
 dependencies = [
     { name = "fastmcp" },

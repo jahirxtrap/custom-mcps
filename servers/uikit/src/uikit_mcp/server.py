@@ -6,6 +6,7 @@ import json
 from fastmcp import FastMCP
 from tokenkit import (
     check_contrast as _check_contrast,
+    check_mockup as _check_mockup,
     contrast_of as _contrast_of,
     design_guide as _design_guide,
     find_pairs as _find_pairs,
@@ -17,13 +18,18 @@ mcp = FastMCP(
     name="uikit",
     instructions=(
         "Interface design measured, not argued: it reads a theme's design tokens, works out "
-        "which colors the code actually puts together, and checks them against WCAG. "
-        "Framework-agnostic and read-only.\n"
-        "Tools: design_guide, read_tokens, find_pairs, check_contrast, review_context, contrast.\n"
-        "Reach for it when building or reviewing a UI, adding a theme, or picking a color. "
-        "Run check_contrast on the token file with the source folder, so the pairs come from "
-        "variant maps and real class usage instead of a guessed table; run review_context for "
-        "the heuristics that leave a trace in the code, and read design_guide for the rubric "
+        "which colors the code actually puts together, checks them against WCAG, and measures a "
+        "mockup against the design the app's code really uses. Framework-agnostic and read-only.\n"
+        "Tools: design_guide, read_tokens, find_pairs, check_contrast, review_context, contrast, "
+        "check_mockup.\n"
+        "Reach for it when building or reviewing a UI, adding a theme, or picking a color. A new "
+        "screen, a new panel or a redesign that touches more than one component starts by asking "
+        "the user whether to make a mockup, and waits for the answer: a mockup takes time. With a "
+        "yes, discover the app's design first (design_guide('mockup')), build with its values, "
+        "deliver the file and measure it with check_mockup; a change to a single control needs no "
+        "mockup. Run check_contrast on the token file with the source folder, so the pairs come "
+        "from variant maps and real class usage instead of a guessed table; run review_context "
+        "for the heuristics that leave a trace in the code, and read design_guide for the rubric "
         "and the thresholds behind the numbers."
     ),
 )
@@ -34,8 +40,22 @@ def design_guide(topic: str = "") -> str:
     """Return the embedded interface guidance, all of it or one topic: heuristics (Nielsen's
     ten) / laws (Fitts, Hick, Miller, Gestalt and the rest, each from its primary source) /
     contrast (what WCAG actually requires and what is exempt) / targets (pointer size, line
-    length, line height, reflow, type and spacing scales) / tokens (naming and theming)."""
+    length, line height, reflow, type and spacing scales) / tokens (naming and theming) / mockup
+    (ask first, discover the app's design by reading and counting, build with its values, deliver
+    one HTML file, measure it with check_mockup)."""
     return _design_guide(topic)
+
+
+@mcp.tool
+def check_mockup(mockup: str, path: str, extra: str = "") -> str:
+    """Measure a mockup against the design the app's own code uses: every color, CSS variable, font
+    family, length (spacing, size, type, radius, in px), shadow and icon library the mockup uses
+    that never appears under `path`, with the closest value the app does use. `mockup` is the HTML
+    file's path or the HTML itself; `path` is the app's source folder; `extra` adds folders
+    (comma-separated), such as a component library the app styles come from. Reads CSS, Tailwind
+    classes on their default scale, Compose dp/sp and the dependency files. It judges nothing and
+    does not measure composition."""
+    return json.dumps(_check_mockup(mockup, path, extra))
 
 
 @mcp.tool

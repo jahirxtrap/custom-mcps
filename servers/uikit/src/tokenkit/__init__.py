@@ -4,11 +4,14 @@ from __future__ import annotations
 from .check import AA_LARGE, AA_TEXT, AAA_TEXT, check_contrast, contrast_of, measure
 from .color import contrast, luminance, over, parse, to_hex
 from .guide import design_guide, guide_topics
+from .mockup import check_mockup, read_design
 from .pairs import declared_pairs, find_pairs, source_files, used_pairs, variant_pairs
 from .review import review_context
 from .tokens import read_theme, read_tokens
 
 __all__ = [
+    "check_mockup",
+    "read_design",
     "parse",
     "over",
     "luminance",

@@ -119,15 +119,49 @@ _TOKENS = """# Tokens and theming
   produces soft tints that fail contrast in the dark theme.
 """
 
+_MOCKUP = """# Mockups: discover the app's design, then draw with it
+
+A mockup decides a design before any code. It belongs to a new screen, a new panel or a redesign
+that touches more than one component, and it takes time, so ask the user first and wait for the
+answer. A change to a single control needs none.
+
+1. Discover first, draw second. Read where the app keeps its design, and count what you find:
+   - Web: the tokens or theme file (CSS custom properties, a theme object, a Tailwind config), the
+     root stylesheet, the font packages and the icon library among the dependencies.
+   - Compose: the theme, typography and shapes files, the dp and sp values in use, where the icons
+     come from (material icons or drawables).
+   - The components themselves: the radii, row heights, paddings, gaps and icon sizes that appear
+     most. When several values compete, the one with the most uses wins; a value used once is noise.
+   read_tokens lists the colors of every theme; the rest is reading and counting.
+2. Build with what you found, never with defaults: the app's font families and sizes, its colors as
+   variables under the app's own names, its radii, its spacing steps, its row heights, its icon
+   library at the sizes it uses. No framework palette, no lorem ipsum: real texts from the app's
+   locales, in its language.
+3. Show the states that decide: empty, loading, error, long text, the smallest and the largest
+   screen the app serves. The happy path alone decides nothing.
+4. Deliver the mockup as one self-contained HTML file where the user asked for it, and say in two
+   lines what it decides. How a client displays it is the client's business, not yours.
+5. Measure it: check_mockup against the app's folder lists every color, variable, font, length,
+   shadow and icon library the mockup uses that the app's code never does. Fix what is yours; a
+   value a library supplies is a judgement call.
+6. Code only after the user decides. The mockup's values are the app's, so the code reuses the
+   same tokens and the result matches what was approved.
+"""
+
 _GUIDES = {
     "heuristics": _HEURISTICS,
     "laws": _LAWS,
     "contrast": _CONTRAST,
     "targets": _TARGETS,
     "tokens": _TOKENS,
+    "mockup": _MOCKUP,
 }
 
 _ALIASES = {
+    "mockups": "mockup",
+    "prototype": "mockup",
+    "wireframe": "mockup",
+    "redesign": "mockup",
     "nielsen": "heuristics",
     "usability": "heuristics",
     "psychology": "laws",

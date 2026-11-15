@@ -28,7 +28,7 @@ standalone server any MCP client can register.
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
 | **study** | Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, editable Word and PowerPoint on the institution's template, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
-| **uikit** | Interface design measured against WCAG: tokens, the color pairs the code really uses, contrast. |
+| **uikit** | Interface design measured against WCAG: tokens, the color pairs the code really uses, contrast, and a mockup checked against the app's own design. |
 
 `pixelart`, `sfx`, `i18n`, `study`, `buildkit` and `uikit` are agnostic; `modkit` (multiloader mod
 dev) and `devkit` (conventions and their checks) are domain-specific. All are registered the same way.
@@ -227,8 +227,8 @@ It fits a procedural Godot pipeline (spec `def` → primitives), the same shape 
 ## uikit
 
 **uikit** is interface design **measured, not argued**. It reads a theme's design tokens, works out
-which colors the code really puts together, and checks those pairs against WCAG. Framework-agnostic,
-dependency-free and read-only.
+which colors the code really puts together, checks those pairs against WCAG, and measures a mockup
+against the design the app's code really uses. Framework-agnostic, dependency-free and read-only.
 
 The contrast maths is four lines; the reason this exists is the other half. A report is only worth
 reading when the pairs in it are the ones the interface actually draws, and those are written in the
@@ -246,7 +246,17 @@ attribute.
   `#ffffff0d` hover is measured as the eye sees it; decorative tokens (logo, shadow, scrollbar) are
   skipped, because a brand mark owes no ratio.
 - **design_guide** carries the usability heuristics, the psychology laws each from its primary
-  source, and the thresholds behind the numbers (WCAG 2.2, Material).
+  source, the thresholds behind the numbers (WCAG 2.2, Material) and, under `mockup`, the procedure
+  for a mockup: ask the user first and wait, discover the app's design by reading and counting, build
+  with its values, deliver one HTML file, measure it. The server's instructions carry the rule: a new
+  screen, a new panel or a redesign that touches more than one component starts by asking whether to
+  make a mockup, because a mockup takes time; a change to a single control needs none.
+- **check_mockup** is that measurement. It knows no app: it reads what the code says about its own
+  look (CSS, Tailwind classes on their default scale, Compose `dp`/`sp`, theme JSON, the font and icon
+  packages among the dependencies) and lists every color, CSS variable, font family, length (spacing,
+  size, type, radius), shadow and icon library the mockup uses that the app never does, each with the
+  closest value the app does use. Layout offsets over 200 px, pill radii, black and white at any
+  opacity and the fallbacks of a font stack are not reported. It judges nothing.
 - **review_context** gathers the evidence for the four heuristics that leave a trace in the code
   (a mutation with no loading state, a delete with no confirmation, an exception rendered raw,
   copy outside i18n) and stops there — the tool supplies the evidence, the reviewer the judgement,
@@ -268,7 +278,7 @@ custom-mcps/
 │   ├── devkit/      # development conventions + checks — convkit: guides, commit style, hardcoded/duplication checks
 │   ├── study/       # academic study work by data — studykit: writing checks, citations, concept maps, PDFs, workspace
 │   ├── buildkit/    # design low-poly 3D structures — formkit: spec->primitives, iso/silhouette renderer, principles
-│   └── uikit/       # interface design against WCAG — tokenkit: theme readers, pair detection, WCAG contrast
+│   └── uikit/       # interface design against WCAG — tokenkit: theme readers, pair detection, WCAG contrast, mockup check
 ├── scripts/         # register.py (every server at user scope), pin.py (each plugin's constraints.txt)
 └── tests/           # workspace test suite (pytest)
 ```

@@ -1,7 +1,7 @@
 {
   "name": "uikit",
-  "version": "0.2.2",
-  "description": "Interface design measured, not argued: design tokens, the color pairs the code really uses, and WCAG contrast.",
+  "version": "0.3.0",
+  "description": "Interface design measured, not argued: design tokens, the color pairs the code really uses, WCAG contrast, and a mockup checked against the design the app's code uses.",
   "author": {
     "name": "jahirtrap",
     "url": "https://github.com/jahirxtrap"

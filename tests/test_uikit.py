@@ -23,12 +23,26 @@ def test_uikit_registers_tools():
 
     assert asyncio.run(run()) == [
         "check_contrast",
+        "check_mockup",
         "contrast",
         "design_guide",
         "find_pairs",
         "read_tokens",
         "review_context",
     ]
+
+
+def test_check_mockup_tool(tmp_path):
+    app = tmp_path / "app"
+    app.mkdir()
+    (app / "tokens.css").write_text(":root { --surface: #15181e; --radius-md: 8px; }\n", encoding="utf-8")
+    html = '<style>.card { background: var(--surface); border-radius: 7px; color: #c084fc; }</style>'
+    report = json.loads(_call("check_mockup", {"mockup": html, "path": str(app)}))
+    assert report["mockup"] == "inline"
+    assert [item["value"] for item in report["findings"]["colors"]] == ["#c084fc"]
+    assert report["findings"]["radius"] == [{"value": 7.0, "count": 1, "closest": 8.0}]
+    assert "variables" not in report["findings"]
+    assert "mockup" in _call("design_guide", {"topic": "mockup"})
 
 
 def test_review_context_tool(tmp_path):
