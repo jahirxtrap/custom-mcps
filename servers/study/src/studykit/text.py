@@ -16,13 +16,16 @@ def _fold(text: str) -> str:
 
 _FILLERS = [
     "en el vibrante mundo de", "en el panorama de", "en la era de", "en el mundo actual",
-    "profundizar en", "en conclusion", "en resumen", "cabe destacar", "es importante senalar",
-    "es importante destacar", "en ultima instancia", "hoy en dia", "a dia de hoy",
-    "sin lugar a dudas", "merece la pena destacar",
+    "profundizar en", "en conclusion", "en resumen", "cabe destacar", "cabe mencionar",
+    "cabe senalar", "cabe recalcar", "cabe resaltar", "cabe indicar", "cabe agregar",
+    "es importante senalar", "es importante destacar", "en ultima instancia", "hoy en dia",
+    "a dia de hoy", "sin lugar a dudas", "merece la pena destacar", "a lo largo de la historia",
+    "desde tiempos inmemoriales",
     "in conclusion", "in summary", "it's important to note", "it is important to note",
-    "it's worth noting", "it is worth noting", "delve into", "in the realm of",
-    "in the world of", "in today's world", "needless to say", "at the end of the day",
-    "when it comes to", "in the ever-evolving",
+    "it's worth noting", "it is worth noting", "it's worth mentioning", "it is worth mentioning",
+    "delve into", "in the realm of", "in the world of", "in today's world", "needless to say",
+    "at the end of the day", "when it comes to", "in the ever-evolving", "throughout history",
+    "since the dawn of time",
 ]
 
 _AI_VOCAB = [
@@ -109,9 +112,13 @@ _WEIGHTS = {
     "chained_transitions": 3,
     "stacked_hedging": 4,
     "rule_of_three": 2,
+    "repeated_openings": 3,
 }
 
 _CAP = 25
+_OPENING_WORDS = 2
+_OPENING_RUN = 3
+_SENTENCE = re.compile(r"[^.!?]+[.!?]*")
 
 
 def _line_of(text: str, pos: int) -> int:
@@ -130,6 +137,30 @@ def _collect(text: str, pattern: re.Pattern[str], group: int = 0) -> list[dict[s
     return hits
 
 
+def _repeated_openings(text: str) -> list[dict[str, Any]]:
+    hits: list[dict[str, Any]] = []
+    runs: list[tuple[tuple[str, ...], int, str]] = []
+
+    def close() -> None:
+        if len(runs) >= _OPENING_RUN:
+            hits.append({"match": f"{runs[0][2]} x{len(runs)}", "line": _line_of(text, runs[0][1])})
+        runs.clear()
+
+    for match in _SENTENCE.finditer(text):
+        segment = match.group(0)
+        words = _WORD.findall(segment)
+        if len(words) < _OPENING_WORDS:
+            close()
+            continue
+        key = tuple(word.lower() for word in words[:_OPENING_WORDS])
+        if runs and key != runs[-1][0]:
+            close()
+        start = match.start() + len(segment) - len(segment.lstrip())
+        runs.append((key, start, " ".join(words[:_OPENING_WORDS])))
+    close()
+    return hits
+
+
 def writing_check(text: str) -> dict[str, Any]:
     categories: dict[str, list[dict[str, Any]]] = {key: [] for key in _WEIGHTS}
 
@@ -142,6 +173,7 @@ def writing_check(text: str) -> dict[str, Any]:
     categories["meta_commentary"] = _collect(text, _META_RE)
     categories["chained_transitions"] = _collect(text, _TRANS_RE, group=1)
     categories["rule_of_three"] = _collect(text, _TRIAD)
+    categories["repeated_openings"] = _repeated_openings(text)
 
     for pattern in _NEGATIVE:
         for match in pattern.finditer(text):
@@ -149,7 +181,7 @@ def writing_check(text: str) -> dict[str, Any]:
                 {"match": " ".join(match.group(0).split())[:80], "line": _line_of(text, match.start())}
             )
 
-    for match in re.finditer(r"[^.!?]+[.!?]*", text):
+    for match in _SENTENCE.finditer(text):
         segment = match.group(0)
         if len(_HEDGE_RE.findall(segment)) >= 2:
             categories["stacked_hedging"].append(

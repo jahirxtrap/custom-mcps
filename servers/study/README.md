@@ -13,14 +13,14 @@ the `toolkit` tool tells you exactly what to install.
 
 | Tool | Args | What it does |
 |---|---|---|
-| `writing_check` | `text` | Detect AI tells (EN+ES): em dashes, filler, negative parallelism, rule of three, tell-tale vocabulary, vague attributions, meta-commentary, chained transitions, stacked hedging. Score + hits by category. |
+| `writing_check` | `text` | Detect AI tells (EN+ES): em dashes, filler, negative parallelism, rule of three, tell-tale vocabulary, vague attributions, meta-commentary, chained transitions, stacked hedging, repeated sentence openings. Score + hits by category. |
 | `burstiness` | `text` | Sentence-length variation (detectors penalize uniformity): mean, stdev, coefficient of variation, score. Language-agnostic. |
 | `grammar_check` | `text`, `language` | Spelling and grammar through a local LanguageTool (30+ languages; `auto` detects). Markdown and pandoc markup is removed first; every finding points to the original line with the flagged text, message, replacements, rule and category, plus counts by category. Once over the finished text; names and technical terms flagged as spelling are the author's call. Needs LanguageTool (see `toolkit('grammar')`). |
 | `study_guide` | `topic=""` | Embedded guidance: `writing` / `citations` / `structure` / `visual` / `images` / `slides` / `documents` / `assignment` (reading a brief that arrives as a photo). |
 | `concept_map` | `spec`, `out_dir=""` | Concept map / organizer from a JSON spec to a PNG (returns the image + `path=`), following the anti-AI visual rules. |
 | `final_check` | `text`, `language` | The three checks in one call over the finished text: a summary line plus the writing, burstiness and grammar reports. |
 | `render_document` | `spec`, `out_dir=""` | Build a document or deck. `format='docx'`: editable Word on the institution's template (its cover, logos, headers, styles and margins stay; cover texts replaced; content appended with its styles) or from scratch. `format='pptx'`: editable PowerPoint on a template's layouts (title, bullets with levels, image, table, notes per slide). `format='report'` and `'slides'`: ReportLab PDFs (outline, vector charts, two columns; 16:9 deck with reveal builds). |
-| `template_inspect` | `path` | What a `.docx` or `.pptx` template offers: sections and margins, styles, the texts of cover, headers, footers and text boxes (what to replace or remove), or the slide size and every layout with its placeholders. Changes nothing. |
+| `template_inspect` | `path` | What a `.docx` or `.pptx` template offers: sections and margins, the styles it really uses and whether the ones `render_document` needs exist, the texts of cover, headers, footers and text boxes (what to replace or remove), or the slide size and every layout with its placeholders. Changes nothing. |
 | `cite` | `fields=""`, `doi=""` | APA 7 reference + in-text + BibTeX from fields, or resolve a DOI to BibTeX (network). |
 | `image_search` | `subject`, `kind=""` | Brief for sourcing a real image from free, openly licensed providers (Wikimedia Commons, Openverse, Google reusable, Flickr): search/API URLs + licensing checklist; AI only when explicitly asked. |
 | `toolkit` | `topic=""` | The ecosystem to install (documents, slides, research, citations, diagrams, latex, images, video, humanize, grammar): commands, API keys, how to configure them. |

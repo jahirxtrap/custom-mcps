@@ -1,6 +1,6 @@
 [project]
 name = "study-mcp"
-version = "0.4.0"
+version = "0.4.1"
 description = "Area-agnostic study MCP: anti-AI writing checks, LanguageTool grammar check, Word and PowerPoint on a template, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, workspaces."
 readme = "README.md"
 requires-python = ">=3.11"

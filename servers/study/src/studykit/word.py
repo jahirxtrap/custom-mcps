@@ -23,6 +23,7 @@ _NUMBER = "List Number"
 _QUOTE = "Quote"
 _CAPTION = "Caption"
 _GRID = "Table Grid"
+BLOCK_STYLES = (_TITLE, *_HEADING.values(), _BULLET, _NUMBER, _QUOTE, _CAPTION, _GRID)
 _HANGING = Cm(1.27)
 _QUOTE_INDENT = Cm(1.27)
 _TOC_FIELD = 'TOC \\o "1-3" \\h \\z \\u'

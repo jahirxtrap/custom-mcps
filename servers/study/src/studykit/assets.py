@@ -23,7 +23,8 @@ agnostic; examples are given in English and Spanish.
    "tapestry", "vibrant", "intricate", "meticulous". ES: "fundamental", "crucial", "robusto",
    "fomentar", "subrayar".
 9. No chained stock transitions. Don't open consecutive sentences with "Moreover", "Furthermore",
-   "Additionally" / "Ademas", "Asimismo", "Por otro lado".
+   "Additionally" / "Ademas", "Asimismo", "Por otro lado". Don't open three sentences in a row
+   with the same words either ("The study... The study... The study...").
 10. No vague attributions. Not "experts agree", "studies show" / "los expertos coinciden",
     "estudios demuestran". Cite author, work, and year.
 11. No boilerplate conclusions ("Despite the challenges, X remains relevant").

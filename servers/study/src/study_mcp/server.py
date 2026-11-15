@@ -62,7 +62,8 @@ def _scratch(prefix: str, out_dir: str = "", suffix: str = "png") -> Path:
 def writing_check(text: str) -> str:
     """Detect AI 'tells' in academic text (English and Spanish): em dashes, AI filler, negative
     parallelism, the rule of three, tell-tale vocabulary, vague attributions, meta-commentary,
-    chained transitions, and stacked hedging. Returns a 0-100 score and hits by category."""
+    chained transitions, stacked hedging, and runs of sentences that open with the same words.
+    Returns a 0-100 score and hits by category."""
     return json.dumps(_writing_check(text))
 
 

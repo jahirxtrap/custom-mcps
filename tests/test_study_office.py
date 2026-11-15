@@ -80,7 +80,10 @@ def test_docx_on_a_template_replaces_cover_texts_and_appends_content(tmp_path, w
     assert "Sample paragraph to drop." not in texts
     assert "Introduction" in texts and "First paragraph." in texts and "A quote." in texts
     assert (report["tables"], report["images"]) == (1, 1)
-    assert "Heading 1" in report["styles"]["paragraph"] and "Table Grid" in report["styles"]["table"]
+    used = {"paragraph": ["Caption", "Heading 1", "List Bullet", "List Number", "Quote"], "table": ["Table Grid"]}
+    assert report["styles"]["used"] == used
+    assert report["styles"]["for_blocks"]["Heading 1"] is True and report["styles"]["for_blocks"]["Table Grid"] is True
+    assert report["body"][4]["style"] == "Heading 1"
 
     document = Document(str(out))
     assert document.styles["Normal"].font.name == "Times New Roman"

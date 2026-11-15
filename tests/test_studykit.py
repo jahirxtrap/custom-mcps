@@ -50,6 +50,26 @@ def test_writing_check_negative_parallelism_and_meta():
     assert "negative_parallelism" in report["categories"]
 
 
+def test_writing_check_sees_repeated_openings_in_any_language():
+    report = writing_check(
+        "La estadística descriptiva organiza los datos.\nLa estadística descriptiva resume la información. "
+        "La estadística descriptiva presenta los resultados. Luego viene otra cosa. Luego sigue."
+    )
+    hits = report["categories"]["repeated_openings"]
+    assert hits["count"] == 1
+    assert hits["hits"][0] == {"match": "La estadística x3", "line": 1}
+    assert report["score"] < 100
+    assert "repeated_openings" not in writing_check("The study grew. The study ended.")["categories"]
+
+
+def test_writing_check_knows_the_cabe_family_and_history_openers():
+    report = writing_check(
+        "Cabe mencionar que el tema importa. Cabe señalar que hay matices. Cabe recalcar que la fuente es "
+        "oficial. A lo largo de la historia el deporte cambió. It is worth mentioning this throughout history."
+    )
+    assert report["categories"]["filler"]["count"] == 6
+
+
 def test_writing_check_clean_text_scores_high():
     report = writing_check("The river rose at dawn. Birds left the reeds. We waited by the old bridge.")
     assert report["score"] == 100
