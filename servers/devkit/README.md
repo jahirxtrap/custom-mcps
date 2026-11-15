@@ -11,13 +11,20 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 
 | Tool | Purpose |
 |---|---|
-| `conventions` | The embedded conventions, all or one topic: commit/code/ssot/dry/boundaries/scope/hardcoding/data/i18n/runtime/verify/design/spacing/format/patterns/docs/naming. |
-| `commit_style` | Analyze a repo's recent commit subjects (prefixes, % conventional, length, case) — the style to imitate. |
-| `commit_context` | Diffstat + changed files + recent subjects + style, to draft a commit message that fits the repo. |
+| `conventions` | One topic of the embedded conventions: commit/code/ssot/dry/boundaries/scope/hardcoding/data/i18n/runtime/verify/design/spacing/format/patterns/docs/naming. Without a topic, the index (one line per topic); an unknown topic answers with the closest name, never with the whole guide. |
+| `commit_style` | Analyze a repo's recent commit subjects (prefixes, % conventional, length, case) — the style to imitate. `path` is the repo or any folder inside it. |
 | `find_hardcoded` | Hardcoded colors (`#hex`, `Color(0xFF…)`, any stack) + web `px`/`rem` values + raw Tailwind → tokens. |
 | `find_inconsistent` | Snapshot the spacing and text-size scales in use; flag rare one-offs, off-grid spacing, and Tailwind arbitrary values. |
-| `find_format` | AI-typical format breaks: inline fully-qualified names, unused imports, mixed tab/space indent, JSON indent outliers. |
-| `find_duplication` | Repeated normalized line blocks → DRY candidates (heuristic). |
+| `find_format` | AI-typical format breaks: inline fully-qualified names, unused imports, mixed tab/space indent, JSON indent outliers. Complete counts, lists of 25 (100 with `detail`). |
+| `find_duplication` | Repeated normalized line blocks → DRY candidates (heuristic). Occurrences per file and the ten largest blocks; `detail` lists up to fifty with every occurrence. |
+
+## The core rules arrive on their own
+
+The plugin ships a `SessionStart` hook (`hooks/hooks.json`) that prints the four core topics
+(code, commit, ssot, dry) into the session context when it starts, resumes or compacts. Measured
+over real use, `conventions` was called hundreds of times per long session to reread those same
+topics after each compaction; now they are always there, and `conventions(topic)` is for the rest.
+The digest comes from the same data as the tool (`convkit.digest`), so there is one text to maintain.
 
 ## What it encodes (verified against real projects)
 
@@ -63,13 +70,12 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 ## Usage
 
 ```
-conventions      topic=hardcoding
-commit_style     repo=/path/to/repo
-commit_context   repo=/path/to/repo            # then draft the message in that style
-find_hardcoded   path=app/src   allow=brand    # extra filename substrings to skip
-find_inconsistent path=app/src   rare=2 grid=4  # spacing/text-size scale snapshot + outliers
-find_format       path=app/src                  # inline FQN, unused imports, indent, JSON style
-find_duplication path=src        window=6
+conventions      topic=hardcoding               # no topic: the index of topics
+commit_style     path=/path/to/repo             # then write the subject in that style
+find_hardcoded   path=app/src   allow=brand     # extra filename substrings to skip
+find_inconsistent path=app/src   rare=2 grid=4   # spacing/text-size scale snapshot + outliers
+find_format       path=app/src   detail=false    # inline FQN, unused imports, indent, JSON style
+find_duplication path=src        window=6 detail=false
 ```
 
 Every tool returns structured JSON / text and never writes anything.

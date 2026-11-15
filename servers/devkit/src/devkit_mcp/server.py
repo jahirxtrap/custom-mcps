@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 
 from convkit import (
-    commit_context as _commit_context,
     commit_style as _commit_style,
     find_duplication as _find_duplication,
     find_format as _find_format,
@@ -19,35 +18,32 @@ mcp = FastMCP(
     instructions=(
         "Development conventions and the checks that verify them, across stacks "
         "(Java, Kotlin/Compose, TypeScript/React, Python, GDScript). Read-only.\n"
-        "Tools: conventions, commit_style, commit_context, find_hardcoded, find_inconsistent, "
-        "find_format, find_duplication.\n"
-        "Read conventions before writing code and again before committing; run the find_* checks "
-        "over the code you touched."
+        "Tools: conventions, commit_style, find_hardcoded, find_inconsistent, find_format, "
+        "find_duplication.\n"
+        "The conventions are these, never what the code you see happens to do: do not infer them "
+        "from the code. The core ones (code, commit, ssot, dry) arrive in your context when the "
+        "session starts and after every compaction, so call conventions(topic) only for the other "
+        "topics. Run commit_style on the repo before committing. Run the find_* checks once over "
+        "the code you touched when the task is done, not after every edit."
     ),
 )
 
 
 @mcp.tool
 def conventions(topic: str = "") -> str:
-    """Return the embedded developer conventions, all of them or one topic: commit / code / ssot /
-    dry / boundaries / scope / hardcoding / data / i18n / runtime / verify / design / spacing /
-    format / patterns / docs / naming."""
+    """Return the developer conventions of one topic: commit / code / ssot / dry / boundaries / scope /
+    hardcoding / data / i18n / runtime / verify / design / spacing / format / patterns / docs /
+    naming. Without a topic it returns the index of topics, one line each. The core topics (code,
+    commit, ssot, dry) are already in your context from the session start."""
     return _guide(topic)
 
 
 @mcp.tool
-def commit_style(repo: str = "", count: int = 30) -> str:
+def commit_style(path: str = "", count: int = 30) -> str:
     """Analyze a git repo's recent commit subjects: prefixes used, % conventional, average length,
-    lowercase rate, recent samples. The style to imitate when committing here."""
-    return json.dumps(_commit_style(repo, count))
-
-
-@mcp.tool
-def commit_context(repo: str = "", rev_range: str = "") -> str:
-    """Gather what's needed to write a commit message in the repo's style: staged (or rev_range)
-    diffstat, changed files, recent subjects, and the commit_style summary. Never add Co-Authored-By.
-    When the change answers an issue, add the required footer (conventions('commit'))."""
-    return json.dumps(_commit_context(repo, rev_range))
+    lowercase rate, recent samples. The style to imitate when committing there. `path` is the repo
+    (or any folder inside it)."""
+    return json.dumps(_commit_style(path, count))
 
 
 @mcp.tool
@@ -73,20 +69,23 @@ def find_inconsistent(path: str, rare: int = 2, grid: int = 4, exclude: str = ""
 
 
 @mcp.tool
-def find_format(path: str, exclude: str = "") -> str:
+def find_format(path: str, exclude: str = "", detail: bool = False) -> str:
     """Flag AI-typical format breaks that formatters miss: inline fully-qualified class names
     (Java/Kotlin -- import them), unused imports (Java/Kotlin/TS), tab+space mixed indentation, and
-    JSON files whose indent style differs from the tree majority. Read-only, multi-stack.
-    `exclude` adds path fragments to skip."""
-    return json.dumps(_find_format(path, exclude))
+    JSON files whose indent style differs from the tree majority. Read-only, multi-stack. Every count
+    is complete; each list shows 25 entries, or 100 with detail=true. `exclude` adds path fragments
+    to skip."""
+    return json.dumps(_find_format(path, exclude, detail))
 
 
 @mcp.tool
-def find_duplication(path: str, window: int = 6, exclude: str = "") -> str:
+def find_duplication(path: str, window: int = 6, exclude: str = "", detail: bool = False) -> str:
     """Find repeated normalized line blocks (~window lines) across the code -- candidates to unify
-    (DRY). Heuristic; some matches may be legit boilerplate. `exclude` adds path fragments to skip,
-    which matters on a tree carrying generated or uploaded files."""
-    return json.dumps(_find_duplication(path, window, exclude))
+    (DRY). Heuristic; some matches may be legit boilerplate. Answers the occurrences per file and the
+    ten largest blocks with a short sample; detail=true lists up to fifty blocks with every
+    occurrence. `exclude` adds path fragments to skip, which matters on a tree carrying generated or
+    uploaded files."""
+    return json.dumps(_find_duplication(path, window, exclude, detail))
 
 
 def main() -> None:

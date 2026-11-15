@@ -26,6 +26,12 @@ _SKIP_DIRS = {
     "third_party", "vendor", "venv",
 }
 _VENDORED_PATHS = ("components/ui/", "components/rnr/", "src/generated/")
+_SUMMARY_LIMIT = 25
+_DETAIL_LIMIT = 100
+_DUPLICATION_SUMMARY = 10
+_DUPLICATION_DETAIL = 50
+_OCCURRENCES = 5
+_SAMPLE = 120
 
 
 def _fragments(exclude: str | None) -> list[str]:
@@ -235,11 +241,12 @@ def _imported_names(line: str, suffix: str) -> list[str]:
     return []
 
 
-def find_format(path: str, exclude: str = "") -> dict[str, Any]:
+def find_format(path: str, exclude: str = "", detail: bool = False) -> dict[str, Any]:
     """Flag AI-typical format breaks formatters miss: inline fully-qualified class names (Java/Kotlin),
     unused imports (Java/Kotlin/TS), tab+space mixed indentation, and JSON files whose indent style
     differs from the rest of the tree."""
     base = Path(path)
+    limit = _DETAIL_LIMIT if detail else _SUMMARY_LIMIT
     inline_fqn: list[dict[str, Any]] = []
     unused: list[dict[str, Any]] = []
     mixed_indent: list[str] = []
@@ -289,19 +296,27 @@ def find_format(path: str, exclude: str = "") -> dict[str, Any]:
     return {
         "code_scanned": code_scanned,
         "json_scanned": json_scanned,
-        "inline_fqn": inline_fqn[:100],
+        "inline_fqn": inline_fqn[:limit],
         "inline_fqn_count": len(inline_fqn),
-        "unused_imports": unused[:100],
+        "unused_imports": unused[:limit],
         "unused_import_count": len(unused),
-        "mixed_indent": mixed_indent[:100],
-        "json_style": {"indents": dict(json_styles), "majority": majority, "outliers": outliers[:60]},
+        "mixed_indent": mixed_indent[:limit],
+        "mixed_indent_count": len(mixed_indent),
+        "json_style": {
+            "indents": dict(json_styles),
+            "majority": majority,
+            "outliers": outliers[:limit],
+            "outlier_count": len(outliers),
+        },
+        "detail": detail,
         "note": "Heuristic. inline_fqn = a package.path.Class used inline (import it). unused_imports "
         "skips names that appear anywhere else (incl. comments), so they are strong candidates. "
-        "json_style flags files whose indent differs from the tree majority. Vendored dirs skipped.",
+        "json_style flags files whose indent differs from the tree majority. Vendored dirs skipped. "
+        "Lists are cut at the limit; the counts are complete; detail=true lists more.",
     }
 
 
-def find_duplication(path: str, window: int = 6, exclude: str = "") -> dict[str, Any]:
+def find_duplication(path: str, window: int = 6, exclude: str = "", detail: bool = False) -> dict[str, Any]:
     """Find identical normalized line blocks (~window lines) repeated across the code (DRY candidates)."""
     base = Path(path)
     fragments = _fragments(exclude)
@@ -329,10 +344,21 @@ def find_duplication(path: str, window: int = 6, exclude: str = "") -> dict[str,
                 "sample": occ[0]["sample"][:200],
             })
     blocks.sort(key=lambda b: b["count"], reverse=True)
+    files: Counter[str] = Counter(o["file"] for b in blocks for o in b["occurrences"])
+    if detail:
+        shown = blocks[:_DUPLICATION_DETAIL]
+    else:
+        shown = [
+            {"count": b["count"], "occurrences": b["occurrences"][:_OCCURRENCES], "sample": b["sample"][:_SAMPLE]}
+            for b in blocks[:_DUPLICATION_SUMMARY]
+        ]
     return {
         "window": window,
         "duplicate_blocks": len(blocks),
-        "blocks": blocks[:50],
+        "files": dict(files.most_common(_DUPLICATION_SUMMARY)),
+        "blocks": shown,
+        "detail": detail,
         "note": "Heuristic: identical normalized line windows. Some are legit boilerplate; "
-        "treat as candidates to unify.",
+        "treat as candidates to unify. files = occurrences per file; blocks = the largest ones, "
+        "detail=true lists up to fifty with every occurrence.",
     }

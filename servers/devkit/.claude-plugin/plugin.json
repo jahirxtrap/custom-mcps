@@ -1,7 +1,7 @@
 {
   "name": "devkit",
-  "version": "0.2.2",
-  "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format and duplication.",
+  "version": "0.3.0",
+  "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format and duplication. The core rules reach every session at its start and after each compaction.",
   "author": {
     "name": "jahirtrap",
     "url": "https://github.com/jahirxtrap"

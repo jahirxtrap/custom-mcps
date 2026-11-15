@@ -1,6 +1,8 @@
 """Embedded developer conventions by topic (verified against the user's real projects)."""
 from __future__ import annotations
 
+import difflib
+
 _TOPICS: dict[str, list[str]] = {
     "commit": [
         "Conventional commits: feat / fix / chore / refactor / docs. Short, lowercase subject "
@@ -295,16 +297,44 @@ _TOPICS: dict[str, list[str]] = {
 }
 
 
+_CORE = ("code", "commit", "ssot", "dry")
+_INDEX_WIDTH = 90
+_CLOSE_ENOUGH = 0.6
+
+
 def topics() -> list[str]:
     return list(_TOPICS)
 
 
-def guide(topic: str = "") -> str:
-    """Render all conventions, or a single topic (commit/code/ssot/dry/boundaries/scope/
-    hardcoding/data/i18n/runtime/verify/design/spacing/format/patterns/docs/naming)."""
-    selected = {topic: _TOPICS[topic]} if topic in _TOPICS else _TOPICS
+def _render(selected: dict[str, list[str]]) -> str:
     lines = ["# Developer conventions"]
     for name, items in selected.items():
         lines += ["", f"## {name}"]
         lines += [f"- {item}" for item in items]
     return "\n".join(lines)
+
+
+def index() -> str:
+    lines = ["# Developer conventions: topics", "", "Call conventions(topic) for the rules of one topic."]
+    for name, items in _TOPICS.items():
+        first = items[0].split(". ")[0].rstrip(".")
+        lines.append(f"- {name} ({len(items)} rules): {first[:_INDEX_WIDTH]}")
+    return "\n".join(lines)
+
+
+def digest() -> str:
+    others = ", ".join(name for name in _TOPICS if name not in _CORE)
+    core = _render({name: _TOPICS[name] for name in _CORE})
+    return f"{core}\n\nThe other topics come from conventions(topic): {others}."
+
+
+def guide(topic: str = "") -> str:
+    """Render one topic's conventions; without a topic, the index of topics."""
+    key = topic.strip().lower()
+    if not key:
+        return index()
+    if key in _TOPICS:
+        return _render({key: _TOPICS[key]})
+    close = difflib.get_close_matches(key, list(_TOPICS), n=1, cutoff=_CLOSE_ENOUGH)
+    hint = f" Did you mean '{close[0]}'?" if close else ""
+    return f"Unknown topic '{topic}'.{hint} Topics: {', '.join(_TOPICS)}."

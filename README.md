@@ -132,16 +132,22 @@ tools look at the real code and history. Read-only.
 
 - **conventions** returns your rules by topic: commit, code (no comments, latest versions), dry,
   hardcoding, design (tokens), spacing (one spacing + type scale, symmetry), format (imports,
-  indentation, JSON style), patterns, docs, naming.
-- **commit_style** / **commit_context** read the repo's git log so a new commit message matches
-  the existing style and what actually changed — no Co-Authored-By.
+  indentation, JSON style), patterns, docs, naming. Without a topic it answers the index, and a
+  misspelt topic gets the closest name, never the whole guide.
+- The **core rules** (code, commit, ssot, dry) reach every session on their own: a `SessionStart`
+  hook prints them when the session starts, resumes or compacts, so they survive compaction
+  without being asked for again.
+- **commit_style** reads the repo's git log so a new commit message matches the existing style —
+  no Co-Authored-By.
 - **find_hardcoded** flags colors (`#hex`, `Color(0xFF…)`, any stack), web `px`/`rem` values and raw
   Tailwind classes that belong in a token file (Compose `.dp` spacing is idiomatic, not flagged).
 - **find_inconsistent** snapshots the spacing and text-size scales actually in use and flags what
   breaks consistency: rare one-off values, spacing off a base grid, and Tailwind arbitrary `[Npx]`.
 - **find_format** catches AI-typical format breaks formatters miss: inline fully-qualified class
   names (import them), unused imports, tab/space mixed indentation, and JSON indent-style outliers.
-- **find_duplication** surfaces repeated blocks to unify (DRY).
+- **find_duplication** surfaces repeated blocks to unify (DRY): occurrences per file and the
+  largest blocks, with a `detail` switch for the full list. **find_format** cuts its lists the same
+  way and keeps every count complete.
 
 The conventions were extracted from your real projects (backstube-web, cconnect, vorenth, mods).
 

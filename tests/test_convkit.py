@@ -5,8 +5,8 @@ import subprocess
 
 import pytest
 from convkit import (
-    commit_context,
     commit_style,
+    digest,
     find_duplication,
     find_format,
     find_hardcoded,
@@ -90,18 +90,29 @@ def test_guide_i18n_pluralization():
 
 
 def test_guide_never_mentions_an_envelope():
-    text = guide()
-    assert "envelope" not in text.lower()
+    assert all("envelope" not in guide(topic).lower() for topic in topics())
     patterns = guide("patterns")
     assert "returns its typed model directly" in patterns
     assert "response_model on EVERY endpoint" in patterns
 
 
-def test_guide_all_and_topic():
-    full = guide()
-    assert "## commit" in full and "## naming" in full
+def test_guide_index_topic_and_unknown():
+    index = guide()
+    assert "- commit (" in index and "- naming (" in index and "## commit" not in index
+    assert len(index) < 3000
     one = guide("hardcoding")
     assert "## hardcoding" in one and "## commit" not in one
+    assert guide("Commit ") == guide("commit")
+    unknown = guide("commits")
+    assert unknown.startswith("Unknown topic 'commits'.") and "Did you mean 'commit'?" in unknown
+    assert len(unknown) < 400 and "## " not in unknown
+    assert "Did you mean" not in guide("zzz")
+
+
+def test_digest_carries_the_core_topics_only():
+    text = digest()
+    assert all(f"## {name}" in text for name in ("code", "commit", "ssot", "dry"))
+    assert "## naming" not in text and "conventions(topic)" in text and "naming" in text
 
 
 def test_find_hardcoded_flags(tmp_path):
@@ -205,6 +216,17 @@ def test_find_format(tmp_path):
     assert any(u["name"] == "Map" for u in report["unused_imports"])
     assert report["json_style"]["majority"] == "2sp"
     assert any("four.json" in o["file"] for o in report["json_style"]["outliers"])
+    assert (report["unused_import_count"], report["json_style"]["outlier_count"], report["detail"]) == (1, 1, False)
+
+
+def test_find_format_cuts_lists_but_keeps_counts(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    imports = "".join(f"import x.y.Thing{i};\n" for i in range(30))
+    (src / "Many.java").write_text(f"package p;\n{imports}class Many {{}}\n", encoding="utf-8")
+    summary = find_format(str(src))
+    assert (len(summary["unused_imports"]), summary["unused_import_count"]) == (25, 30)
+    assert len(find_format(str(src), detail=True)["unused_imports"]) == 30
 
 
 def test_find_duplication(tmp_path):
@@ -215,6 +237,23 @@ def test_find_duplication(tmp_path):
     (src / "b.py").write_text("unique b\n" + block + "\n", encoding="utf-8")
     report = find_duplication(str(src), window=6)
     assert report["duplicate_blocks"] >= 1
+    assert report["files"] == {"a.py": 1, "b.py": 1} and report["detail"] is False
+    assert len(report["blocks"][0]["sample"]) <= 120
+
+
+def test_find_duplication_summary_and_detail(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    for index in range(12):
+        block = "\n".join(f"block {index} line {i} with content" for i in range(6))
+        for copy in range(7):
+            (src / f"f{index}_{copy}.py").write_text(block + "\n", encoding="utf-8")
+    summary = find_duplication(str(src), window=6)
+    assert summary["duplicate_blocks"] == 12 and len(summary["blocks"]) == 10
+    assert all(len(block["occurrences"]) == 5 for block in summary["blocks"])
+    assert len(summary["files"]) == 10
+    detail = find_duplication(str(src), window=6, detail=True)
+    assert len(detail["blocks"]) == 12 and all(len(block["occurrences"]) == 7 for block in detail["blocks"])
 
 
 @pytest.mark.skipif(not _HAS_GIT, reason="git not available")
@@ -226,10 +265,10 @@ def test_commit_style(tmp_path):
 
 
 @pytest.mark.skipif(not _HAS_GIT, reason="git not available")
-def test_commit_context(tmp_path):
+def test_commit_style_takes_any_folder_inside_the_repo(tmp_path):
     repo = _make_repo(tmp_path)
-    (repo / "c.txt").write_text("c", encoding="utf-8")
-    subprocess.run(["git", "-C", str(repo), "add", "-A"], capture_output=True, text=True)
-    report = commit_context(str(repo))
-    assert "c.txt" in report["files"]
-    assert report["style"]["sampled"] == 2
+    inner = repo / "src"
+    inner.mkdir()
+    report = commit_style(str(inner), 30)
+    assert report["sampled"] == 2 and report["path"] == str(inner)
+    assert "error" in commit_style(str(tmp_path / "nowhere"), 30)
