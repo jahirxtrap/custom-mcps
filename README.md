@@ -26,7 +26,7 @@ standalone server any MCP client can register.
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
-| **study** | Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
+| **study** | Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, editable Word and PowerPoint on the institution's template, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 | **uikit** | Interface design measured against WCAG: tokens, the color pairs the code really uses, contrast. |
 
@@ -165,22 +165,30 @@ tells you exactly what to install.
 - **concept_map** renders a graphic organizer from a JSON spec, following the anti-AI visual rules
   (the title is the topic, two to four colors, no template signatures).
 - **cite** formats APA 7 references and BibTeX from fields, or resolves a DOI to BibTeX.
-- **render_document** typesets a professional PDF from a spec with ReportLab: a **report** (cover,
-  navigable outline, fine tables, vector charts from data, two-column sections, page numbering) or
-  a 16:9 **deck** (reveal builds, progress bar, the same palette as the report). No LaTeX, no
-  Chromium — it ships with the server.
+- **render_document** builds the deliverable from a spec. **docx**: editable Word on the
+  institution's own template — its cover, logos, headers, styles and margins stay, the cover texts
+  are replaced, the content follows with its styles (or a clean Word file from scratch). **pptx**:
+  editable PowerPoint on a template's layouts and master. **report** and **slides**: ReportLab PDFs
+  (navigable outline, fine tables, vector charts, two columns; a 16:9 deck with reveal builds). No
+  LaTeX, no Chromium, no Office — it all ships with the server. **template_inspect** reads a
+  template first and says what to replace and which layouts exist. **final_check** runs the three
+  text checks in one call over the finished text.
 - **image_search** briefs where to source a real image from free, openly licensed providers
   (Wikimedia Commons, Openverse, Google reusable, Flickr) with a licensing checklist, and generates
   with AI only when you explicitly ask.
-- **study_guide** carries the writing, citation, structure, visual, images, slides and documents
-  conventions, including the rule to **ask which engine** fits before building (pandoc for `.docx`
-  and automatic citations, LaTeX for strict APA, ReportLab for a designed PDF, Marp for a visual
-  deck); **toolkit** is the ecosystem catalog (what to install, which needs a key, how to configure it).
+- **study_guide** carries the writing, citation, structure, visual, images, slides, documents and
+  assignment conventions: how to read a brief that arrives as a photo and confirm it, and the rule
+  to **ask what the institution expects** before building (Word on its template, pandoc for prose
+  with automatic citations, LaTeX for strict APA, ReportLab for a designed PDF, PowerPoint on its
+  template or Marp for a deck); **toolkit** is the ecosystem catalog (what to install, which needs a
+  key, how to configure it).
 - **workspace_init**, **area_add**, **reference_add** and **workspace_status** scaffold a reusable,
-  **multi-area** study workspace — shared conventions and memory, one folder per subject with its
-  own knowledge base and reference library. A PDF added as a source is converted in reading order
-  and cleaned of repeated headers, page numbers, broken lines and ligatures before it reaches the
-  library.
+  **multi-area** study workspace — shared conventions, templates, tools and memory, one folder per
+  subject with its own knowledge base, reference library, one folder per work and an `out/` for
+  the final files. `workspace_status` reports what is really there: works, scripts, deliverables,
+  templates, shared tools and work files by status. A PDF added as a source is converted in
+  reading order and cleaned of repeated headers, page numbers, broken lines and ligatures before
+  it reaches the library.
 
 It carries **no subject knowledge** — you pick the field. The plugin also brings the **OpenAlex**
 and **Semantic Scholar** research servers, pinned to a version, and its options

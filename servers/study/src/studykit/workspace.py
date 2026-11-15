@@ -18,7 +18,9 @@ from .assets import (
     MEMORY_LOG,
     MEMORY_PROFILE,
     PAPER_APA7_TEX,
+    TOOLS_README,
     VISUAL_GUIDE,
+    WORKS_README,
     WORKSPACE_CLAUDE,
     WRITING_RULES,
 )
@@ -27,6 +29,11 @@ from .normalize import normalize_extracted
 
 _PLAINTEXT = ("md", "markdown", "txt")
 _PANDOC = ("docx", "odt", "rtf", "html", "htm", "epub", "tex")
+_WORK_FOLDERS = ("documents", "slides")
+_OUT = "out"
+_LIBRARY = "library"
+_FRONTMATTER = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
+_DOCSTRING = re.compile(r'^\s*(?:r|u)?(?:"""|\'\'\')\s*([^\n"\']+)', re.MULTILINE)
 
 
 def _slug(name: str) -> str:
@@ -80,7 +87,7 @@ def _create_area(root: Path, name: str) -> str:
 
 def workspace_init(path: str, areas: list[str] | None = None) -> dict[str, Any]:
     root = Path(path)
-    for name in ("conventions", "styles", "memory", "areas", "templates"):
+    for name in ("conventions", "styles", "memory/works", "areas", "templates", "tools"):
         (root / name).mkdir(parents=True, exist_ok=True)
     files = {
         root / "CLAUDE.md": WORKSPACE_CLAUDE,
@@ -89,8 +96,10 @@ def workspace_init(path: str, areas: list[str] | None = None) -> dict[str, Any]:
         root / "styles" / "README.md": APA_CSL_README,
         root / "memory" / "profile.md": MEMORY_PROFILE,
         root / "memory" / "log.md": MEMORY_LOG,
+        root / "memory" / "works" / "README.md": WORKS_README,
         root / "templates" / "paper-apa7.tex": PAPER_APA7_TEX,
         root / "templates" / "concept-map-example.json": CONCEPT_MAP_EXAMPLE,
+        root / "tools" / "README.md": TOOLS_README,
     }
     created = [str(p.relative_to(root)) for p, content in files.items() if _write_if_absent(p, content)]
     slugs = [_create_area(root, name) for name in (areas or [])]
@@ -142,24 +151,91 @@ def reference_add(path: str, area: str, fields: dict[str, Any], file: str = "") 
     return {"area": slug, "key": key, "bibtex": entry, "source_copied": source_copied, "markdown": markdown}
 
 
+def _frontmatter(path: Path) -> dict[str, str]:
+    match = _FRONTMATTER.match(path.read_text(encoding="utf-8", errors="replace"))
+    fields: dict[str, str] = {}
+    if match:
+        for line in match.group(1).splitlines():
+            if ":" in line and not line.startswith((" ", "-")):
+                key, value = line.split(":", 1)
+                fields[key.strip()] = value.strip()
+    return fields
+
+
+def _docstring_line(path: Path) -> str:
+    match = _DOCSTRING.search(path.read_text(encoding="utf-8", errors="replace"))
+    return match.group(1).strip() if match else ""
+
+
+def _by_suffix(files: list[Path]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for file in files:
+        suffix = file.suffix.lower().lstrip(".") or "none"
+        counts[suffix] = counts.get(suffix, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _works(root: Path) -> dict[str, Any]:
+    folder = root / "memory" / "works"
+    files = [p for p in folder.glob("*.md") if p.name.lower() != "readme.md"] if folder.exists() else []
+    by_status: dict[str, int] = {}
+    for file in files:
+        status = _frontmatter(file).get("status", "unknown")
+        by_status[status] = by_status.get(status, 0) + 1
+    return {"count": len(files), "by_status": dict(sorted(by_status.items()))}
+
+
+def _tools(root: Path) -> list[dict[str, str]]:
+    folder = root / "tools"
+    if not folder.exists():
+        return []
+    return [{"module": p.stem, "does": _docstring_line(p)} for p in sorted(folder.glob("*.py")) if p.stem != "__init__"]
+
+
+def _templates(root: Path) -> dict[str, list[str]]:
+    folder = root / "templates"
+    grouped: dict[str, list[str]] = {}
+    if folder.exists():
+        for file in sorted(folder.iterdir()):
+            if file.is_file():
+                grouped.setdefault(file.suffix.lower().lstrip(".") or "none", []).append(file.name)
+    return grouped
+
+
+def _area_status(entry: Path) -> dict[str, Any]:
+    bib = entry / "references.bib"
+    refs = len(re.findall(r"(?m)^@", bib.read_text(encoding="utf-8"))) if bib.exists() else 0
+    sources = entry / _LIBRARY / "sources"
+    source_count = len([p for p in sources.iterdir() if p.is_file()]) if sources.exists() else 0
+    works = {
+        name: sorted(p.name for p in (entry / name).iterdir() if p.is_dir())
+        for name in _WORK_FOLDERS
+        if (entry / name).exists()
+    }
+    scripts = [p for p in entry.rglob("*.py") if _LIBRARY not in p.relative_to(entry).parts]
+    out = entry / _OUT
+    deliverables = _by_suffix([p for p in out.iterdir() if p.is_file()]) if out.exists() else {}
+    return {
+        "area": entry.name,
+        "references": refs,
+        "sources": source_count,
+        "has_knowledge": (entry / "knowledge.md").exists(),
+        "works": works,
+        "scripts": len(scripts),
+        "deliverables": deliverables,
+    }
+
+
 def workspace_status(path: str) -> dict[str, Any]:
     root = Path(path)
-    areas: list[dict[str, Any]] = []
     area_dir = root / "areas"
-    if area_dir.exists():
-        for entry in sorted(area_dir.iterdir()):
-            if not entry.is_dir():
-                continue
-            bib = entry / "references.bib"
-            refs = len(re.findall(r"(?m)^@", bib.read_text(encoding="utf-8"))) if bib.exists() else 0
-            sources = entry / "library" / "sources"
-            source_count = len([p for p in sources.iterdir() if p.is_file()]) if sources.exists() else 0
-            areas.append(
-                {
-                    "area": entry.name,
-                    "references": refs,
-                    "sources": source_count,
-                    "has_knowledge": (entry / "knowledge.md").exists(),
-                }
-            )
-    return {"workspace": str(root), "exists": root.exists(), "area_count": len(areas), "areas": areas}
+    areas = [_area_status(entry) for entry in sorted(area_dir.iterdir()) if entry.is_dir()] if area_dir.exists() else []
+    return {
+        "workspace": str(root),
+        "exists": root.exists(),
+        "area_count": len(areas),
+        "areas": areas,
+        "templates": _templates(root),
+        "tools": _tools(root),
+        "works": _works(root),
+    }

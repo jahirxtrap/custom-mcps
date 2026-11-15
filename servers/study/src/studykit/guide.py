@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .assets import (
+    ASSIGNMENT_GUIDE,
     CITATION_APA,
     DOCUMENTS_GUIDE,
     IMAGES_GUIDE,
@@ -19,9 +20,13 @@ _GUIDES = {
     "images": IMAGES_GUIDE,
     "slides": SLIDES_GUIDE,
     "documents": DOCUMENTS_GUIDE,
+    "assignment": ASSIGNMENT_GUIDE,
 }
 
 _ALIASES = {
+    "brief": "assignment",
+    "task": "assignment",
+    "homework": "assignment",
     "apa": "citations",
     "cite": "citations",
     "references": "citations",
@@ -71,12 +76,21 @@ def study_guide(topic: str = "") -> str:
 _TOOLKIT: dict[str, list[dict[str, str]]] = {
     "documents": [
         {
-            "name": "ReportLab (render_document tool)",
+            "name": "Word on a template (render_document format='docx' + template_inspect)",
+            "what": "editable .docx written over the institution's own format: its cover, logos, headers, "
+            "styles and margins stay, the cover texts are replaced, the content follows; already installed",
+            "install": "bundled (python-docx, a studykit dependency); nothing to install",
+            "configure": "keep the institution's .docx in templates/, run template_inspect once, pass "
+            "template and replace in the spec. Without a template it writes a clean Word file",
+        },
+        {
+            "name": "ReportLab (render_document format='report')",
             "what": "the professional, technical engine: designed PDFs with fine tables, vector charts, "
             "navigable outline, page numbering; already installed with this server",
             "install": "bundled (studykit dependency); nothing to install",
-            "configure": "ask the user which engine fits before building: pandoc (.docx + automatic "
-            "citations), LaTeX (strict APA), or ReportLab (designed PDF). It does not read BibTeX/CSL",
+            "configure": "ask the user what the institution expects before building: Word on its template "
+            "(docx), pandoc (.docx from Markdown + automatic citations), LaTeX (strict APA), or ReportLab "
+            "(designed PDF). Neither docx nor ReportLab reads BibTeX/CSL",
         },
         {
             "name": "Anthropic document skills (docx, pptx, xlsx, pdf)",
@@ -85,6 +99,14 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
         },
     ],
     "slides": [
+        {
+            "name": "PowerPoint on a template (render_document format='pptx' + template_inspect)",
+            "what": "editable .pptx on the layouts and master of the institution's template: title, bullets "
+            "with levels, image, table and notes per slide; already installed",
+            "install": "bundled (python-pptx, a studykit dependency); nothing to install",
+            "configure": "keep the institution's .pptx in templates/, run template_inspect to see its layout "
+            "names, name one per slide in the spec. Without a template it uses the default 16:9 layouts",
+        },
         {
             "name": "ReportLab (render_document tool, format='slides')",
             "what": "the technical deck: 16:9, vector charts, reveal builds, progress bar, matching the "

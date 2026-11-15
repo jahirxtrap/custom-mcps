@@ -16,7 +16,7 @@ def test_workspace_registers_no_server_of_its_own(tmp_path):
 
 
 def test_workspace_mcp_json_lists_only_the_cloned_video_audio(tmp_path):
-    server = tmp_path / "tools" / "video-audio-mcp" / "server.py"
+    server = tmp_path / "external" / "video-audio-mcp" / "server.py"
     server.parent.mkdir(parents=True)
     server.write_text("", encoding="utf-8")
     SETUP.write_mcp_json(tmp_path)

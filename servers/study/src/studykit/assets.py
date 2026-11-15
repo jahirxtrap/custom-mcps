@@ -62,6 +62,34 @@ signatures. Avoid:
 6. Coherent, sober icons, not a different flashy icon per element.
 
 Golden rule: it should look made by a person for a specific task, not a stock template.
+
+`concept_map` renders an organizer as a PNG. When the deliverable is Word or PowerPoint, embed it
+(an image block in the docx spec, an image slide in the pptx spec); it is not a separate file to
+hand in.
+"""
+
+ASSIGNMENT_GUIDE = """# Assignments: read the brief before producing
+
+Most briefs arrive as a photo of the virtual classroom, of a printed sheet or of the institution's
+format, with a short message on top. Treat the photo as the source and the message as the hint.
+
+1. Read everything first: every image, every attachment, the whole message. Look closely at the
+   small parts of a photo (tables, footnotes, rubric rows).
+2. Extract the brief into fixed fields: deliverable (essay, slides, matrix, report, worksheet),
+   format and norm (Word, PDF, PowerPoint; APA, font, margins, cover), length (pages, slides,
+   words), parts or sections demanded, members and their roles, course and teacher, deadline, how
+   it is handed in (platform, print, by hand).
+3. Restate it in three lines and confirm with the user before building. Most rework comes from a
+   brief read wrong the first time, not from bad writing.
+4. If a field is missing, ask once, in the same message; never fill it by inference without
+   saying so.
+5. Record the brief in the work file (`memory/works/`): the fields, the photo's file name, and the
+   decisions taken. The next change request starts from there.
+6. A format shown in the photo (cover, header, table layout) becomes a template file in
+   `templates/` the first time; see the workspace rules.
+
+When the message asks to change something already delivered, open its work file first, change
+the content or the parameter it names, and regenerate; never rebuild from scratch.
 """
 
 IMAGES_GUIDE = """# Images: search free sources first, generate with AI only on request
@@ -103,26 +131,51 @@ tools (search and fetch) pull the actual files.
 
 DOCUMENTS_GUIDE = """# Documents: pick the engine before you build
 
-There is no default engine. ASK the user which one fits the job, and state the trade-off in one
-line. Three engines, three jobs:
+There is no default engine. ASK the user what the institution expects, and state the trade-off in
+one line. Four engines, four jobs:
 
-1. pandoc - the user needs an editable .docx, or automatic APA citations from a .bib file.
-   Markdown in, Word or PDF out, with --citeproc resolving the bibliography.
-   pandoc essay.md --citeproc --bibliography=references.bib --csl=styles/apa.csl -o essay.docx
-2. LaTeX (TinyTeX + apa7) - the work must follow a strict academic template: APA 7 paper, thesis,
+1. render_document, format='docx' - the deliverable must be Word: uploaded to a platform,
+   corrected by a teacher, or built on the institution's own format. It opens the template .docx
+   and keeps everything it has (cover, logos, headers and footers, page numbers, styles, margins,
+   fonts), replaces the texts you name on the cover and headers, drops the sample paragraphs you
+   name, and writes the content after them with the template's styles. Without a template it
+   writes a clean Word file with the font, size and spacing you ask for.
+2. pandoc - long prose written in Markdown with an automatic bibliography from a .bib
+   (--citeproc), on the institution's styles with --reference-doc (styles, margins and headers
+   come from that .docx; its body text is ignored, so a cover needs the docx engine or a script).
+   pandoc essay.md --citeproc --bibliography=references.bib --csl=styles/apa.csl
+   --reference-doc=templates/<format>.docx -o essay.docx
+3. LaTeX (TinyTeX + apa7) - the work must follow a strict academic template: APA 7 paper, thesis,
    journal submission. Best typography and a real bibliography engine (biblatex), heaviest install.
-3. ReportLab (the render_document tool) - the deliverable is a designed PDF: technical report,
-   executive summary, dossier, data-driven document. Full control of the page, fine tables, vector
-   charts from data, navigable outline, page numbering, two-column sections, watermark.
+4. ReportLab (format='report') - the deliverable is a designed PDF: technical report, executive
+   summary, dossier, data-driven document. Full control of the page, fine tables, vector charts
+   from data, navigable outline, page numbering, two-column sections, watermark.
 
 Decide with the user, not for them:
-- "I need to keep editing it in Word" -> pandoc.
+- "It goes in Word" or "on the university's format" -> docx on the template.
 - "It has to follow APA to the letter, with references" -> LaTeX (or pandoc + apa.csl).
-- "It must look professional and precisely laid out" -> ReportLab.
+- "It must look professional and precisely laid out, as a PDF" -> ReportLab.
 
-Know the limit before promising: ReportLab does NOT read BibTeX and does NOT process CSL. It
-typesets the reference strings you pass it. When the document needs an automatic bibliography,
-build the references with the cite tool (or pandoc) first, then pass them as text.
+Know the limit before promising: neither the docx engine nor ReportLab reads BibTeX or CSL. They
+write the reference strings you pass them; build those with the cite tool (or pandoc) first. A
+table of contents in docx is a Word field: the file asks to update it when it opens.
+
+The render_document spec, format='docx':
+{ "format": "docx", "template": "templates/<format>.docx",
+  "replace": {"STUDENT NAME": "...", "COURSE": "..."}, "remove": ["Sample paragraph to drop"],
+  "title", "subtitle", "author", "date" (a title block, only without a template),
+  "font": {"name": "Times New Roman", "size": 12, "line_spacing": 2},
+  "margins_cm": {"top": 2.54, "bottom": 2.54, "left": 2.54, "right": 2.54}, "toc": true,
+  "blocks": [ {"type":"heading","text","level":1|2|3},
+              {"type":"text","text"},
+              {"type":"quote","text"},
+              {"type":"list","items":[...],"ordered":false},
+              {"type":"table","header":[...],"rows":[[...]],"caption"},
+              {"type":"image","path","width_cm","caption"},
+              {"type":"pagebreak"},
+              {"type":"references","items":[...]} ] }
+Run template_inspect on the template first: it lists the cover, header and text-box texts to put
+in 'replace', the sample paragraphs to put in 'remove', and the styles the template offers.
 
 The render_document spec, format='report':
 { "format": "report", "title", "subtitle", "author", "date", "abstract", "toc": true,
@@ -144,16 +197,35 @@ document is not a decorated one.
 
 SLIDES_GUIDE = """# Slides: pick the engine before you build
 
-Two engines, two products. ASK the user which one they want; do not assume.
+Three engines, three products. ASK the user which one they want; do not assume.
 
+- render_document, format='pptx' - the deck must be PowerPoint, editable, on the institution's
+  template. It uses the template's layouts and master: each slide names a layout (by the name
+  template_inspect lists) and fills its placeholders (title, subtitle, bullets with levels, image,
+  table, speaker notes); the template's own sample slides are dropped unless keep_slides is true.
+  Without a template it uses the default 16:9 layouts.
 - Marp - visual and fast, the modern "deck" look. Written in Markdown, themed with CSS, exports
   PDF, PPTX and HTML, has live preview and speaker notes. Choose it when the deck should look
-  designed and be edited quickly, or when PPTX or HTML output is required.
-- ReportLab (the render_document tool with format='slides') - the technical, precisely typeset
-  option. Vector charts from data, fine tables, progress bar, reveal builds, exact positioning,
-  and the same palette as the report so a deck and its document match. PDF only.
+  designed and be edited quickly, and no institutional template is required.
+- ReportLab (format='slides') - the technical, precisely typeset option. Vector charts from data,
+  fine tables, progress bar, reveal builds, exact positioning, and the same palette as the report
+  so a deck and its document match. PDF only.
 
-Ask it plainly: "a visual deck (Marp) or a technical, precisely laid out one (ReportLab)?"
+Ask it plainly: "editable PowerPoint on your template (pptx), a visual deck (Marp) or a technical
+PDF deck (ReportLab)?"
+
+The render_document spec, format='pptx':
+{ "format": "pptx", "template": "templates/<format>.pptx", "keep_slides": false,
+  "replace": {"text in a kept slide": "new text"},
+  "slides": [ {"layout":"cover","title","subtitle"},
+              {"layout":"bullets","title","items":["point", {"lead":"Word.","text":"the rest","level":1}],
+               "notes":"speaker notes"},
+              {"layout":"image","title","image":"path","text":"caption or side text"},
+              {"layout":"table","title","table":{"header":[...],"rows":[[...]]}},
+              {"layout":"two","title","items":[...],"image":"path"} ] }
+'layout' takes a layout name or index from template_inspect; the aliases cover, bullets, section,
+two, image, table, closing and blank map to the usual names. Placeholders a slide does not fill
+are removed, so no "Click to add text" box is left behind.
 
 The render_document spec, format='slides':
 { "format": "slides", "title", "progress": true, "font", "palette",
@@ -249,43 +321,104 @@ can carry more than one at a time.
    area's language. Default to the user's language and keep spelling and accents correct.
 2. Human voice and correctness: write the whole text first, following `conventions/writing-rules.md`
    (no em dashes, no AI filler, no default lists; vary sentence length). When it is finished, run
-   `writing_check`, `burstiness` and `grammar_check` once over the complete text, fix what they
-   find, and deliver. Never check paragraph by paragraph. In `grammar_check`, spelling hits on
-   names, technical terms and citations are the author's call, not errors to correct. For
+   `final_check` once over the complete text (it runs writing_check, burstiness and grammar_check
+   together), fix what it finds, and deliver. Never check paragraph by paragraph. Spelling hits
+   on names, technical terms and citations are the author's call, not errors to correct. For
    graphics: no meta labels, no brand footers, a palette of two to four colors.
 3. Area knowledge: for a task in area X, read and cite from `areas/<X>/knowledge.md`. Never invent
-   authors, works, dates, or data. Verify anything marked as unconfirmed before citing it.
+   authors, works, dates, or data. Verify anything marked as unconfirmed before citing it. Once
+   `knowledge.md` grows past a few pages, split it by topic with an index at the top and read
+   only the topic the task needs.
 4. Citations: APA 7 by default (`conventions/citation-apa.md`); keys without spaces. No verifiable
    source, no claim. The per-area bibliography is `areas/<X>/references.bib`.
-5. Memory: at the start of a session read `memory/*.md`. When the user gives a new instruction or
-   preference, or starts a task, update the matching file in `memory/` without being asked.
+5. Memory: at the start of a session read `memory/profile.md` and the open items of
+   `memory/log.md`, nothing more; open a file in `memory/works/` only when the task continues
+   that work. Every delivered work gets its own file there, with the frontmatter described in
+   `memory/works/README.md` (date, area, kind, format, status, files). `log.md` keeps standing
+   instructions, deadlines and open items only, never a second copy of a work. When the user
+   gives a new instruction or preference, update `profile.md` or `log.md` without being asked.
 6. Images: search free, openly licensed sources first (Wikimedia Commons, Openverse, Google
    reusable), take the full-resolution original, and record the license and credit. Generate with
    AI only if the user explicitly asks. See `study_guide('images')` and the `image_search` tool.
-7. Engine choice: never assume one. Before building a document or a deck, ASK which engine fits.
-   Documents: pandoc (editable .docx, automatic APA citations), LaTeX/apa7 (strict academic
-   template), or ReportLab via `render_document` (designed, precisely typeset PDF). Slides: Marp
-   (visual, Markdown-fast, exports PPTX and HTML) or `render_document` with format='slides'
-   (technical, vector charts, reveal builds). With Marp also ask PDF (recommended) or editable
-   PPTX. See `study_guide` topics `documents` and `slides`.
+7. Engine choice: never assume one. Before building a document or a deck, ASK what the
+   institution expects, then pick the engine for that answer. Word that will be uploaded or
+   corrected: `render_document` with format='docx' on the institution's template (rule 10). Long
+   prose with an automatic bibliography from `.bib`: pandoc with `--reference-doc` and
+   `--citeproc`. Strict academic typesetting: LaTeX/apa7. A designed PDF: `render_document` with
+   format='report'. Slides: PowerPoint on the institution's template with format='pptx'; a visual
+   Markdown deck: Marp (PDF recommended); a technical PDF deck: format='slides'. See
+   `study_guide` topics `documents` and `slides`.
+8. Briefs arrive as photos and short messages. Before producing anything, read the whole brief
+   (every image and attachment), restate in three lines what is asked (deliverable, format and
+   norm, length, members, deadline), confirm it with the user, and record it in the work file.
+   See `study_guide('assignment')`. A change to something already delivered starts from its work
+   file and regenerates; it never rebuilds from scratch.
+9. Generators and scripts. A document or deck that no tool produces is built by a script: that
+   is expected, not a workaround. Keep the content apart from the assembly (what the work says in
+   one file, how it is laid out in another), so a change request is a parameter, not a rewrite.
+   One folder per work, `areas/<area>/documents/<work>/` or `areas/<area>/slides/<work>/`, with
+   its scripts and intermediates inside, and the final file in `areas/<area>/out/`. Anything two
+   works need (a cover, table styles, image cropping) moves to `tools/` at the root as a module
+   with a one-line docstring. Read `workspace_status` before writing a helper: it lists what
+   `tools/` already has.
+10. Institutional formats. A `.docx` or `.pptx` the institution hands out goes to `templates/`
+    under a name that says whose it is, the moment it arrives. Run `template_inspect` on it once,
+    note in `memory/profile.md` which texts of its cover, headers and layouts get replaced by
+    what, and from then on every work on that format is `render_document` with that `template`
+    and `replace`. A format that only exists as a photo is rebuilt once into a template file and
+    kept the same way.
 
 ## Layout
 
 - `conventions/` - writing rules (anti-AI) and the APA quick guide.
 - `styles/` - how to fetch `apa.csl` for pandoc.
-- `templates/` - reusable templates (`paper-apa7.tex`, `concept-map-example.json`).
-- `memory/` - `profile.md` (the student and their preferences) and `log.md` (ongoing work).
-- `areas/<area>/` - `knowledge.md`, `references.bib`, and `library/` (INDEX.md, sources/, notes/).
+- `templates/` - the institution's `.docx` and `.pptx` formats, plus `paper-apa7.tex` and
+  `concept-map-example.json`.
+- `tools/` - modules shared by several works (see `tools/README.md`); `workspace_status` lists them.
+- `memory/` - `profile.md` (the student, preferences, template replacements), `log.md` (standing
+  instructions and open items) and `works/` (one file per delivered work, with frontmatter).
+- `areas/<area>/` - `knowledge.md`, `references.bib`, `library/` (INDEX.md, sources/, md/),
+  `documents/<work>/`, `slides/<work>/` and `out/` (the final files).
 - `.claude/skills/` - project-scoped skills, loaded when this folder is open in Claude Code.
 
 ## Tools
 
 The `study` MCP server (the `study@custom-mcps` plugin, which also brings the `openalex` and
 `semantic-scholar` research servers, or a registration of your own) provides writing_check,
-burstiness, grammar_check, study_guide, concept_map, cite, image_search, render_document, toolkit,
+burstiness, grammar_check, final_check, study_guide, concept_map, cite, image_search,
+render_document (report and slides as PDF, docx and pptx on a template), template_inspect, toolkit,
 and the workspace tools (workspace_init, area_add, reference_add, workspace_status). Call `toolkit`
 to see what else to install for documents, slides, research, diagrams, LaTeX, and grammar
 (LanguageTool).
+"""
+
+TOOLS_README = """# Tools
+
+Modules shared by more than one work: a cover, table styles, image cropping, anything a second
+work needed again. One module per concern, with a one-line docstring at the top saying what it
+does: `workspace_status` lists the modules from that line, so there is no index to maintain. A
+script that serves one work only stays in that work's folder under its area.
+"""
+
+WORKS_README = """# Works
+
+One file per delivered work, named `<date>-<slug>.md`, starting with this frontmatter:
+
+```
+---
+date: 2026-01-31
+area: <area slug>
+kind: essay | slides | report | matrix | worksheet | other
+format: docx | pptx | pdf | md
+status: open | delivered | revised
+files:
+  - areas/<area>/out/<file>
+---
+```
+
+Below it: the brief as confirmed with the user, the sources used, the decisions taken, and how to
+rebuild it (the script or the render_document spec). `workspace_status` counts these files by
+status, so the log never repeats them.
 """
 
 KNOWLEDGE_TEMPLATE = """# {area}
@@ -311,7 +444,8 @@ citation style.
 
 MEMORY_LOG = """# Log
 
-Ongoing work, deadlines, and instructions. Update as you go.
+Standing instructions, deadlines and open items, one line each; remove what is done. Delivered
+work is not described here: each one has its file in `works/`.
 """
 
 APA_CSL_README = """# Citation styles

@@ -29,6 +29,9 @@ from reportlab.platypus import (
 )
 from reportlab.platypus.tableofcontents import TableOfContents
 
+from .deck import render_pptx
+from .word import render_docx
+
 DEFAULT_PALETTE = {
     "primary": "#23404f",
     "accent": "#c2703d",
@@ -541,7 +544,7 @@ def _slides(spec: dict[str, Any], out: Path) -> dict[str, Any]:
 
 
 def render_document(spec: dict[str, Any], out: str | Path) -> dict[str, Any]:
-    """Typeset a spec into a PDF. format='report' (document) or 'slides' (16:9 deck)."""
+    """Build a spec into a file: 'report' and 'slides' are PDFs, 'docx' and 'pptx' are editable Office files."""
     target = Path(out)
     target.parent.mkdir(parents=True, exist_ok=True)
     fmt = str(spec.get("format", "report")).lower()
@@ -549,4 +552,8 @@ def render_document(spec: dict[str, Any], out: str | Path) -> dict[str, Any]:
         return _slides(spec, target)
     if fmt in ("report", "document"):
         return _report(spec, target)
-    raise ValueError(f"unknown format '{fmt}'; use 'report' or 'slides'")
+    if fmt == "docx":
+        return render_docx(spec, target)
+    if fmt == "pptx":
+        return render_pptx(spec, target)
+    raise ValueError(f"unknown format '{fmt}'; use 'report', 'slides', 'docx' or 'pptx'")

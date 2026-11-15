@@ -1,7 +1,7 @@
 {
   "name": "study",
-  "version": "0.3.0",
-  "description": "Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces.",
+  "version": "0.4.0",
+  "description": "Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, editable Word and PowerPoint on the institution's template, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces.",
   "author": {
     "name": "jahirtrap",
     "url": "https://github.com/jahirxtrap"

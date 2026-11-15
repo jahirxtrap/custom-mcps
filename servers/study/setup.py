@@ -366,7 +366,7 @@ def warm_bundled_servers() -> None:
 
 
 def write_mcp_json(workspace: Path) -> None:
-    video = workspace / "tools" / "video-audio-mcp"
+    video = workspace / "external" / "video-audio-mcp"
     if not (video / "server.py").exists():
         return
     servers = {"video-audio": {"command": "uv", "args": ["run", "--directory", str(video), "server.py"]}}
@@ -378,7 +378,7 @@ def write_mcp_json(workspace: Path) -> None:
 
 def install_video_audio(workspace: Path) -> None:
     print("\n== video-audio MCP (misbahsy/video-audio-mcp) ==")
-    dest = workspace / "tools" / "video-audio-mcp"
+    dest = workspace / "external" / "video-audio-mcp"
     if (dest / ".venv").exists():
         print("  already installed")
         return

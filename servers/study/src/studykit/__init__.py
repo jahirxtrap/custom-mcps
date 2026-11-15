@@ -13,7 +13,9 @@ from .guide import guide_topics, study_guide, toolkit, toolkit_groups
 from .images import image_search
 from .maps import render_concept_map
 from .normalize import normalize_extracted
+from .office import inspect_template
 from .render import render_document
+from .review import final_check
 from .text import burstiness, split_sentences, writing_check
 from .workspace import area_add, reference_add, workspace_init, workspace_status
 
@@ -21,6 +23,8 @@ __all__ = [
     "writing_check",
     "burstiness",
     "grammar_check",
+    "final_check",
+    "inspect_template",
     "normalize_extracted",
     "split_sentences",
     "study_guide",

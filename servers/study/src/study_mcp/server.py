@@ -14,10 +14,12 @@ from studykit import (
     bibtex_entry,
     burstiness as _burstiness,
     doi_to_bibtex,
+    final_check as _final_check,
     format_citation,
     grammar_check as _grammar_check,
     image_search as _image_search,
     in_text_citation,
+    inspect_template as _inspect_template,
     reference_add as _reference_add,
     render_concept_map,
     render_document as _render_document,
@@ -33,15 +35,19 @@ mcp = FastMCP(
     instructions=(
         "Academic and study work by data, for any field and any language. It carries no subject "
         "knowledge.\n"
-        "Tools: writing_check, burstiness, grammar_check, study_guide, concept_map, render_document, "
-        "cite, image_search, toolkit, workspace_init, area_add, reference_add, workspace_status.\n"
-        "Work inside a workspace: workspace_init scaffolds one (conventions, styles, memory and "
-        "per-area knowledge and bibliography) and writes its own CLAUDE.md; area_add adds a "
-        "subject to it. The external dependencies live outside this server -- toolkit is the "
-        "catalog of what to install (pandoc, LaTeX, Marp, diagram CLIs, research MCPs, "
-        "LanguageTool) and which ones need a key. Read study_guide before writing or building "
-        "anything. The text checks (writing_check, burstiness, grammar_check) run once over the "
-        "finished text before delivering, never paragraph by paragraph."
+        "Tools: writing_check, burstiness, grammar_check, final_check, study_guide, concept_map, "
+        "render_document, template_inspect, cite, image_search, toolkit, workspace_init, area_add, "
+        "reference_add, workspace_status.\n"
+        "Work inside a workspace: workspace_init scaffolds one (conventions, styles, templates, "
+        "tools, memory and per-area knowledge and bibliography) and writes its own CLAUDE.md; "
+        "area_add adds a subject to it. render_document builds PDFs (report, slides) and editable "
+        "Word and PowerPoint (docx, pptx) on the institution's own template, which template_inspect "
+        "describes first. The external dependencies live outside this server -- toolkit is the "
+        "catalog of what to install (pandoc, LaTeX, Marp, diagram CLIs, LanguageTool) and which "
+        "ones need a key. Read study_guide before writing or building anything, and "
+        "study_guide('assignment') before reading a brief that arrives as a photo. final_check runs "
+        "the three text checks once over the finished text before delivering, never paragraph by "
+        "paragraph."
     ),
 )
 
@@ -83,11 +89,31 @@ def grammar_check(text: str, language: str) -> str:
 
 
 @mcp.tool
+def final_check(text: str, language: str) -> str:
+    """Run writing_check, burstiness and grammar_check together, once over the finished text, and
+    return one report: a summary line plus the three results. 'language' is LanguageTool's code
+    ('es', 'en-US', 'pt-BR'...). Use it instead of three separate calls before delivering; names
+    and technical terms flagged as spelling are the author's call."""
+    return json.dumps(_final_check(text, language))
+
+
+@mcp.tool
 def study_guide(topic: str = "") -> str:
     """Return embedded, area-agnostic study guidance, all of it or one topic: writing (human voice /
     anti-AI) / citations (APA 7) / structure (academic) / visual (organizers) / images (search free
-    sources first, AI only on request) / slides (Marp, ask PDF vs editable PPTX)."""
+    sources first, AI only on request) / slides (pptx on a template, Marp, ReportLab) / documents
+    (docx on a template, pandoc, LaTeX, ReportLab) / assignment (reading a brief that arrives as a
+    photo, confirming it, recording it)."""
     return _study_guide(topic)
+
+
+@mcp.tool
+def template_inspect(path: str) -> str:
+    """Read a .docx or .pptx an institution hands out and report what a render_document spec can use.
+    Word: sections and margins, paragraph and table styles, and the texts of body, headers, footers
+    and text boxes (the cover texts go in 'replace', sample paragraphs in 'remove'). PowerPoint: slide
+    size, every layout with its name and placeholders, and the sample slides. It changes nothing."""
+    return json.dumps(_inspect_template(path))
 
 
 @mcp.tool
@@ -123,14 +149,18 @@ def concept_map(spec: str, out_dir: str = "") -> list[Any]:
 
 @mcp.tool
 def render_document(spec: str, out_dir: str = "") -> str:
-    """Typeset a professional PDF with ReportLab from a JSON spec. ASK the user which engine to use
-    before building (see study_guide('documents') and study_guide('slides')): ReportLab is the
-    technical, precisely typeset option; Marp is the visual, Markdown-fast one; pandoc/LaTeX own
-    .docx and automatic APA bibliographies. Spec: {format:'report'|'slides', title, subtitle?,
-    author?, date?, palette?, font:'serif'|'sans', out?, ...}. report adds {abstract?, toc?,
-    watermark?, blocks:[{type:heading|text|quote|list|table|chart|references|columns|pagebreak}]}
-    with a navigable outline and 'page / total'. slides adds {slides:[{layout:cover|bullets|table|
-    chart|closing, ...}]} at 16:9, with progress bar and optional 'reveal' builds."""
+    """Build a document or deck from a JSON spec. ASK the user what the institution expects before
+    building (see study_guide('documents') and study_guide('slides')). format='docx' writes editable
+    Word on the institution's template: {template?, replace:{text:text}, remove:[texts], font?,
+    margins_cm?, toc?, blocks:[{type:heading|text|quote|list|table|image|references|pagebreak}]};
+    the template keeps its cover, logos, headers and styles and the content follows them. format=
+    'pptx' writes editable PowerPoint on a template's layouts: {template?, keep_slides?, replace?,
+    slides:[{layout:<name from template_inspect>|cover|bullets|two|image|table|closing, title,
+    subtitle?, items?, text?, image?, table?, notes?}]}. format='report' and 'slides' are the
+    ReportLab PDFs: report {abstract?, toc?, watermark?, palette?, font:'serif'|'sans', blocks:[...
+    chart|columns]} with navigable outline and 'page / total'; slides {slides:[{layout:cover|bullets|
+    table|chart|closing}]} at 16:9 with progress bar and 'reveal' builds. Run template_inspect on a
+    template first."""
     data = json.loads(spec)
     fmt = str(data.get("format", "report")).lower()
     target = Path(data["out"]) if data.get("out") else _scratch(fmt, out_dir, "pdf")
