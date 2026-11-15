@@ -76,3 +76,12 @@ def test_post_tool_use_hook_warns_only_about_new_comments(tmp_path):
     assert "line 2" in reason and "# bytes" in reason and "legacy" not in reason
     quiet = run({"old_string": "# legacy note", "new_string": "LIMIT = 10"})
     assert quiet.returncode == 0 and quiet.stdout == ""
+
+    first = "# " + "the queue drains one plugin at a time " * 4
+    long_block = f"{first}\n# " + "so every client draws the same state " * 3
+    target.write_text(f"LIMIT = 10\n{long_block}\nSTEP = 1\n", encoding="utf-8")
+    block = run({"old_string": "STEP = 1", "new_string": f"{long_block}\nSTEP = 1"})
+    reason = json.loads(block.stdout)["reason"]
+    excerpt = reason.splitlines()[1]
+    assert excerpt.startswith("- lines 2-3, comment: # the queue drains") and "…" in excerpt
+    assert excerpt.endswith("draws the same state") and len(excerpt) < 110

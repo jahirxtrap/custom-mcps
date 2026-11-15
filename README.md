@@ -149,8 +149,8 @@ tools look at the real code and history. Read-only.
   largest blocks, with a `detail` switch for the full list. **find_format** cuts its lists the same
   way and keeps every count complete.
 - **find_comments** finds what the no-comments rule forbids: every comment line or block, directives
-  excepted, and the docstrings that run over one line, only repeat the name they describe or carry
-  rationale. Python is read with its tokenizer and ast; `//`, `/* */`, `<!-- -->`, `--` and `#`
+  excepted, and the docstrings that run over one line or 100 characters, only repeat the name they
+  describe or carry rationale. Python is read with its tokenizer and ast; `//`, `/* */`, `<!-- -->`, `--` and `#`
   families by line. The same detector runs from a `PostToolUse` hook after every `Edit` or `Write`:
   when the edit introduced comments it answers with the lines and the rule, otherwise it stays silent.
 

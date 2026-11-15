@@ -300,12 +300,20 @@ def test_review_text_python_reads_comments_and_docstrings():
         "def described():\n"
         '    """Measure the tree.\n\n    The client shows this text, because it is the tool description.\n    """\n'
         "    return 1\n"
+        "# first of a block\n"
+        "# second of a block\n\n\n"
+        "def storages():\n"
+        '    """Every account\'s secure storage folder, keyed by the config dir it runs with, '
+        'empty for the primary one, as a dict."""\n'
+        "    return {}\n"
     )
     found = review_text(text, ".py")
     assert [(item["line"], item["kind"]) for item in found] == [
         (3, "comment"), (4, "comment"), (9, "doc_repeats_name"), (14, "doc_lines"), (22, "doc_rationale"),
+        (38, "comment"), (43, "doc_long"),
     ]
     assert found[1]["text"] == "LIMIT = 10  # bytes" and found[2]["name"] == "read_tokens"
+    assert found[-2]["lines"] == 2 and found[0]["lines"] == 1 and found[-1]["chars"] == 114
 
 
 def test_review_text_typescript_doc_blocks_and_directives():

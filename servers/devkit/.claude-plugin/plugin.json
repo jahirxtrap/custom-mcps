@@ -1,6 +1,6 @@
 {
   "name": "devkit",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Development conventions plus the checks that verify them: commits, hardcoded tokens, spacing, format, duplication and comments. The core rules reach every session at its start and after each compaction, and an edit that adds comments gets a notice.",
   "author": {
     "name": "jahirtrap",

@@ -150,7 +150,7 @@ def _scale_report(counter: Counter[str], rare: int, grid: int) -> dict[str, Any]
 
 
 def find_inconsistent(path: str, rare: int = 2, grid: int = 4, exclude: str = "") -> dict[str, Any]:
-    """The spacing and text-size scales in use, with the rare, off-grid and arbitrary values that break them."""
+    """Spacing and text-size scales in use, with the rare, off-grid and arbitrary values breaking them."""
     base = Path(path)
     spacing: Counter[str] = Counter()
     text: Counter[str] = Counter()
@@ -240,7 +240,7 @@ def _imported_names(line: str, suffix: str) -> list[str]:
 
 
 def find_format(path: str, exclude: str = "", detail: bool = False) -> dict[str, Any]:
-    """The format breaks formatters miss: inline fully-qualified names, unused imports, mixed indent, JSON style."""
+    """Format breaks formatters miss: inline qualified names, unused imports, mixed indent, JSON style."""
     base = Path(path)
     limit = _DETAIL_LIMIT if detail else _SUMMARY_LIMIT
     inline_fqn: list[dict[str, Any]] = []

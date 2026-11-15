@@ -1,4 +1,4 @@
-"""Editable PowerPoint decks from a spec, on the layouts of an institution's template or the default ones."""
+"""Editable PowerPoint decks from a spec, on an institution's template layouts or the default ones."""
 from __future__ import annotations
 
 from pathlib import Path

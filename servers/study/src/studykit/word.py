@@ -1,4 +1,4 @@
-"""Editable Word documents from a spec, written over a template handed out by an institution or from scratch."""
+"""Editable Word documents from a spec, over a template an institution handed out or from scratch."""
 from __future__ import annotations
 
 import re

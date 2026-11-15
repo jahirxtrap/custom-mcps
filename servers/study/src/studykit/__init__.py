@@ -1,4 +1,4 @@
-"""studykit: area-agnostic study toolkit (writing and grammar checks, citations, concept maps, workspace)."""
+"""studykit: area-agnostic study toolkit (writing checks, citations, concept maps, workspace)."""
 from __future__ import annotations
 
 from .cite import (

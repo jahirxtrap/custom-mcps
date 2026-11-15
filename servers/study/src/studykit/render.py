@@ -544,7 +544,7 @@ def _slides(spec: dict[str, Any], out: Path) -> dict[str, Any]:
 
 
 def render_document(spec: dict[str, Any], out: str | Path) -> dict[str, Any]:
-    """Build a spec into a file: 'report' and 'slides' are PDFs, 'docx' and 'pptx' are editable Office files."""
+    """Build a spec into a file: report and slides as PDF, docx and pptx as editable Office files."""
     target = Path(out)
     target.parent.mkdir(parents=True, exist_ok=True)
     fmt = str(spec.get("format", "report")).lower()

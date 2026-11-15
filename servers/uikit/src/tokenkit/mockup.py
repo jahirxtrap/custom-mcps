@@ -280,7 +280,7 @@ def _design_files(base: Path):
 
 
 def read_design(path: str | Path, extra: str = "") -> _Design:
-    """Everything the app's code says about its own look: colors, variables, fonts, lengths, shadows, icons."""
+    """What the app's code says about its own look: colors, variables, fonts, lengths, shadows, icons."""
     design = _Design()
     roots = [Path(path), *(Path(item.strip()) for item in extra.split(",") if item.strip())]
     seen: set[Path] = set()

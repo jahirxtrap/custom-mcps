@@ -17,7 +17,7 @@ Built on [`fastmcp`](https://gofastmcp.com) over the dependency-free
 | `find_inconsistent` | Snapshot the spacing and text-size scales in use; flag rare one-offs, off-grid spacing, and Tailwind arbitrary values. |
 | `find_format` | AI-typical format breaks: inline fully-qualified names, unused imports, mixed tab/space indent, JSON indent outliers. Complete counts, lists of 25 (100 with `detail`). |
 | `find_duplication` | Repeated normalized line blocks → DRY candidates (heuristic). Occurrences per file and the ten largest blocks; `detail` lists up to fifty with every occurrence. |
-| `find_comments` | What the no-comments rule forbids: every comment (directives excepted) and the docstrings over one line, repeating their name or carrying rationale. Python by tokenizer and ast; `//`, `/* */`, `<!-- -->`, `--`, `#` families by line. |
+| `find_comments` | What the no-comments rule forbids: every comment (directives excepted) and the docstrings over one line or 100 characters, repeating their name or carrying rationale. Python by tokenizer and ast; `//`, `/* */`, `<!-- -->`, `--`, `#` families by line. |
 
 ## The core rules arrive on their own
 
@@ -41,8 +41,9 @@ What counts as a comment is syntax, not intent: a line or block starting with th
 (`#`, `//`, `/* */`, `<!-- -->`, `--`), minus directives (`# noqa`, `# type:`, `// @ts-expect-error`,
 shebangs, Rust attributes, C preprocessor, `-- name:`). A docstring is what sits on a definition
 (`"""…"""`, `/** … */`, `///`, `##` in GDScript) and is allowed, so only its form is checked: over
-one line, every word already in the name it describes, or rationale words (because, so that, to
-avoid, workaround, TODO). The docstring of a decorated Python definition is data for the decorator
+one line, over 100 characters (one line with no cap is no rule; measured on real code the median is
+78 and the ninetieth percentile 103), every word already in the name it describes, or rationale
+words (because, so that, to avoid, workaround, TODO). The docstring of a decorated Python definition is data for the decorator
 (an MCP tool's description, a route's) and is not checked. Whether a one-line descriptive docstring
 was needed stays a judgement.
 

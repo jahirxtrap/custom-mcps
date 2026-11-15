@@ -95,8 +95,8 @@ def find_duplication(path: str, window: int = 6, exclude: str = "", detail: bool
 def find_comments(path: str, exclude: str = "", detail: bool = False) -> str:
     """Find what the no-comments convention forbids in the code under `path`: every comment line or
     block (directives such as noqa, ts-expect-error, shebangs and attributes excepted) and the
-    docstrings that run over one line, only repeat the name they describe or carry rationale
-    (because, so that, workaround, TODO). Python is read with its tokenizer and ast, so a `#` inside
+    docstrings that run over one line or 100 characters, only repeat the name they describe or
+    carry rationale (because, so that, workaround, TODO). Python is read with its tokenizer and ast, so a `#` inside
     a string never counts and the docstring of a decorated definition (a tool's description, a
     route's) is data, not checked; Java/Kotlin/TS/JS/Rust/Go/C#/CSS (`//`, `/* */`), HTML/Svelte/Vue
     (`<!-- -->`), SQL (`--`) and GDScript/shell (`#`) by line. Complete counts; each list shows 25

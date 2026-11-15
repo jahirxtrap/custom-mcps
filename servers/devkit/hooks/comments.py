@@ -11,10 +11,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 comments = importlib.import_module("convkit.comments")
 
 _SHOWN = 10
+_HEAD = 48
+_TAIL = 24
 _GIT_TIMEOUT = 5
 _LABELS = {
     "comment": "comment",
     "doc_lines": "docstring over one line",
+    "doc_long": "docstring over 100 characters",
     "doc_repeats_name": "docstring that only repeats the name",
     "doc_rationale": "docstring carrying rationale",
 }
@@ -48,22 +51,47 @@ def _changed(tool: str, tool_input: dict) -> tuple[str, str]:
     return tool_input.get("old_string", ""), tool_input.get("new_string", "")
 
 
-def _message(path: Path, findings: list[dict]) -> str:
-    lines = [f"devkit: the edit to {path.name} adds what the conventions forbid:"]
+def _span(finding: dict) -> int:
+    return finding.get("lines", 1) if finding["kind"] == "comment" else 1
+
+
+def _introduced(lines: list[str], finding: dict, fresh: set[str]) -> bool:
+    start = finding["line"] - 1
+    return any(line.strip() in fresh for line in lines[start : start + _span(finding)])
+
+
+def _excerpt(lines: list[str], finding: dict) -> str:
+    start = finding["line"] - 1
+    block = " ".join(line.strip() for line in lines[start : start + _span(finding)])
+    if len(block) <= _HEAD + _TAIL:
+        return block
+    head = block[:_HEAD] if block[_HEAD] == " " else block[:_HEAD].rsplit(" ", 1)[0]
+    tail = block[-_TAIL:] if block[-_TAIL - 1] == " " else block[-_TAIL:].split(" ", 1)[-1]
+    return f"{head.rstrip()} … {tail.lstrip()}"
+
+
+def _where(finding: dict) -> str:
+    span = _span(finding)
+    return f"lines {finding['line']}-{finding['line'] + span - 1}" if span > 1 else f"line {finding['line']}"
+
+
+def _message(path: Path, lines: list[str], findings: list[dict]) -> str:
+    out = [f"devkit: the edit to {path.name} adds what the conventions forbid:"]
     for finding in findings[:_SHOWN]:
         label = _LABELS[finding["kind"]]
         if finding["kind"] == "doc_lines":
             label = f"docstring of {finding['lines']} lines"
-        if finding.get("name") and finding["kind"] == "doc_repeats_name":
+        if finding["kind"] == "doc_long":
+            label = f"docstring of {finding['chars']} characters"
+        if finding["kind"] == "doc_repeats_name" and finding.get("name"):
             label += f" ({finding['name']})"
-        lines.append(f"- line {finding['line']}, {label}: {finding['text']}")
+        out.append(f"- {_where(finding)}, {label}: {_excerpt(lines, finding)}")
     if len(findings) > _SHOWN:
-        lines.append(f"- and {len(findings) - _SHOWN} more")
-    lines.append(
-        "No comments; a docstring is one purely descriptive line, only when a constraint cannot be expressed "
-        "in code. Remove them; the why belongs in the MR or the chat."
+        out.append(f"- and {len(findings) - _SHOWN} more")
+    out.append(
+        "Remove them: no comments, and a docstring is one descriptive line under 100 characters, only when needed."
     )
-    return "\n".join(lines)
+    return "\n".join(out)
 
 
 def main() -> None:
@@ -78,10 +106,11 @@ def main() -> None:
     if not fresh:
         return
     text = path.read_text(encoding="utf-8", errors="replace")
-    findings = [finding for finding in comments.review_text(text, path.suffix) if finding["text"] in fresh]
+    lines = text.splitlines()
+    findings = [item for item in comments.review_text(text, path.suffix) if _introduced(lines, item, fresh)]
     if findings:
         sys.stdout.reconfigure(encoding="utf-8")
-        print(json.dumps({"decision": "block", "reason": _message(path, findings)}))
+        print(json.dumps({"decision": "block", "reason": _message(path, lines, findings)}))
 
 
 if __name__ == "__main__":

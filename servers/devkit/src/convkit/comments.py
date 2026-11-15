@@ -44,7 +44,8 @@ _STOP = {
 _DOC_MARKERS = ("/**", "*/", "///", "//!", "##")
 _MATCH_PREFIX = 4
 _CLIP = 120
-_KINDS = ("comment", "doc_lines", "doc_repeats_name", "doc_rationale")
+_DOC_MAX = 100
+_KINDS = ("comment", "doc_lines", "doc_long", "doc_repeats_name", "doc_rationale")
 
 
 def families(suffix: str) -> set[str]:
@@ -86,9 +87,11 @@ def repeats_name(doc: str, name: str) -> bool:
 def _doc_findings(content: list[str], line: int, name: str, source_line: str) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     text = _clip(source_line)
+    joined = " ".join(content)
     if len(content) > 1:
         findings.append({"line": line, "kind": "doc_lines", "lines": len(content), "name": name, "text": text})
-    joined = " ".join(content)
+    elif len(joined) > _DOC_MAX:
+        findings.append({"line": line, "kind": "doc_long", "chars": len(joined), "name": name, "text": text})
     if _RATIONALE.search(joined):
         findings.append({"line": line, "kind": "doc_rationale", "name": name, "text": text})
     if name and repeats_name(joined, name):
@@ -107,13 +110,27 @@ def _declared_name(lines: list[str], start: int) -> str:
     return ""
 
 
-def _python(text: str, lines: list[str]) -> list[dict[str, Any]]:
+def _comment_blocks(numbers: list[int], lines: list[str]) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
+    previous_whole = -1
+    for number in numbers:
+        whole = lines[number - 1].lstrip().startswith("#")
+        if whole and previous_whole == number - 1:
+            findings[-1]["lines"] += 1
+        else:
+            findings.append({"line": number, "kind": "comment", "lines": 1, "text": _clip(lines[number - 1])})
+        previous_whole = number if whole else -1
+    return findings
+
+
+def _python(text: str, lines: list[str]) -> list[dict[str, Any]]:
     try:
-        for token in tokenize.generate_tokens(io.StringIO(text).readline):
-            if token.type == tokenize.COMMENT and not _DIRECTIVE.match(token.string):
-                line = token.start[0]
-                findings.append({"line": line, "kind": "comment", "lines": 1, "text": _clip(lines[line - 1])})
+        numbers = [
+            token.start[0]
+            for token in tokenize.generate_tokens(io.StringIO(text).readline)
+            if token.type == tokenize.COMMENT and not _DIRECTIVE.match(token.string)
+        ]
+        findings = _comment_blocks(numbers, lines)
     except (tokenize.TokenError, SyntaxError):
         findings = _by_lines(lines, {"hash"})
     try:
@@ -215,7 +232,7 @@ def _by_lines(lines: list[str], kinds: set[str]) -> list[dict[str, Any]]:
 
 
 def review_text(text: str, suffix: str) -> list[dict[str, Any]]:
-    """Every comment, and every docstring over one line, repeating its name or carrying rationale, in a file."""
+    """Every comment, plus each docstring that is long, repeats its name or carries rationale."""
     kinds = families(suffix)
     if not kinds:
         return []
@@ -245,7 +262,8 @@ def find_comments(path: str, exclude: str = "", detail: bool = False) -> dict[st
         **{f"{kind}_count": len(hits[kind]) for kind in _KINDS},
         "detail": detail,
         "note": "comment = a comment line or block (directives such as noqa, ts-expect-error, shebangs and "
-        "attributes excepted); doc_lines = a docstring over one line; doc_repeats_name = a docstring whose "
+        "attributes excepted); doc_lines = a docstring over one line; doc_long = a one-line docstring over "
+        "100 characters; doc_repeats_name = a docstring whose "
         "words are all in the name it describes; doc_rationale = a docstring explaining why. Python is "
         "read with its tokenizer and ast, the other families (// and /* */, <!-- -->, --, #) by line. "
         "The docstring of a decorated definition is data for the decorator (a tool's or a route's "
