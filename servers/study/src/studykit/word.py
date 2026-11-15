@@ -24,6 +24,7 @@ _QUOTE = "Quote"
 _CAPTION = "Caption"
 _GRID = "Table Grid"
 BLOCK_STYLES = (_TITLE, *_HEADING.values(), _BULLET, _NUMBER, _QUOTE, _CAPTION, _GRID)
+TEXT_LIMIT = 160
 _HANGING = Cm(1.27)
 _QUOTE_INDENT = Cm(1.27)
 _TOC_FIELD = 'TOC \\o "1-3" \\h \\z \\u'
@@ -107,11 +108,17 @@ def replace_text(document: Any, replacements: dict[str, str]) -> int:
     )
 
 
+def _names(text: str, exact: set[str], prefixes: set[str]) -> bool:
+    stripped = text.strip()
+    return stripped in exact or any(stripped.startswith(prefix) for prefix in prefixes)
+
+
 def remove_paragraphs(document: Any, texts: list[str]) -> int:
-    wanted = {text.strip() for text in texts if text.strip()}
+    exact = {text.strip() for text in texts if text.strip()}
+    prefixes = {text for text in texts if len(text) >= TEXT_LIMIT}
     removed = 0
     for paragraph in list(document.paragraphs):
-        if paragraph.text.strip() in wanted:
+        if _names(paragraph.text, exact, prefixes):
             paragraph._element.getparent().remove(paragraph._element)
             removed += 1
     return removed

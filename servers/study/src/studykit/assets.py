@@ -176,7 +176,9 @@ The render_document spec, format='docx':
               {"type":"pagebreak"},
               {"type":"references","items":[...]} ] }
 Run template_inspect on the template first: it lists the cover, header and text-box texts to put
-in 'replace', the sample paragraphs to put in 'remove', and the styles the template offers.
+in 'replace', the sample paragraphs to put in 'remove' (a long one comes clipped to 160 characters,
+and that clipped text is accepted by 'remove' as the paragraph's prefix), and the styles the
+template uses and offers.
 
 The render_document spec, format='report':
 { "format": "report", "title", "subtitle", "author", "date", "abstract", "toc": true,

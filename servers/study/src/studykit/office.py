@@ -11,11 +11,10 @@ from pptx import Presentation
 from pptx.util import Emu
 
 from .deck import layouts_of
-from .word import BLOCK_STYLES, header_roots, texts_by_paragraph
+from .word import BLOCK_STYLES, TEXT_LIMIT, header_roots, texts_by_paragraph
 
 _TEXT_BOX = qn("w:txbxContent")
 _STYLE = f"{qn('w:pPr')}/{qn('w:pStyle')}"
-_BODY_LIMIT = 80
 _EMU_PER_CM = 360000
 _BLOCK_STYLE_TYPES = (WD_STYLE_TYPE.PARAGRAPH, WD_STYLE_TYPE.TABLE)
 
@@ -34,6 +33,12 @@ def _paragraph_texts(root: Any) -> list[dict[str, Any]]:
         style = paragraph.find(_STYLE)
         found.append({"text": text, "style": style.get(qn("w:val")) if style is not None else None, "text_box": boxed})
     return found
+
+
+def _clipped(item: dict[str, Any]) -> dict[str, Any]:
+    if len(item["text"]) <= TEXT_LIMIT:
+        return item
+    return {**item, "text": item["text"][:TEXT_LIMIT], "cut": True}
 
 
 def _inspect_docx(path: Path) -> dict[str, Any]:
@@ -56,9 +61,11 @@ def _inspect_docx(path: Path) -> dict[str, Any]:
         if texts:
             headers.setdefault(name, []).extend(texts)
     names = {style.style_id: style.name for style in document.styles}
+    default = document.styles.default(WD_STYLE_TYPE.PARAGRAPH)
     body = _paragraph_texts(document.element.body)
     for item in body:
-        item["style"] = names.get(item["style"], item["style"])
+        style = item["style"]
+        item["style"] = names.get(style, style) if style else (default.name if default is not None else None)
     available = {style.name for style in document.styles if style.type in _BLOCK_STYLE_TYPES}
     return {
         "kind": "docx",
@@ -71,7 +78,7 @@ def _inspect_docx(path: Path) -> dict[str, Any]:
             "for_blocks": {name: name in available for name in BLOCK_STYLES},
         },
         "headers_footers": headers,
-        "body": body[:_BODY_LIMIT],
+        "body": [_clipped(item) for item in body],
         "body_paragraphs": len(body),
         "text_boxes": [item["text"] for item in body if item["text_box"]],
         "tables": len(document.tables),

@@ -80,8 +80,9 @@ def test_docx_on_a_template_replaces_cover_texts_and_appends_content(tmp_path, w
     assert "Sample paragraph to drop." not in texts
     assert "Introduction" in texts and "First paragraph." in texts and "A quote." in texts
     assert (report["tables"], report["images"]) == (1, 1)
-    used = {"paragraph": ["Caption", "Heading 1", "List Bullet", "List Number", "Quote"], "table": ["Table Grid"]}
-    assert report["styles"]["used"] == used
+    paragraph_styles = ["Caption", "Heading 1", "List Bullet", "List Number", "Normal", "Quote"]
+    assert report["styles"]["used"] == {"paragraph": paragraph_styles, "table": ["Table Grid"]}
+    assert report["body"][0]["style"] == "Normal"
     assert report["styles"]["for_blocks"]["Heading 1"] is True and report["styles"]["for_blocks"]["Table Grid"] is True
     assert report["body"][4]["style"] == "Heading 1"
 
@@ -98,6 +99,27 @@ def test_docx_without_template_writes_a_title_block(tmp_path):
     render_document(spec, out)
     texts = [item["text"] for item in inspect_template(str(out))["body"]]
     assert texts == ["My essay", "Ana", "Body."]
+
+
+def test_template_inspect_clips_long_texts_and_keeps_every_paragraph(tmp_path):
+    document = Document()
+    document.add_paragraph("word " * 100)
+    for index in range(70):
+        document.add_paragraph(f"Paragraph {index}")
+    path = tmp_path / "long.docx"
+    document.save(path)
+
+    report = inspect_template(str(path))
+    assert (len(report["body"]), report["body_paragraphs"]) == (71, 71)
+    assert len(report["body"][0]["text"]) == 160 and report["body"][0]["cut"] is True
+    assert "cut" not in report["body"][1]
+
+    clipped = report["body"][0]["text"]
+    spec = {"format": "docx", "template": str(path), "remove": [clipped, "Paragraph 3", "Para"]}
+    result = render_document(spec, tmp_path / "out.docx")
+    assert result["removed"] == 2
+    texts = [item["text"] for item in inspect_template(str(tmp_path / "out.docx"))["body"]]
+    assert texts[:3] == ["Paragraph 0", "Paragraph 1", "Paragraph 2"] and "Paragraph 3" not in texts
 
 
 def test_docx_rejects_unknown_blocks(tmp_path):
