@@ -15,6 +15,7 @@ from studykit import (
     burstiness as _burstiness,
     doi_to_bibtex,
     format_citation,
+    grammar_check as _grammar_check,
     image_search as _image_search,
     in_text_citation,
     reference_add as _reference_add,
@@ -32,13 +33,15 @@ mcp = FastMCP(
     instructions=(
         "Academic and study work by data, for any field and any language. It carries no subject "
         "knowledge.\n"
-        "Tools: writing_check, burstiness, study_guide, concept_map, render_document, cite, "
-        "image_search, toolkit, workspace_init, area_add, reference_add, workspace_status.\n"
+        "Tools: writing_check, burstiness, grammar_check, study_guide, concept_map, render_document, "
+        "cite, image_search, toolkit, workspace_init, area_add, reference_add, workspace_status.\n"
         "Work inside a workspace: workspace_init scaffolds one (conventions, styles, memory and "
         "per-area knowledge and bibliography) and writes its own CLAUDE.md; area_add adds a "
         "subject to it. The external dependencies live outside this server -- toolkit is the "
-        "catalog of what to install (pandoc, LaTeX, Marp, diagram CLIs, research MCPs) and which "
-        "ones need a key. Read study_guide before writing or building anything."
+        "catalog of what to install (pandoc, LaTeX, Marp, diagram CLIs, research MCPs, "
+        "LanguageTool) and which ones need a key. Read study_guide before writing or building "
+        "anything. The text checks (writing_check, burstiness, grammar_check) run once over the "
+        "finished text before delivering, never paragraph by paragraph."
     ),
 )
 
@@ -66,6 +69,20 @@ def burstiness(text: str) -> str:
 
 
 @mcp.tool
+def grammar_check(text: str, language: str) -> str:
+    """Spelling and grammar through a local LanguageTool, in any of its 30+ languages ('es', 'en-US',
+    'de-DE', 'pt-BR'; 'auto' detects). Run it once over the finished text, never per paragraph. Markdown
+    and pandoc markup (headings, emphasis, links, images, citation keys, code, tables) is removed before
+    checking and every finding points back to the original line: line, column, flagged text, message,
+    replacements, rule, category, plus counts by category. It judges nothing, so spelling hits on
+    names, technical terms and citations are the author's call. Needs LanguageTool: the plugin options
+    languagetool_url (a running server) or languagetool_home (its unzipped folder, Java 17+ on PATH),
+    or the same values in LANGUAGETOOL_URL / LANGUAGETOOL_HOME; otherwise it answers available=false
+    (see toolkit('grammar'))."""
+    return json.dumps(_grammar_check(text, language))
+
+
+@mcp.tool
 def study_guide(topic: str = "") -> str:
     """Return embedded, area-agnostic study guidance, all of it or one topic: writing (human voice /
     anti-AI) / citations (APA 7) / structure (academic) / visual (organizers) / images (search free
@@ -76,8 +93,9 @@ def study_guide(topic: str = "") -> str:
 @mcp.tool
 def toolkit(topic: str = "") -> str:
     """List the ecosystem to install for full academic work (documents, slides, research, citations,
-    diagrams, latex, images, video, humanize): install commands, which need an API key, how to get
-    it and how to configure it. Pass a group name to filter. Run servers/study/setup.py to automate it."""
+    diagrams, latex, images, video, humanize, grammar): install commands, which need an API key, how
+    to get it and how to configure it. Pass a group name to filter. Run servers/study/setup.py to
+    automate it."""
     return _toolkit(topic)
 
 

@@ -26,7 +26,7 @@ standalone server any MCP client can register.
 | **modkit** | Inspect and validate multiloader mod workspaces (read-only). Domain-specific. |
 | **i18n** | Keep translation locales in sync, complete and consistent (read-only). |
 | **devkit** | Your development conventions plus checks (commits, hardcoded tokens, DRY). |
-| **study** | Academic study work by data: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
+| **study** | Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces. |
 | **buildkit** | Design low-poly 3D structures by data: principles, references, spec, iso/silhouette preview, Godot def. |
 | **uikit** | Interface design measured against WCAG: tokens, the color pairs the code really uses, contrast. |
 
@@ -158,6 +158,10 @@ tells you exactly what to install.
   parallelism, the rule of three, tell-tale vocabulary, vague attributions, meta-commentary,
   chained transitions and stacked hedging — in **English and Spanish**, with a 0-100 score.
 - **burstiness** measures sentence-length variation, the uniformity detectors actually penalize.
+- **grammar_check** runs a local [LanguageTool](https://languagetool.org) (open source, 30+
+  languages) over the finished text and returns every finding with its line, message, replacements
+  and category. It judges nothing: names and technical terms flagged as spelling stay the author's
+  call. The three checks run once over the whole text, never paragraph by paragraph.
 - **concept_map** renders a graphic organizer from a JSON spec, following the anti-AI visual rules
   (the title is the topic, two to four colors, no template signatures).
 - **cite** formats APA 7 references and BibTeX from fields, or resolves a DOI to BibTeX.
@@ -174,10 +178,14 @@ tells you exactly what to install.
   deck); **toolkit** is the ecosystem catalog (what to install, which needs a key, how to configure it).
 - **workspace_init**, **area_add**, **reference_add** and **workspace_status** scaffold a reusable,
   **multi-area** study workspace — shared conventions and memory, one folder per subject with its
-  own knowledge base and reference library.
+  own knowledge base and reference library. A PDF added as a source is converted in reading order
+  and cleaned of repeated headers, page numbers, broken lines and ligatures before it reaches the
+  library.
 
-It carries **no subject knowledge** — you pick the field. `servers/study/setup.py` installs the
-toolkit and writes any API keys to a gitignored `.env`; the server never stores secrets.
+It carries **no subject knowledge** — you pick the field. The plugin also brings the **OpenAlex**
+and **Semantic Scholar** research servers, pinned to a version, and its options
+(`claude plugin configure study@custom-mcps`) hold the optional keys and where LanguageTool is;
+`servers/study/setup.py` installs the rest of the toolkit. The server never stores secrets.
 
 See [`servers/study`](servers/study) and [`servers/study/src/studykit`](servers/study/src/studykit).
 

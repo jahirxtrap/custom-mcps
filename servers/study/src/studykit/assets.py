@@ -36,7 +36,9 @@ agnostic; examples are given in English and Spanish.
     helps"). Get straight to the content.
 18. One idea per paragraph, in your own voice: concrete examples and, where apt, an argued judgment.
 19. Follow your citation style (for example APA 7); citation keys without spaces.
-20. Final pass: re-read and fix every "tell" before submitting.
+20. Final pass, once, over the finished text: run writing_check, burstiness and grammar_check
+    (LanguageTool, when installed), fix every real finding, and submit. Names and technical terms
+    flagged as spelling are not errors.
 
 ## AI vocabulary to watch (a moving target by model)
 delve, tapestry, testament, vibrant, intricate, bolster, pivotal, underscore, leverage, seamless,
@@ -245,9 +247,12 @@ can carry more than one at a time.
    English and stay in English. The *output* follows the user: produce deliverables (essays,
    slides, diagram labels, bibliography notes) and chat in the language the user asks for, or the
    area's language. Default to the user's language and keep spelling and accents correct.
-2. Human voice: before delivering any text or graphic, apply `conventions/writing-rules.md`. No em
-   dashes, no AI filler, no default lists; vary sentence length. For graphics: no meta labels, no
-   brand footers, a palette of two to four colors.
+2. Human voice and correctness: write the whole text first, following `conventions/writing-rules.md`
+   (no em dashes, no AI filler, no default lists; vary sentence length). When it is finished, run
+   `writing_check`, `burstiness` and `grammar_check` once over the complete text, fix what they
+   find, and deliver. Never check paragraph by paragraph. In `grammar_check`, spelling hits on
+   names, technical terms and citations are the author's call, not errors to correct. For
+   graphics: no meta labels, no brand footers, a palette of two to four colors.
 3. Area knowledge: for a task in area X, read and cite from `areas/<X>/knowledge.md`. Never invent
    authors, works, dates, or data. Verify anything marked as unconfirmed before citing it.
 4. Citations: APA 7 by default (`conventions/citation-apa.md`); keys without spaces. No verifiable
@@ -275,10 +280,12 @@ can carry more than one at a time.
 
 ## Tools
 
-The `study` MCP provides writing_check, burstiness, study_guide, concept_map, cite, image_search,
-render_document, toolkit, and the workspace tools (workspace_init, area_add, reference_add,
-workspace_status). Call `toolkit` to see what else to install for documents, slides, research,
-diagrams, and LaTeX.
+The `study` MCP server (the `study@custom-mcps` plugin, which also brings the `openalex` and
+`semantic-scholar` research servers, or a registration of your own) provides writing_check,
+burstiness, grammar_check, study_guide, concept_map, cite, image_search, render_document, toolkit,
+and the workspace tools (workspace_init, area_add, reference_add, workspace_status). Call `toolkit`
+to see what else to install for documents, slides, research, diagrams, LaTeX, and grammar
+(LanguageTool).
 """
 
 KNOWLEDGE_TEMPLATE = """# {area}

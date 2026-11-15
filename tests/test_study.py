@@ -17,6 +17,7 @@ def test_study_registers_tools():
         "burstiness",
         "cite",
         "concept_map",
+        "grammar_check",
         "image_search",
         "reference_add",
         "render_document",

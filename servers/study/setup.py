@@ -1,17 +1,19 @@
-"""Install the study ecosystem and store optional API keys in a gitignored .env.
+"""Install the study ecosystem around the study plugin.
 
-Tiers: a default run installs the light basics; `--all` installs everything that can be
-automated (heavier CLIs, slide tools, mermaid, and skills via `claude plugin install`).
-Things a script cannot install (proprietary skills without a known marketplace, web-only
-services) are always reported, never faked.
+The plugin (study@custom-mcps) brings the study, openalex and semantic-scholar servers and holds
+the optional keys and the LanguageTool location in its options (claude plugin configure). This
+script installs the rest. Tiers: a default run installs the light basics; `--all` installs
+everything that can be automated (heavier CLIs, slide tools, mermaid, and skills via
+`claude plugin install`). Things a script cannot install (proprietary skills without a known
+marketplace, web-only services) are always reported, never faked.
 
   uv run python servers/study/setup.py [--all]
-      Global: register the external MCP at user scope; with --all also install the CLIs,
-      npm tools, and skill plugins.
+      Global: install the CLIs, npm tools and skill plugins (prompting unless --all).
 
   uv run python servers/study/setup.py --workspace <dir> [--all] [--mermaid] [--latex] [--skills-from <dir>]
-      Workspace-scoped: keep config inside <dir> (.env, .mcp.json, TOOLKIT.md, .gitignore,
-      styles/apa.csl, .claude/skills) and install npm tools under <dir>/node_modules.
+      Workspace-scoped: keep config inside <dir> (.env with CHROME_PATH for Marp, TOOLKIT.md,
+      .gitignore, puppeteer-config.json, styles/apa.csl, .claude/skills, and .mcp.json only for
+      video-audio when --all cloned it) and install npm tools under <dir>/node_modules.
       Basics install markmap + Marp and repair pandoc when it is older than 2.11; --mermaid adds
       mermaid, --latex adds TinyTeX, and --all adds every one of those plus the system CLIs,
       video-audio and the skill plugins.
@@ -32,6 +34,9 @@ from pathlib import Path
 from studykit import toolkit
 
 ROOT = Path(__file__).resolve().parents[2]
+PLUGIN_SERVERS = Path(__file__).resolve().parent / ".mcp.json"
+PLUGIN_ROOT_VAR = "${CLAUDE_PLUGIN_ROOT}"
+WARM_TIMEOUT = 300
 CLAUDE = shutil.which("claude") or "claude"
 NPM = shutil.which("npm")
 GIT = shutil.which("git")
@@ -42,7 +47,6 @@ INTERACTIVE = sys.stdin.isatty()
 APA_CSL_URL = "https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl"
 
 USER_AGENT = "study-setup"
-SEMANTIC_PIN = ["--with", "mcp[cli]<2"]
 PANDOC_MIN = (2, 11)
 PANDOC_LATEST_API = "https://api.github.com/repos/jgm/pandoc/releases/latest"
 TINYTEX_URL = "https://yihui.org/tinytex/install-bin-unix.sh"
@@ -78,14 +82,10 @@ CLI_TOOLS = [
     },
 ]
 
-OPTIONAL_KEYS = [
-    ("OPENALEX_API_KEY", "OpenAlex contact email for the polite pool (free; blank to skip)"),
-    ("SEMANTIC_SCHOLAR_API_KEY", "Semantic Scholar API key to raise limits (blank to skip)"),
-]
-
 ENV_HEADER = (
-    "# Optional API keys for the research MCPs (openalex, semantic-scholar). Both work without a\n"
-    "# key; set one only to raise rate limits. This file is gitignored, never commit it."
+    "# Values the study setup records for this workspace (CHROME_PATH for Marp). Keys and the\n"
+    "# LanguageTool location live in the study plugin's options: claude plugin configure\n"
+    "# study@custom-mcps. This file is gitignored, never commit it."
 )
 
 SKILL_PLUGINS = [
@@ -156,14 +156,8 @@ def read_env(path: Path) -> dict[str, str]:
 
 
 def write_env(path: Path, values: dict[str, str]) -> None:
-    known = {key for key, _ in OPTIONAL_KEYS}
-    lines = [ENV_HEADER, ""]
-    for key, description in OPTIONAL_KEYS:
-        lines += [f"# {description}", f"{key}={values.get(key, '')}", ""]
-    extra = [f"{key}={value}" for key, value in values.items() if key not in known and value]
-    if extra:
-        lines += [*extra, ""]
-    path.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8", newline="\n")
+    lines = [ENV_HEADER, "", *(f"{key}={value}" for key, value in values.items() if value)]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _ask(prompt: str) -> str | None:
@@ -178,25 +172,6 @@ def confirm(prompt: str) -> bool:
         return False
     answer = _ask(f"{prompt} [Y/n] ")
     return answer is not None and answer.lower() in ("", "y", "yes")
-
-
-def collect_keys(env_path: Path) -> dict[str, str]:
-    print(f"\n== API keys (optional) -> {env_path.name} ==")
-    values = read_env(env_path)
-    if INTERACTIVE:
-        for key, description in OPTIONAL_KEYS:
-            current = values.get(key, "")
-            shown = f" [current: {current}]" if current else ""
-            entered = _ask(f"{description}{shown}: ")
-            if entered is None:
-                break
-            if entered:
-                values[key] = entered
-    else:
-        print("non-interactive; writing the .env template (fill the keys later)")
-    write_env(env_path, values)
-    print(f"saved {env_path}")
-    return values
 
 
 def install_cli(auto: bool) -> None:
@@ -374,44 +349,31 @@ def install_skills(auto: bool) -> None:
         print(f"  {manual['name']}: manual -> {manual['how']}")
 
 
-def register_mcps(env: dict[str, str]) -> None:
-    print("\n== external MCP servers (user scope) ==")
-    command = [CLAUDE, "mcp", "add", "openalex", "-s", "user"]
-    if env.get("OPENALEX_API_KEY"):
-        command += ["-e", f"OPENALEX_API_KEY={env['OPENALEX_API_KEY']}"]
-    command += ["--", "npx", "-y", "@cyanheads/openalex-mcp-server"]
-    run([CLAUDE, "mcp", "remove", "openalex", "-s", "user"])
-    print(f"  openalex: {'registered' if run(command) else 'FAILED (need claude + npx)'}")
+def warm_bundled_servers() -> None:
+    """Start each bundled third-party server once with no input, so npx and uvx download it now and
+    the first Claude Code session connects within its 30 s limit."""
+    print("\n== bundled servers (first download) ==")
+    servers = json.loads(PLUGIN_SERVERS.read_text(encoding="utf-8"))["mcpServers"]
+    for name, spec in servers.items():
+        if any(PLUGIN_ROOT_VAR in arg for arg in spec["args"]):
+            continue
+        command = [shutil.which(spec["command"]) or spec["command"], *spec["args"]]
+        try:
+            subprocess.run(command, capture_output=True, stdin=subprocess.DEVNULL, timeout=WARM_TIMEOUT)
+            print(f"  {name}: cached")
+        except (OSError, subprocess.TimeoutExpired) as error:
+            print(f"  {name}: not cached ({error.__class__.__name__}); it downloads on first use")
 
 
-def study_command() -> dict[str, object]:
-    """Prefer the venv entry point: `uv run` re-syncs on launch and clashes with the user-scope
-    registration, which points at the same binary."""
-    scripts = ROOT / ".venv" / ("Scripts" if PLATFORM == "win" else "bin")
-    entry = scripts / ("study-mcp.exe" if PLATFORM == "win" else "study-mcp")
-    if entry.exists():
-        return {"command": str(entry), "args": []}
-    return {"command": "uv", "args": ["run", "--no-sync", "--project", str(ROOT), "study-mcp"]}
-
-
-def write_mcp_json(workspace: Path, env: dict[str, str]) -> None:
-    openalex: dict[str, object] = {"command": "npx", "args": ["-y", "@cyanheads/openalex-mcp-server"]}
-    if env.get("OPENALEX_API_KEY"):
-        openalex["env"] = {"OPENALEX_API_KEY": env["OPENALEX_API_KEY"]}
-    semantic: dict[str, object] = {"command": "uvx", "args": [*SEMANTIC_PIN, "semantic-scholar-mcp"]}
-    if env.get("SEMANTIC_SCHOLAR_API_KEY"):
-        semantic["env"] = {"SEMANTIC_SCHOLAR_API_KEY": env["SEMANTIC_SCHOLAR_API_KEY"]}
-    servers: dict[str, object] = {
-        "study": study_command(),
-        "openalex": openalex,
-        "semantic-scholar": semantic,
-    }
+def write_mcp_json(workspace: Path) -> None:
     video = workspace / "tools" / "video-audio-mcp"
-    if (video / "server.py").exists():
-        servers["video-audio"] = {"command": "uv", "args": ["run", "--directory", str(video), "server.py"]}
+    if not (video / "server.py").exists():
+        return
+    servers = {"video-audio": {"command": "uv", "args": ["run", "--directory", str(video), "server.py"]}}
     (workspace / ".mcp.json").write_text(
         json.dumps({"mcpServers": servers}, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
+    print(f"wrote {workspace / '.mcp.json'} (video-audio)")
 
 
 def install_video_audio(workspace: Path) -> None:
@@ -460,11 +422,10 @@ def write_skills_dir(workspace: Path, skills_from: str) -> None:
 def workspace_setup(workspace: Path, all_: bool, mermaid: bool, latex: bool, skills_from: str) -> None:
     workspace.mkdir(parents=True, exist_ok=True)
     print(f"Workspace setup -> {workspace}  (mode: {'all' if all_ else 'basics'})")
-    env = collect_keys(workspace / ".env")
     if all_:
         install_video_audio(workspace)
-    write_mcp_json(workspace, env)
-    print(f"wrote {workspace / '.mcp.json'}")
+    write_mcp_json(workspace)
+    warm_bundled_servers()
     (workspace / "TOOLKIT.md").write_text(toolkit() + "\n", encoding="utf-8", newline="\n")
     (workspace / ".gitignore").write_text(
         ".env\nnode_modules/\n.venv/\n.cache/\n*.png\n", encoding="utf-8", newline="\n"
@@ -502,15 +463,15 @@ def workspace_setup(workspace: Path, all_: bool, mermaid: bool, latex: bool, ski
         install_skills(auto=False)
         print("\nbasics done. Run with --all to also clone video-audio, install mermaid, the system"
               " CLIs, LaTeX and skills.")
-    print("\nOpen this folder in Claude Code; .mcp.json loads study, openalex, semantic-scholar"
-          " (and video-audio if cloned).")
+    print("\nOpen this folder in Claude Code. The study plugin (study@custom-mcps) brings the study,"
+          " openalex and semantic-scholar servers; keys and the LanguageTool location are its options:"
+          " claude plugin configure study@custom-mcps. .mcp.json here only lists video-audio when cloned.")
 
 
 def global_setup(all_: bool) -> None:
     print(f"Global ecosystem setup  (mode: {'all' if all_ else 'basics'})")
-    print(f"platform={PLATFORM} interactive={INTERACTIVE} env={ROOT / '.env'}")
-    env = collect_keys(ROOT / ".env")
-    register_mcps(env)
+    print(f"platform={PLATFORM} interactive={INTERACTIVE}")
+    warm_bundled_servers()
     if all_:
         install_cli(auto=True)
         ensure_pandoc(auto=True)

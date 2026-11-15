@@ -116,18 +116,23 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
             "install": "available as a Claude Code skill",
         },
         {
-            "name": "OpenAlex MCP",
+            "name": "OpenAlex MCP (openalex)",
             "what": "open catalog of papers, citation graph, literature review",
-            "install": "claude mcp add openalex -s user -- npx -y @cyanheads/openalex-mcp-server",
-            "get_key": "free, no key required; set a contact email for the polite pool",
-            "configure": "add -e OPENALEX_API_KEY=you@example.com before the -- in the install command",
+            "install": "bundled with the study plugin, it starts with it (needs Node 24 or later); on a standalone "
+            "registration: claude mcp add openalex -s user -- npx -y @cyanheads/openalex-mcp-server",
+            "get_key": "free, no key required; a contact email joins the polite pool and a free account key from "
+            "https://openalex.org/settings/api raises the limits",
+            "configure": "plugin options openalex_mailto and openalex_key (claude plugin configure study@custom-mcps); "
+            "standalone: OPENALEX_MAILTO and OPENALEX_API_KEY in its environment",
         },
         {
-            "name": "Semantic Scholar MCP",
+            "name": "Semantic Scholar MCP (semantic-scholar)",
             "what": "225M+ papers, citations, authors",
-            "install": "claude mcp add semantic-scholar -s user -- uvx semantic-scholar-mcp",
+            "install": "bundled with the study plugin, it starts with it; on a standalone registration: "
+            "claude mcp add semantic-scholar -s user -- uvx --with 'mcp[cli]<2' semantic-scholar-mcp",
             "get_key": "optional; request a key at https://www.semanticscholar.org/product/api to raise rate limits",
-            "configure": "add -e SEMANTIC_SCHOLAR_API_KEY=... before the -- (the key lives in .env)",
+            "configure": "plugin option semantic_scholar_key (claude plugin configure study@custom-mcps); "
+            "standalone: SEMANTIC_SCHOLAR_API_KEY in its environment",
         },
     ],
     "citations": [
@@ -205,6 +210,19 @@ _TOOLKIT: dict[str, list[dict[str, str]]] = {
             "name": "humanizer skill + writing_check",
             "what": "rewrite to a human voice, then verify",
             "install": "humanizer is a Claude Code skill; verify with the study writing_check tool",
+        },
+    ],
+    "grammar": [
+        {
+            "name": "LanguageTool (grammar_check tool)",
+            "what": "spelling and grammar for 30+ languages, open source and local; grammar_check drives it",
+            "install": "download https://languagetool.org/download/LanguageTool-stable.zip (about 250 MB) and "
+            "unzip it; needs Java 17 or later on PATH",
+            "configure": "plugin options (claude plugin configure study@custom-mcps): languagetool_home=<unzipped "
+            "folder> (one JVM start per check, seconds) or, after running its server with java -cp "
+            "<folder>/languagetool-server.jar org.languagetool.server.HTTPServer --port 8081, "
+            "languagetool_url=http://localhost:8081 (sub-second checks; the server stays in memory). On a "
+            "standalone registration the same values go in LANGUAGETOOL_HOME / LANGUAGETOOL_URL",
         },
     ],
 }

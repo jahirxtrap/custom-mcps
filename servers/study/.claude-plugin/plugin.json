@@ -1,7 +1,7 @@
 {
   "name": "study",
-  "version": "0.2.2",
-  "description": "Academic study work by data: anti-AI writing checks, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces.",
+  "version": "0.3.0",
+  "description": "Academic study work by data: anti-AI writing checks, grammar check through LanguageTool, APA citations, concept maps, typeset PDFs and decks, free-image sourcing, multi-area workspaces.",
   "author": {
     "name": "jahirtrap",
     "url": "https://github.com/jahirxtrap"
@@ -10,5 +10,39 @@
   "repository": "https://github.com/jahirxtrap/custom-mcps",
   "license": "MIT",
   "icon": "./assets/icon.svg",
-  "keywords": ["mcp", "study", "writing", "citations"]
+  "keywords": ["mcp", "study", "writing", "citations"],
+  "userConfig": {
+    "languagetool_url": {
+      "type": "string",
+      "title": "LanguageTool server",
+      "description": "URL of a LanguageTool server you keep running, such as http://localhost:8081, for grammar_check. Empty: the folder below is used instead.",
+      "default": ""
+    },
+    "languagetool_home": {
+      "type": "directory",
+      "title": "LanguageTool folder",
+      "description": "The unzipped LanguageTool folder (it holds languagetool-commandline.jar), used by grammar_check when no server is set; needs Java 17 or later on PATH. Empty: grammar_check answers that it is not available.",
+      "default": ""
+    },
+    "openalex_mailto": {
+      "type": "string",
+      "title": "OpenAlex contact email",
+      "description": "Email sent to OpenAlex as mailto= to identify you (its polite pool). Empty: anonymous.",
+      "default": ""
+    },
+    "openalex_key": {
+      "type": "string",
+      "title": "OpenAlex API key",
+      "description": "Free account key from openalex.org/settings/api; raises the rate limits. Empty: anonymous limits.",
+      "default": "",
+      "sensitive": true
+    },
+    "semantic_scholar_key": {
+      "type": "string",
+      "title": "Semantic Scholar API key",
+      "description": "Optional key from semanticscholar.org/product/api; raises the rate limits. Empty: the shared pool.",
+      "default": "",
+      "sensitive": true
+    }
+  }
 }

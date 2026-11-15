@@ -3,7 +3,24 @@
     "study": {
       "command": "uv",
       "args": ["run", "--no-project", "--python", ">=3.11", "--with-requirements", "${CLAUDE_PLUGIN_ROOT}/constraints.txt", "python", "-m", "study_mcp"],
-      "env": { "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src" }
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src",
+        "LANGUAGETOOL_URL": "${user_config.languagetool_url}",
+        "LANGUAGETOOL_HOME": "${user_config.languagetool_home}"
+      }
+    },
+    "openalex": {
+      "command": "npx",
+      "args": ["-y", "@cyanheads/openalex-mcp-server@0.11.1"],
+      "env": {
+        "OPENALEX_MAILTO": "${user_config.openalex_mailto}",
+        "OPENALEX_API_KEY": "${user_config.openalex_key}"
+      }
+    },
+    "semantic-scholar": {
+      "command": "uvx",
+      "args": ["--from", "semantic-scholar-mcp==0.4.0", "--with", "mcp[cli]<2", "semantic-scholar-mcp"],
+      "env": { "SEMANTIC_SCHOLAR_API_KEY": "${user_config.semantic_scholar_key}" }
     }
   }
 }

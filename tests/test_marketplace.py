@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 from importlib import util
 from pathlib import Path
@@ -60,9 +61,23 @@ def test_plugin_launches_its_installed_copy(name):
     installed = "${CLAUDE_PLUGIN_ROOT}"
     run = ["run", "--no-project", "--python", project["requires-python"]]
     pinned = ["--with-requirements", f"{installed}/{PIN.CONSTRAINTS}"]
-    source = {"PYTHONPATH": f"{installed}/src"}
 
-    assert launched == {name: {"command": "uv", "args": [*run, *pinned, "python", "-m", module], "env": source}}
+    own = launched[name]
+    assert (own["command"], own["args"]) == ("uv", [*run, *pinned, "python", "-m", module])
+    assert own["env"]["PYTHONPATH"] == f"{installed}/src"
+
+
+@pytest.mark.parametrize("name", SERVERS)
+def test_bundled_servers_are_pinned_and_every_option_is_declared_and_used(name):
+    launched = _read_json(ROOT / "servers" / name / ".mcp.json")["mcpServers"]
+    manifest = _read_json(ROOT / "servers" / name / ".claude-plugin" / "plugin.json")
+    declared = set(manifest.get("userConfig", {}))
+    used = set(re.findall(r"\$\{user_config\.(\w+)\}", json.dumps(launched)))
+
+    for other, spec in launched.items():
+        if other != name:
+            assert any(re.search(r"(?:@|==)\d+\.\d+\.\d+$", arg) for arg in spec["args"]), f"{other} is not pinned"
+    assert used == declared
 
 
 @pytest.mark.parametrize("name", SERVERS)

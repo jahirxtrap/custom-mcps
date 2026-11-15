@@ -23,6 +23,7 @@ from .assets import (
     WRITING_RULES,
 )
 from .cite import bibtex_entry, bibtex_key
+from .normalize import normalize_extracted
 
 _PLAINTEXT = ("md", "markdown", "txt")
 _PANDOC = ("docx", "odt", "rtf", "html", "htm", "epub", "tex")
@@ -55,11 +56,13 @@ def _to_markdown(src: Path, key: str, md_dir: Path) -> str | None:
     if ext in _PLAINTEXT:
         out.write_text(src.read_text(encoding="utf-8", errors="replace"), encoding="utf-8", newline="\n")
         return str(out)
-    if ext == "pdf" and shutil.which("pdftotext") and _run(["pdftotext", "-layout", str(src), str(out)]):
+    if ext == "pdf" and shutil.which("pdftotext") and _run(["pdftotext", str(src), str(out)]):
+        extracted = out.read_text(encoding="utf-8", errors="replace")
+        out.write_text(normalize_extracted(extracted), encoding="utf-8", newline="\n")
         return str(out)
     if ext in _PANDOC and shutil.which("pandoc"):
         media = md_dir / f"media-{key}"
-        if _run(["pandoc", str(src), "-t", "gfm", f"--extract-media={media}", "-o", str(out)]):
+        if _run(["pandoc", str(src), "-t", "gfm", "--wrap=none", f"--extract-media={media}", "-o", str(out)]):
             return str(out)
     return None
 

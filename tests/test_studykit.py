@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+import subprocess
+from pathlib import Path
+
 import pytest
 from studykit import (
     area_add,
@@ -7,17 +11,23 @@ from studykit import (
     bibtex_key,
     burstiness,
     format_citation,
+    grammar,
+    grammar_check,
     image_search,
     in_text_citation,
+    normalize_extracted,
     reference_add,
     render_concept_map,
     render_document,
     study_guide,
     toolkit,
+    workspace,
     workspace_init,
     workspace_status,
     writing_check,
 )
+from studykit.grammar import HOME_VAR, URL_VAR, backend, hits
+from studykit.markdown import plain_text
 
 
 def test_writing_check_detects_spanish_with_accents():
@@ -249,3 +259,173 @@ def test_reference_add_copies_and_converts_source(tmp_path):
     md = tmp_path / "areas" / "physics" / "library" / "md" / "bohr1913.md"
     assert md.exists()
     assert "reference content" in md.read_text(encoding="utf-8")
+
+
+def test_reference_add_reads_pdf_in_order_and_cleans_it(tmp_path, monkeypatch):
+    workspace_init(str(tmp_path), ["History"])
+    source = tmp_path / "paper.pdf"
+    source.write_bytes(b"%PDF-1.4")
+    commands = []
+
+    def fake_run(command):
+        commands.append(command)
+        Path(command[-1]).write_text(
+            "Header\nA line that goes\non and on. 1\fHeader\nMore text.\n2\fHeader\nEnd.\n3", encoding="utf-8"
+        )
+        return True
+
+    monkeypatch.setattr(workspace, "_run", fake_run)
+    monkeypatch.setattr(workspace.shutil, "which", lambda name: "/usr/bin/pdftotext")
+    result = reference_add(
+        str(tmp_path),
+        "History",
+        {"type": "book", "authors": ["Carr, E. H."], "year": 1961, "title": "What is history"},
+        file=str(source),
+    )
+    assert commands[0][:2] == ["pdftotext", str(source)]
+    assert Path(result["markdown"]).read_text(encoding="utf-8") == "A line that goes on and on.\n\nMore text.\n\nEnd.\n"
+
+
+def test_normalize_extracted_removes_page_furniture_and_reflows():
+    pages = [
+        "Journal of Tests 12 (2024)\nFirst para that continues on the\nnext line and finishes here.\n\n"
+        "Second para about hyphen-\nation and ﬁne ligatures.\n1",
+        "Figure 1. Caption\nSee the figure.\nJournal of Tests 12 (2024)\nA.  Author Name\nTable 1. Caption text. 2",
+        "Journal of Tests 12 (2024)\n3. Heading\nBody starts here.\n3",
+        "Journal of Tests 12 (2024)\nLast page text.\n4",
+    ]
+    text = normalize_extracted("\f".join(pages))
+    assert "Journal of Tests" not in text
+    assert "\f" not in text
+    assert "First para that continues on the next line and finishes here.\n\nSecond para" in text
+    assert "hyphenation and fine ligatures." in text
+    assert "See the figure.\nA. Author Name\nTable 1. Caption text.\n\n3. Heading\nBody starts here." in text
+    assert text.endswith("Last page text.\n")
+
+
+def test_normalize_extracted_keeps_short_documents_and_uppercase_breaks():
+    text = normalize_extracted("Title\nBody of the note.\n12\nCOVID-\n19 figures\n")
+    assert text == "Title\nBody of the note.\n12\nCOVID-\n19 figures\n"
+
+
+def test_grammar_hits_drop_overlaps_and_locate_lines():
+    text = "Primera linea.\nEsta claro que si."
+    start = text.index("Esta")
+    matches = [
+        {
+            "offset": start,
+            "length": 10,
+            "message": "agreement",
+            "replacements": [{"value": "Este claro"}],
+            "rule": {"id": "AGREEMENT", "category": {"id": "GRAMMAR"}},
+        },
+        {
+            "offset": start,
+            "length": 4,
+            "message": "tilde",
+            "replacements": [{"value": f"Est{suffix}"} for suffix in "aeiouy"],
+            "rule": {"id": "ESTA_TILDE", "category": {"id": "TYPOS"}},
+        },
+        {
+            "offset": text.index("si."),
+            "length": 2,
+            "message": "si/si",
+            "replacements": [{"value": "sí"}],
+            "rule": {"id": "SI", "category": {"id": "TYPOS"}},
+        },
+    ]
+    plain, origins = plain_text(text)
+    assert plain == text
+    found = hits(text, plain, origins, matches)
+    assert [hit["rule"] for hit in found] == ["ESTA_TILDE", "SI"]
+    assert (found[0]["line"], found[0]["column"], found[0]["text"]) == (2, 1, "Esta")
+    assert len(found[0]["replacements"]) == 5
+    assert found[1]["replacements"] == ["sí"]
+
+
+def test_plain_text_strips_markup_and_keeps_origins():
+    source = (
+        "---\ntitle: Deck\n---\n# Título\n\nUn **texto** con [enlace](https://x.y/z) y cita [@key2020, p. 3].\n\n"
+        "![fig](img.png){width=50%}\n: Pie de figura\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n"
+        "::: {custom-style=\"Figura\"}\nIlustración 1 Fuente\n:::\n\n"
+        "Ver <span class=\"x\">nota</span>, `code` y @otra2021 al final.\n"
+    )
+    plain, origins = plain_text(source)
+    markup = ("---", "title:", "#", "**", "](", "https", "@key2020", "{width", "|", "`", "<span", "@otra2021", ":::")
+    assert not [piece for piece in markup if piece in plain]
+    assert "Un texto con enlace y cita .\n" in plain
+    assert "Pie de figura" in plain and " a b \n" in plain and " 1 2 \n" in plain
+    assert "\nIlustración 1 Fuente\n" in plain
+    assert "Ver nota, y al final.\n" in plain
+    for word in ("texto", "enlace", "nota"):
+        start = origins[plain.index(word)]
+        assert source[start : start + len(word)] == word
+    assert len(origins) == len(plain)
+
+
+def test_grammar_backend_prefers_server_then_home_then_wrapper(tmp_path, monkeypatch):
+    monkeypatch.setenv(URL_VAR, "http://localhost:8081/")
+    monkeypatch.setenv(HOME_VAR, str(tmp_path))
+    assert backend() == {"kind": "server", "url": "http://localhost:8081"}
+
+    monkeypatch.delenv(URL_VAR)
+    monkeypatch.setattr(grammar.shutil, "which", lambda name: None)
+    assert backend() == {}
+    assert "java" in grammar_check("text", "es")["reason"]
+
+    monkeypatch.setattr(grammar.shutil, "which", lambda name: "/usr/bin/java" if name == "java" else None)
+    assert "languagetool-commandline.jar" in grammar_check("text", "es")["reason"]
+    (tmp_path / "languagetool-commandline.jar").write_bytes(b"")
+    assert backend()["command"][:2] == ["/usr/bin/java", "-jar"]
+
+    monkeypatch.delenv(HOME_VAR)
+    wrapper = "/usr/local/bin/languagetool"
+    monkeypatch.setattr(grammar.shutil, "which", lambda name: wrapper if name == "languagetool" else None)
+    assert backend() == {"kind": "commandline", "command": [wrapper]}
+
+    monkeypatch.setattr(grammar.shutil, "which", lambda name: None)
+    report = grammar_check("text", "es")
+    assert report["available"] is False
+    assert URL_VAR in report["reason"] and HOME_VAR in report["reason"]
+
+
+def test_grammar_check_runs_the_command_line(tmp_path, monkeypatch):
+    (tmp_path / "languagetool-commandline.jar").write_bytes(b"")
+    monkeypatch.delenv(URL_VAR, raising=False)
+    monkeypatch.setenv(HOME_VAR, str(tmp_path))
+    monkeypatch.setattr(grammar.shutil, "which", lambda name: "java" if name == "java" else None)
+    commands = []
+
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        payload = {
+            "software": {"version": "6.6"},
+            "language": {"code": "es"},
+            "matches": [
+                {
+                    "offset": 0,
+                    "length": 4,
+                    "message": "m",
+                    "replacements": [],
+                    "rule": {"id": "R", "category": {"id": "TYPOS"}},
+                }
+            ],
+        }
+        return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+    monkeypatch.setattr(grammar.subprocess, "run", fake_run)
+    report = grammar_check("Hola mundo", "es")
+    assert report["available"] and report["backend"] == "commandline"
+    assert (report["total_hits"], report["by_category"], report["languagetool"]) == (1, {"TYPOS": 1}, "6.6")
+    assert report["hits"][0]["text"] == "Hola"
+    assert commands[0][:3] == ["java", "-jar", str(tmp_path / "languagetool-commandline.jar")]
+    assert commands[0][3:7] == ["-l", "es", "--json", "--clean-overlapping"]
+
+
+def test_toolkit_grammar_group_and_workspace_final_pass(tmp_path):
+    text = toolkit("grammar")
+    assert "LanguageTool" in text and URL_VAR in text and HOME_VAR in text
+    workspace_init(str(tmp_path))
+    claude = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "grammar_check" in claude and "once over the complete text" in claude
+    assert "Never check paragraph by paragraph" in claude

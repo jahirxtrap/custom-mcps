@@ -31,8 +31,11 @@ custom-mcps/                      # uv workspace root (virtual project, package 
   the plugin reuses it and starts in about 2 s (4 on the VPS); only the first start of a new set of
   pins installs them (6-13 s). A plugin that built itself on every new version (`uvx --from`) went past
   the CLI's 30 s connect limit on the VPS when several updated at once. A server needs nothing outside
-  its folder: no workspace sources, its library inside `src/`. `tests/test_marketplace.py` keeps
-  `plugin.json`, `.mcp.json`, `marketplace.json`, `pyproject.toml` and `constraints.txt` in agreement.
+  its folder: no workspace sources, its library inside `src/`. A plugin may also bundle third-party
+  servers its work needs, pinned to a version and configured through `userConfig`
+  (`${user_config.*}`): study brings `openalex` (npx) and `semantic-scholar` (uvx).
+  `tests/test_marketplace.py` keeps `plugin.json`, `.mcp.json`, `marketplace.json`, `pyproject.toml`
+  and `constraints.txt` in agreement, including the pins and that every option is declared and used.
 
 - **Transport.** Every server is **stdio** (`mcp.run()`); the client launches the process
   on demand and tears it down on close. No port, no FastAPI/uvicorn, nothing long-running.
@@ -55,8 +58,8 @@ custom-mcps/                      # uv workspace root (virtual project, package 
 | server | `i18n` | Keep translation locales in sync (agnostic); read-only. Tools: `locale_diff`, `completeness`, `check_format`, `find_unused`, `i18n_guide`. |
 | library | `convkit` | Developer-convention guides + git/static checks (multi-stack); no deps. |
 | server | `devkit` | Development conventions + the checks that verify them; read-only. Tools: `conventions`, `commit_style`, `commit_context`, `find_hardcoded`, `find_inconsistent`, `find_format`, `find_duplication`. |
-| library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, APA citations, concept-map render, ReportLab report/deck typesetting, free-image sourcing, multi-area workspace. |
-| server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `study_guide`, `concept_map`, `render_document`, `cite`, `image_search`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
+| library | `studykit` | Area- and language-agnostic study toolkit: AI-tell + burstiness checks, LanguageTool grammar check (optional, by URL or jar, Markdown stripped first), extracted-text cleanup, APA citations, concept-map render, ReportLab report/deck typesetting, free-image sourcing, multi-area workspace. |
+| server | `study` | Academic study work by data (agnostic). Tools: `writing_check`, `burstiness`, `grammar_check`, `study_guide`, `concept_map`, `render_document`, `cite`, `image_search`, `toolkit`, `workspace_init`, `area_add`, `reference_add`, `workspace_status`. |
 | library | `formkit` | Low-poly 3D toolkit: spec->primitives compile, software iso/silhouette renderer (Pillow+NumPy), design principles, Godot def. |
 | server | `buildkit` | Design low-poly 3D structures by data (agnostic). Tools: `design_guide`, `search_reference`, `render_preview`, `check`, `godot_def`. |
 | library | `tokenkit` | Design tokens read from any theme shape, paired from real code (naming, variant maps, classes used together) and measured against WCAG; no deps. |

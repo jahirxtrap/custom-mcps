@@ -1,4 +1,4 @@
-"""studykit: area-agnostic study toolkit (writing checks, citations, concept maps, workspace)."""
+"""studykit: area-agnostic study toolkit (writing and grammar checks, citations, concept maps, workspace)."""
 from __future__ import annotations
 
 from .cite import (
@@ -8,9 +8,11 @@ from .cite import (
     format_citation,
     in_text_citation,
 )
+from .grammar import grammar_check
 from .guide import guide_topics, study_guide, toolkit, toolkit_groups
 from .images import image_search
 from .maps import render_concept_map
+from .normalize import normalize_extracted
 from .render import render_document
 from .text import burstiness, split_sentences, writing_check
 from .workspace import area_add, reference_add, workspace_init, workspace_status
@@ -18,6 +20,8 @@ from .workspace import area_add, reference_add, workspace_init, workspace_status
 __all__ = [
     "writing_check",
     "burstiness",
+    "grammar_check",
+    "normalize_extracted",
     "split_sentences",
     "study_guide",
     "guide_topics",
