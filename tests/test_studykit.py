@@ -619,3 +619,41 @@ def test_secret_parameters_and_fragments_never_reach_the_archive():
     assert links._secret("https://h.example/f?access_key=x") and not links._secret("https://h.example/f?page=2&id=7")
     assert links._bare("https://h.example/f?page=2#sec") == "https://h.example/f?page=2"
     assert links._blocked("https://ho%73t.example/") == "no valid host"
+
+
+def test_check_links_serializes_a_host_and_sets_429s_apart(monkeypatch):
+    opened: list[str] = []
+    archived: list[str] = []
+    answers = {
+        "https://slow.example/a": {"status": None, "error": "timeout"},
+        "https://busy.example/x": {"status": 429, "type": "text/html", "final": "https://busy.example/x"},
+        "https://web.archive.org/web/2025/https://gone.example/f": {"status": 429, "type": "", "final": ""},
+        "https://web.archive.org/web/2024/https://gone.example/g": {"status": 404, "type": "", "final": ""},
+    }
+
+    def status(url):
+        opened.append(url)
+        return answers[url]
+
+    def cdx(url):
+        archived.append(url)
+        return []
+
+    monkeypatch.setattr(links, "_public", lambda host: True)
+    monkeypatch.setattr(links, "_status", status)
+    monkeypatch.setattr(links, "_cdx", cdx)
+    report = check_links(
+        text="https://slow.example/a https://slow.example/b https://busy.example/x "
+        "https://web.archive.org/web/2025/https://gone.example/f https://web.archive.org/web/2024/https://gone.example/g"
+    )
+    assert "https://slow.example/b" not in opened
+    assert [item["url"] for item in report["failing"]] == [
+        "https://slow.example/a", "https://slow.example/b", "https://web.archive.org/web/2024/https://gone.example/g",
+    ]
+    assert report["failing"][1]["error"] == "timeout"
+    assert report["failing"][2]["archive_error"] == "already an archive URL"
+    assert [item["url"] for item in report["throttled"]] == [
+        "https://busy.example/x", "https://web.archive.org/web/2025/https://gone.example/f",
+    ]
+    assert archived == ["https://slow.example/a", "https://slow.example/b"]
+    assert report["checked"] == 5 and report["ok"] == 0

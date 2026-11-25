@@ -28,6 +28,8 @@ _HOST = re.compile(r"^[A-Za-z0-9.\-]+$|^[0-9A-Fa-f:.]+$")
 _SECRET_WORDS = ("token", "key", "sig", "auth", "pass", "pwd", "secret", "credential", "jwt", "session", "x-amz-")
 _SECRET_NAMES = {"code", "sid"}
 _DOI_HOSTS = {"doi.org", "dx.doi.org", "www.doi.org"}
+_ARCHIVE_HOSTS = {"web.archive.org", "archive.org", "wayback.archive.org"}
+_THROTTLED = 429
 _HANDLE = "https://doi.org/api/handles/"
 _HANDLE_FOUND = 1
 _TIMEOUT = 12
@@ -249,7 +251,27 @@ def _cdx(url: str) -> list[list[str]]:
         return json.loads(response.read().decode("utf-8", "replace") or "[]")
 
 
+def _host(url: str) -> str:
+    return (urllib.parse.urlsplit(url).hostname or "").lower()
+
+
+def _check_host(urls: list[str]) -> list[dict[str, Any]]:
+    """One host's URLs in sequence; after a timeout the rest of them are not opened."""
+    results: list[dict[str, Any]] = []
+    unreachable = False
+    for url in urls:
+        if unreachable:
+            results.append({"status": None, "error": "timeout"})
+            continue
+        result = _status(url)
+        results.append(result)
+        unreachable = result.get("error") == "timeout"
+    return results
+
+
 def _capture(url: str) -> dict[str, Any]:
+    if _host(url) in _ARCHIVE_HOSTS:
+        return {"archive": None, "archive_error": "already an archive URL"}
     if _secret(url):
         return {"archive": None, "archive_error": "not sent to the archive: a credential-like parameter in the URL"}
     try:
@@ -298,9 +320,18 @@ def check_links(text: str = "", path: str | Path = "") -> dict[str, Any]:
             skipped.append({"url": _shown(url), "reason": reason})
         else:
             urls.append(url)
+    hosts: dict[str, list[str]] = {}
+    for url in urls:
+        hosts.setdefault(_host(url), []).append(url)
     with ThreadPoolExecutor(max_workers=_WORKERS) as pool:
-        results = dict(zip(urls, pool.map(_status, map(_bare, urls)), strict=True))
+        outcomes = pool.map(_check_host, [[_bare(url) for url in group] for group in hosts.values()])
+    results = {
+        url: result
+        for group, batch in zip(hosts.values(), outcomes, strict=True)
+        for url, result in zip(group, batch, strict=True)
+    }
     failing: list[dict[str, Any]] = []
+    throttled: list[dict[str, Any]] = []
     redirected: list[dict[str, str]] = []
     for url in urls:
         result = results[url]
@@ -309,19 +340,25 @@ def check_links(text: str = "", path: str | Path = "") -> dict[str, Any]:
                 redirected.append({"url": url, "to": result["final"]})
             continue
         detail = {key: value for key, value in result.items() if key != "final"}
+        if result.get("status") == _THROTTLED:
+            throttled.append({"url": url, "where": where[url], **detail})
+            continue
         failing.append({"url": url, "where": where[url], **detail, **_capture(_bare(url))})
     return {
         "checked": len(urls),
-        "ok": len(urls) - len(failing),
+        "ok": len(urls) - len(failing) - len(throttled),
         "failing": failing,
+        "throttled": throttled,
         "redirected": redirected,
         "skipped": skipped,
         "note": "Only a 2xx passes. A doi.org link is checked at the DOI registry, not at the publisher, so a "
-        "registered DOI passes even where the publisher refuses robots. For the rest, a 403, a 429 or a "
-        "timeout from here may still open for the reader, so the status is reported, not judged; a 404 or "
-        "410 is gone. archive is the latest copy the Internet Archive holds, the URL to cite when the "
-        "original stays dead; archive null means no copy exists and the reference needs another source. "
-        "Not opened at all: non-http(s) URLs, URLs carrying credentials and non-public hosts, including a "
-        "redirect to one; a URL with a credential-like parameter is opened but never sent to the archive. "
-        "Up to 150 URLs per call; the rest come back in skipped.",
+        "registered DOI passes even where the publisher refuses robots. For the rest, a 403 or a timeout "
+        "from here may still open for the reader, so the status is reported, not judged; a 404 or 410 is "
+        "gone. throttled holds the 429s: the host is rate-limiting this machine, not answering about the "
+        "page, so run them again later. archive is the latest copy the Internet Archive holds, the URL to "
+        "cite when the original stays dead; archive null means no copy exists and the reference needs "
+        "another source. One host is opened one URL at a time, and after a timeout its remaining URLs are "
+        "not opened. Not opened at all: non-http(s) URLs, URLs carrying credentials and non-public hosts, "
+        "including a redirect to one; a URL with a credential-like parameter is opened but never sent to "
+        "the archive. Up to 150 URLs per call; the rest come back in skipped.",
     }
