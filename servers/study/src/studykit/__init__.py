@@ -11,6 +11,7 @@ from .cite import (
 from .grammar import grammar_check
 from .guide import guide_topics, study_guide, toolkit, toolkit_groups
 from .images import image_search
+from .links import check_links, extract_urls
 from .maps import render_concept_map
 from .normalize import normalize_extracted
 from .office import inspect_template
@@ -39,6 +40,8 @@ __all__ = [
     "bibtex_entry",
     "bibtex_key",
     "doi_to_bibtex",
+    "check_links",
+    "extract_urls",
     "workspace_init",
     "area_add",
     "reference_add",

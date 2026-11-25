@@ -22,6 +22,7 @@ the `toolkit` tool tells you exactly what to install.
 | `render_document` | `spec`, `out_dir=""` | Build a document or deck. `format='docx'`: editable Word on the institution's template (its cover, logos, headers, styles and margins stay; cover texts replaced; content appended with its styles) or from scratch. `format='pptx'`: editable PowerPoint on a template's layouts (title, bullets with levels, image, table, notes per slide). `format='report'` and `'slides'`: ReportLab PDFs (outline, vector charts, two columns; 16:9 deck with reveal builds). |
 | `template_inspect` | `path` | What a `.docx` or `.pptx` template offers: sections and margins, the styles it really uses and whether the ones `render_document` needs exist, the texts of cover, headers, footers and text boxes (what to replace or remove; a long text is clipped to 160 characters, and that clipped text works as a prefix in `remove`), or the slide size and every layout with its placeholders. Changes nothing. |
 | `cite` | `fields=""`, `doi=""` | APA 7 reference + in-text + BibTeX from fields, or resolve a DOI to BibTeX (network). |
+| `check_links` | `text=""`, `path=""` | Open every URL in a text or under a path (a `.bib`, a Markdown file, a work folder; DOIs as doi.org links) and report the ones that do not answer: status or error, `file:line`, and the latest Internet Archive copy as the URL to cite instead. Only a 2xx passes; the status is reported, not judged (network). |
 | `image_search` | `subject`, `kind=""` | Brief for sourcing a real image from free, openly licensed providers (Wikimedia Commons, Openverse, Google reusable, Flickr): search/API URLs + licensing checklist; AI only when explicitly asked. |
 | `toolkit` | `topic=""` | The ecosystem to install (documents, slides, research, citations, diagrams, latex, images, video, humanize, grammar): commands, API keys, how to configure them. |
 | `workspace_init` | `path`, `areas=""` | Scaffold a multi-area study workspace (conventions, styles, memory, areas) with a generated CLAUDE.md. |
@@ -58,8 +59,15 @@ and confirm it before building; ask what the institution expects and pick the en
 answer; keep every institutional format in `templates/` and inspect it once; build what no tool
 produces with a script, one folder per work, content apart from assembly, shared helpers in
 `tools/`; apply the anti-AI rules and `final_check` once on the finished text; cite in APA from the
-area's `references.bib`; and keep `memory/` light: profile and open items at the start of a
-session, one file per delivered work with frontmatter.
+area's `references.bib` and open every link of the reference list with `check_links` before
+delivering, citing the archived copy of one that no longer answers; and keep `memory/` light:
+profile and open items at the start of a session, one file per delivered work with frontmatter.
+
+A dead link is the most common way a real source reads as an invented one. The reference list of a
+work is usually copied from the bibliography, and the bibliography was written when the site
+answered; months later the reader gets a 403 and concludes the citation was made up. `check_links`
+settles it: a URL that still answers passes, one that does not comes back with its status and the
+latest capture the Internet Archive holds, which APA 7 accepts as the URL of an archived version.
 
 ## Setup, keys and LanguageTool
 

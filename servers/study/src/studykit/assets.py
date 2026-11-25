@@ -296,6 +296,11 @@ Reference list (hanging indent, alphabetical by surname). Italics are marked wit
 
 Rules: citation keys without spaces (surname2020). Don't cite what you can't verify. For automatic
 formatting use a reference manager, or a .bib plus apa.csl with pandoc.
+
+Links: before delivering, run check_links over the reference list or the .bib. A URL that does not
+answer is cited with the copy the Internet Archive holds (https://web.archive.org/web/<date>/<url>),
+which the tool reports; a URL with no copy anywhere is not a verifiable source. Never deliver a link
+nobody has opened.
 """
 
 STRUCTURE_GUIDE = """# Academic structure
@@ -333,7 +338,9 @@ can carry more than one at a time.
    `knowledge.md` grows past a few pages, split it by topic with an index at the top and read
    only the topic the task needs.
 4. Citations: APA 7 by default (`conventions/citation-apa.md`); keys without spaces. No verifiable
-   source, no claim. The per-area bibliography is `areas/<X>/references.bib`.
+   source, no claim. Before delivering, run `check_links` over the reference list: a URL that does
+   not answer is cited by the archived copy the tool reports, and one with no copy is not a source.
+   The per-area bibliography is `areas/<X>/references.bib`.
 5. Memory: at the start of a session read `memory/profile.md` and the open items of
    `memory/log.md`, nothing more; open a file in `memory/works/` only when the task continues
    that work. Every delivered work gets its own file there, with the frontmatter described in

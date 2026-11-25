@@ -13,6 +13,7 @@ from studykit import (
     area_add as _area_add,
     bibtex_entry,
     burstiness as _burstiness,
+    check_links as _check_links,
     doi_to_bibtex,
     final_check as _final_check,
     format_citation,
@@ -36,8 +37,8 @@ mcp = FastMCP(
         "Academic and study work by data, for any field and any language. It carries no subject "
         "knowledge.\n"
         "Tools: writing_check, burstiness, grammar_check, final_check, study_guide, concept_map, "
-        "render_document, template_inspect, cite, image_search, toolkit, workspace_init, area_add, "
-        "reference_add, workspace_status.\n"
+        "render_document, template_inspect, cite, check_links, image_search, toolkit, workspace_init, "
+        "area_add, reference_add, workspace_status.\n"
         "Work inside a workspace: workspace_init scaffolds one (conventions, styles, templates, "
         "tools, memory and per-area knowledge and bibliography) and writes its own CLAUDE.md; "
         "area_add adds a subject to it. render_document builds PDFs (report, slides) and editable "
@@ -47,7 +48,8 @@ mcp = FastMCP(
         "ones need a key. Read study_guide before writing or building anything, and "
         "study_guide('assignment') before reading a brief that arrives as a photo. final_check runs "
         "the three text checks once over the finished text before delivering, never paragraph by "
-        "paragraph."
+        "paragraph, and check_links opens every link of the reference list: a link that does not "
+        "answer is cited by the archived copy it reports, never delivered unopened."
     ),
 )
 
@@ -184,6 +186,17 @@ def cite(fields: str = "", doi: str = "") -> str:
     return json.dumps(
         {"apa": format_citation(data), "in_text": in_text_citation(data), "bibtex": bibtex_entry(data)}
     )
+
+
+@mcp.tool
+def check_links(text: str = "", path: str = "") -> str:
+    """Open every URL in `text` and in the files under `path` (a .bib, a Markdown file, a work folder;
+    DOIs count as doi.org links) and report the ones that do not answer, each with its HTTP status or
+    error, where it appears (file:line) and the latest copy the Internet Archive holds, the URL to
+    cite instead. Run it over the reference list before delivering. Only a 2xx passes; a 403 or a
+    timeout from here may still open for the reader, so the status is reported, not judged. Up to
+    150 URLs per call, eight at a time, 12 s each (network)."""
+    return json.dumps(_check_links(text, path))
 
 
 @mcp.tool

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import io
 import json
 import subprocess
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -10,11 +12,14 @@ from studykit import (
     bibtex_entry,
     bibtex_key,
     burstiness,
+    check_links,
+    extract_urls,
     format_citation,
     grammar,
     grammar_check,
     image_search,
     in_text_citation,
+    links,
     normalize_extracted,
     reference_add,
     render_concept_map,
@@ -449,3 +454,90 @@ def test_toolkit_grammar_group_and_workspace_final_pass(tmp_path):
     claude = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
     assert "grammar_check" in claude and "once over the complete text" in claude
     assert "Never check paragraph by paragraph" in claude
+
+
+def test_check_links_reports_dead_urls_with_their_archive(tmp_path, monkeypatch):
+    (tmp_path / "references.bib").write_text(
+        "@misc{a,\n  url = {https://example.org/alive.pdf}\n}\n"
+        "@article{b,\n  doi = {10.1234/abc.5}\n}\n"
+        "@misc{c,\n  url = {https://gone.example/file.pdf}\n}\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "notes.md").write_text(
+        "See (https://gone.example/file.pdf). Also https://en.wikipedia.org/wiki/Foo_(bar).\n"
+        "https://moved.example/old\n",
+        encoding="utf-8",
+    )
+    answers = {
+        "https://example.org/alive.pdf": {"status": 200, "type": "application/pdf", "final": "https://example.org/alive.pdf"},
+        "https://doi.org/10.1234/abc.5": {"status": 200, "type": "text/html", "final": "https://publisher.example/abc5"},
+        "https://gone.example/file.pdf": {"status": 403, "type": "text/html", "final": "https://gone.example/file.pdf"},
+        "https://en.wikipedia.org/wiki/Foo_(bar)": {"status": 200, "type": "text/html", "final": "https://en.wikipedia.org/wiki/Foo_(bar)"},
+        "https://moved.example/old": {"status": None, "error": "timeout"},
+    }
+    archive = "https://web.archive.org/web/20251124235719/https://gone.example/file.pdf"
+    captures = {"https://gone.example/file.pdf": {"archive": archive, "captured": "2025-11-24"}}
+    monkeypatch.setattr(links, "_status", lambda url: answers[url])
+    monkeypatch.setattr(links, "_capture", lambda url: captures.get(url, {"archive": None}))
+
+    report = check_links(path=str(tmp_path))
+    assert report["checked"] == 5 and report["ok"] == 3 and report["skipped"] == []
+    gone, moved = report["failing"]
+    assert gone["url"] == "https://gone.example/file.pdf" and gone["status"] == 403
+    assert gone["archive"] == archive and gone["captured"] == "2025-11-24"
+    assert gone["where"] == ["notes.md:1", "references.bib:8"]
+    assert moved["url"] == "https://moved.example/old" and moved["error"] == "timeout" and moved["archive"] is None
+    assert report["redirected"] == [{"url": "https://doi.org/10.1234/abc.5", "to": "https://publisher.example/abc5"}]
+
+
+def test_extract_urls_keeps_balanced_parentheses_and_drops_punctuation():
+    text = "A (https://x.example/a). B https://x.example/b, C https://x.example/Foo_(bar); doi: 10.1234/z.9."
+    assert extract_urls(text) == [
+        "https://x.example/a", "https://x.example/b", "https://x.example/Foo_(bar)", "https://doi.org/10.1234/z.9",
+    ]
+
+
+def test_check_links_asks_the_doi_registry_not_the_publisher(monkeypatch):
+    seen: list[str] = []
+
+    def fake_urlopen(request, timeout=0):
+        seen.append(request.full_url)
+        raise AssertionError("the publisher must not be opened")
+
+    monkeypatch.setattr(links, "_handle", lambda doi: {"status": 200, "type": "doi", "final": f"https://pub.example/{doi}"})
+    monkeypatch.setattr(links.urllib.request, "urlopen", fake_urlopen)
+    report = check_links(text="https://doi.org/10.5555/abc.1 and doi = {10.5555/abc.1}")
+    assert report["checked"] == 1 and report["ok"] == 1 and report["redirected"] == [] and seen == []
+
+
+def test_check_links_retries_a_refused_connection_once_but_not_a_timeout(monkeypatch):
+    calls: list[str] = []
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Type": "text/html"}
+
+        def geturl(self):
+            return "https://refused.example/"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def opening(url, timeout, accept="*/*"):
+        calls.append(url)
+        if url == "https://refused.example/":
+            if calls.count(url) == 1:
+                raise urllib.error.URLError(ConnectionRefusedError(111, "refused"))
+            return Response()
+        raise urllib.error.URLError(TimeoutError("timed out"))
+
+    monkeypatch.setattr(links, "_open", opening)
+    report = check_links(text="https://refused.example/ https://slow.example/")
+    assert report["ok"] == 1
+    assert calls.count("https://refused.example/") == 2 and calls.count("https://slow.example/") == 1
+    slow = report["failing"][0]
+    assert slow["url"] == "https://slow.example/" and slow["error"] == "timeout"
+    assert slow["archive"] is None and slow["archive_error"] == "timeout"

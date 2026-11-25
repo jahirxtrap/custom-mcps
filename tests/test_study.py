@@ -15,6 +15,7 @@ def test_study_registers_tools():
     assert asyncio.run(run()) == [
         "area_add",
         "burstiness",
+        "check_links",
         "cite",
         "concept_map",
         "final_check",
@@ -81,3 +82,19 @@ def test_concept_map_tool_returns_image(tmp_path):
     content = asyncio.run(run())
     kinds = {getattr(part, "type", None) for part in content}
     assert "image" in kinds
+
+
+def test_check_links_tool(monkeypatch):
+    from studykit import links
+
+    monkeypatch.setattr(links, "_status", lambda url: {"status": 404, "type": "text/html", "final": url})
+    monkeypatch.setattr(links, "_capture", lambda url: {"archive": None})
+
+    async def run():
+        async with Client(mcp) as client:
+            result = await client.call_tool("check_links", {"text": "Ver https://nowhere.example/x."})
+            return result.content[0].text
+
+    report = json.loads(asyncio.run(run()))
+    assert report["ok"] == 0 and report["failing"][0]["status"] == 404
+    assert report["failing"][0]["url"] == "https://nowhere.example/x"

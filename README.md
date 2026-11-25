@@ -176,6 +176,10 @@ tells you exactly what to install.
 - **concept_map** renders a graphic organizer from a JSON spec, following the anti-AI visual rules
   (the title is the topic, two to four colors, no template signatures).
 - **cite** formats APA 7 references and BibTeX from fields, or resolves a DOI to BibTeX.
+- **check_links** opens every URL of a reference list, a `.bib` or a work folder before delivery and
+  reports the ones that do not answer, with their status, where they appear and the latest Internet
+  Archive copy as the URL to cite instead. A dead link is the most common way a real source reads as
+  an invented one.
 - **render_document** builds the deliverable from a spec. **docx**: editable Word on the
   institution's own template — its cover, logos, headers, styles and margins stay, the cover texts
   are replaced, the content follows with its styles (or a clean Word file from scratch). **pptx**:
