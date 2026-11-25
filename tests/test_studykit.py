@@ -541,3 +541,38 @@ def test_check_links_retries_a_refused_connection_once_but_not_a_timeout(monkeyp
     slow = report["failing"][0]
     assert slow["url"] == "https://slow.example/" and slow["error"] == "timeout"
     assert slow["archive"] is None and slow["archive_error"] == "timeout"
+
+
+def test_check_links_never_opens_private_hosts_or_credentials_and_keeps_secrets_from_the_archive(monkeypatch):
+    opened: list[str] = []
+    archived: list[str] = []
+
+    def status(url):
+        opened.append(url)
+        return {"status": 404, "type": "text/html", "final": url}
+
+    def cdx(url):
+        archived.append(url)
+        return []
+
+    monkeypatch.setattr(links, "_public", lambda host: host == "host.example")
+    monkeypatch.setattr(links, "_status", status)
+    monkeypatch.setattr(links, "_cdx", cdx)
+    report = check_links(
+        text="http://localhost:8080/x https://user:pw@host.example/y https://host.example/f?token=abc "
+        "https://host.example/g"
+    )
+    assert opened == ["https://host.example/f?token=abc", "https://host.example/g"]
+    assert [item["reason"] for item in report["skipped"]] == ["not a public host", "carries credentials"]
+    assert report["skipped"][1]["url"] == "https://host.example/y"
+    assert links._blocked("ftp://host.example/z") == "not an http(s) URL"
+    assert archived == ["https://host.example/g"]
+    tokened = report["failing"][0]
+    assert tokened["archive"] is None and "credential" in tokened["archive_error"]
+
+
+def test_check_links_refuses_a_redirect_to_a_private_host(monkeypatch):
+    monkeypatch.setattr(links, "_public", lambda host: host == "host.example")
+    handler = links._Redirects()
+    assert handler.redirect_request(None, None, 302, "Found", {}, "http://127.0.0.1/admin") is None
+    assert handler.redirect_request(None, None, 302, "Found", {}, "https://user:pw@host.example/") is None

@@ -1,6 +1,7 @@
 """Reference links opened on the live web, with an archived copy for each one that does not answer."""
 from __future__ import annotations
 
+import ipaddress
 import json
 import re
 import socket
@@ -15,12 +16,14 @@ from typing import Any
 _URL = re.compile(r"https?://[^\s<>\"'`]+")
 _DOI = re.compile(r"\bdoi\s*[=:]\s*\{?\s*(10\.\d{4,9}/[^\s}\"']+)", re.IGNORECASE)
 _TRAILING = ".,;:!?)]}*>»"
-_TEXT_EXT = (".bib", ".md", ".txt", ".py", ".json", ".html", ".tex", ".csv", ".yaml", ".yml", ".toml", ".rst")
+_TEXT_EXT = (".bib", ".md", ".txt", ".py", ".json", ".html", ".tex", ".rst")
 _SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "build", "dist"}
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 )
 _SAFE = ":/?#[]@!$&'()*+,;=%~"
+_SCHEMES = {"http", "https"}
+_SECRET_WORDS = ("token", "key", "sig", "signature", "auth", "password", "secret", "x-amz-")
 _DOI_HOSTS = {"doi.org", "dx.doi.org", "www.doi.org"}
 _HANDLE = "https://doi.org/api/handles/"
 _HANDLE_FOUND = 1
@@ -68,6 +71,54 @@ def _files(base: Path):
             yield entry
 
 
+def _public(host: str) -> bool:
+    try:
+        addresses = {info[4][0] for info in socket.getaddrinfo(host, None)}
+    except socket.gaierror:
+        return True
+    return all(ipaddress.ip_address(address).is_global for address in addresses)
+
+
+def _blocked(url: str) -> str | None:
+    """Why a URL is never opened: a non-http(s) scheme, credentials in it, or a non-public host."""
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme not in _SCHEMES:
+        return "not an http(s) URL"
+    if parsed.username or parsed.password:
+        return "carries credentials"
+    host = parsed.hostname or ""
+    if not host:
+        return "no host"
+    if not _public(host):
+        return "not a public host"
+    return None
+
+
+def _secret(url: str) -> bool:
+    query = urllib.parse.urlsplit(url).query
+    return any(any(word in name.lower() for word in _SECRET_WORDS) for name, _ in urllib.parse.parse_qsl(query))
+
+
+def _shown(url: str) -> str:
+    parsed = urllib.parse.urlsplit(url)
+    if not parsed.username and not parsed.password:
+        return url
+    netloc = parsed.hostname or ""
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return urllib.parse.urlunsplit(parsed._replace(netloc=netloc))
+
+
+class _Redirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if _blocked(newurl):
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_Redirects(), urllib.request.HTTPSHandler(context=_SSL))
+
+
 def _reason(error: object) -> str:
     if isinstance(error, (socket.timeout, TimeoutError)) or "timed out" in str(error):
         return "timeout"
@@ -82,7 +133,7 @@ def _open(url: str, timeout: int, accept: str = "*/*"):
     request = urllib.request.Request(
         urllib.parse.quote(url, safe=_SAFE), headers={"User-Agent": _USER_AGENT, "Accept": accept}
     )
-    return urllib.request.urlopen(request, timeout=timeout, context=_SSL)
+    return _OPENER.open(request, timeout=timeout)
 
 
 def _doi_of(url: str) -> str | None:
@@ -133,13 +184,13 @@ def _status(url: str) -> dict[str, Any]:
     def fetch() -> dict[str, Any]:
         with _open(url, _TIMEOUT) as response:
             content_type = response.headers.get("Content-Type", "")
-            return {"status": response.status, "type": content_type.split(";")[0], "final": response.geturl()}
+            return {"status": response.status, "type": content_type.split(";")[0], "final": _shown(response.geturl())}
 
     try:
         return _retry(fetch, lambda reason: {"status": None, "error": reason})
     except urllib.error.HTTPError as error:
         content_type = error.headers.get("Content-Type", "") if error.headers else ""
-        return {"status": error.code, "type": content_type.split(";")[0], "final": error.geturl()}
+        return {"status": error.code, "type": content_type.split(";")[0], "final": _shown(error.geturl())}
 
 
 def _cdx(url: str) -> list[list[str]]:
@@ -151,6 +202,8 @@ def _cdx(url: str) -> list[list[str]]:
 
 
 def _capture(url: str) -> dict[str, Any]:
+    if _secret(url):
+        return {"archive": None, "archive_error": "not sent to the archive: a credential-like parameter in the URL"}
     try:
         rows = _retry(lambda: _cdx(url), lambda reason: reason)
     except urllib.error.HTTPError as error:
@@ -189,7 +242,14 @@ def check_links(text: str = "", path: str | Path = "") -> dict[str, Any]:
         for file in _files(base):
             label = str(file.relative_to(base)) if base.is_dir() else file.name
             note(label, file.read_text(encoding="utf-8", errors="replace"))
-    urls, skipped = list(where)[:_LIMIT], list(where)[_LIMIT:]
+    skipped: list[dict[str, str]] = []
+    urls: list[str] = []
+    for url in where:
+        reason = "over the limit of 150 URLs per call" if len(urls) >= _LIMIT else _blocked(url)
+        if reason:
+            skipped.append({"url": _shown(url), "reason": reason})
+        else:
+            urls.append(url)
     with ThreadPoolExecutor(max_workers=_WORKERS) as pool:
         results = dict(zip(urls, pool.map(_status, urls), strict=True))
     failing: list[dict[str, Any]] = []
@@ -213,5 +273,7 @@ def check_links(text: str = "", path: str | Path = "") -> dict[str, Any]:
         "timeout from here may still open for the reader, so the status is reported, not judged; a 404 or "
         "410 is gone. archive is the latest copy the Internet Archive holds, the URL to cite when the "
         "original stays dead; archive null means no copy exists and the reference needs another source. "
+        "Not opened at all: non-http(s) URLs, URLs carrying credentials and non-public hosts, including a "
+        "redirect to one; a URL with a credential-like parameter is opened but never sent to the archive. "
         "Up to 150 URLs per call; the rest come back in skipped.",
     }

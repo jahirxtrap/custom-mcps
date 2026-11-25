@@ -194,7 +194,9 @@ def check_links(text: str = "", path: str = "") -> str:
     DOIs count as doi.org links) and report the ones that do not answer, each with its HTTP status or
     error, where it appears (file:line) and the latest copy the Internet Archive holds, the URL to
     cite instead. Run it over the reference list before delivering. Only a 2xx passes; a 403 or a
-    timeout from here may still open for the reader, so the status is reported, not judged. Up to
+    timeout from here may still open for the reader, so the status is reported, not judged. A
+    doi.org link is checked at the DOI registry. Non-http(s) URLs, URLs carrying credentials and
+    non-public hosts are never opened, and a credential-like query never reaches the archive. Up to
     150 URLs per call, eight at a time, 12 s each (network)."""
     return json.dumps(_check_links(text, path))
 
