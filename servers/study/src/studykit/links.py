@@ -1,6 +1,7 @@
 """Reference links opened on the live web, with an archived copy for each one that does not answer."""
 from __future__ import annotations
 
+import http.client
 import ipaddress
 import json
 import re
@@ -23,7 +24,9 @@ _USER_AGENT = (
 )
 _SAFE = ":/?#[]@!$&'()*+,;=%~"
 _SCHEMES = {"http", "https"}
-_SECRET_WORDS = ("token", "key", "sig", "signature", "auth", "password", "secret", "x-amz-")
+_HOST = re.compile(r"^[A-Za-z0-9.\-]+$|^[0-9A-Fa-f:.]+$")
+_SECRET_WORDS = ("token", "key", "sig", "auth", "pass", "pwd", "secret", "credential", "jwt", "session", "x-amz-")
+_SECRET_NAMES = {"code", "sid"}
 _DOI_HOSTS = {"doi.org", "dx.doi.org", "www.doi.org"}
 _HANDLE = "https://doi.org/api/handles/"
 _HANDLE_FOUND = 1
@@ -71,12 +74,16 @@ def _files(base: Path):
             yield entry
 
 
+def _global(sockaddr: tuple) -> bool:
+    return ipaddress.ip_address(sockaddr[0].split("%")[0]).is_global
+
+
 def _public(host: str) -> bool:
     try:
-        addresses = {info[4][0] for info in socket.getaddrinfo(host, None)}
+        infos = socket.getaddrinfo(host, None)
     except socket.gaierror:
         return True
-    return all(ipaddress.ip_address(address).is_global for address in addresses)
+    return all(_global(info[4]) for info in infos)
 
 
 def _blocked(url: str) -> str | None:
@@ -87,16 +94,57 @@ def _blocked(url: str) -> str | None:
     if parsed.username or parsed.password:
         return "carries credentials"
     host = parsed.hostname or ""
-    if not host:
-        return "no host"
+    if not host or not _HOST.match(host):
+        return "no valid host"
     if not _public(host):
         return "not a public host"
     return None
 
 
+def _bare(url: str) -> str:
+    return urllib.parse.urlsplit(url)._replace(fragment="").geturl()
+
+
 def _secret(url: str) -> bool:
-    query = urllib.parse.urlsplit(url).query
-    return any(any(word in name.lower() for word in _SECRET_WORDS) for name, _ in urllib.parse.parse_qsl(query))
+    query = urllib.parse.urlsplit(url).query.replace(";", "&")
+    names = [name.lower() for name, _ in urllib.parse.parse_qsl(query, keep_blank_values=True)]
+    return any(name in _SECRET_NAMES or any(word in name for word in _SECRET_WORDS) for name in names)
+
+
+class _Vetted:
+    """A connection that resolves once, refuses any non-public address and connects to the vetted one."""
+
+    def connect(self) -> None:
+        infos = socket.getaddrinfo(self.host, self.port, type=socket.SOCK_STREAM)
+        if not infos:
+            raise OSError("dns")
+        if not all(_global(info[4]) for info in infos):
+            raise OSError("not a public host")
+        family, kind, proto, _, sockaddr = infos[0]
+        sock = socket.socket(family, kind, proto)
+        sock.settimeout(self.timeout)
+        sock.connect(sockaddr)
+        self.sock = sock
+
+
+class _VettedHTTP(_Vetted, http.client.HTTPConnection):
+    pass
+
+
+class _VettedHTTPS(_Vetted, http.client.HTTPSConnection):
+    def connect(self) -> None:
+        super().connect()
+        self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)
+
+
+class _HTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(_VettedHTTP, req)
+
+
+class _HTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_VettedHTTPS, req, context=self._context)
 
 
 def _shown(url: str) -> str:
@@ -116,7 +164,7 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-_OPENER = urllib.request.build_opener(_Redirects(), urllib.request.HTTPSHandler(context=_SSL))
+_OPENER = urllib.request.build_opener(_Redirects(), _HTTPHandler(), _HTTPSHandler(context=_SSL))
 
 
 def _reason(error: object) -> str:
@@ -251,17 +299,17 @@ def check_links(text: str = "", path: str | Path = "") -> dict[str, Any]:
         else:
             urls.append(url)
     with ThreadPoolExecutor(max_workers=_WORKERS) as pool:
-        results = dict(zip(urls, pool.map(_status, urls), strict=True))
+        results = dict(zip(urls, pool.map(_status, map(_bare, urls)), strict=True))
     failing: list[dict[str, Any]] = []
     redirected: list[dict[str, str]] = []
     for url in urls:
         result = results[url]
         if _alive(result):
-            if result.get("type") != "doi" and result.get("final") and result["final"] != url:
+            if result.get("type") != "doi" and result.get("final") and result["final"] != _bare(url):
                 redirected.append({"url": url, "to": result["final"]})
             continue
         detail = {key: value for key, value in result.items() if key != "final"}
-        failing.append({"url": url, "where": where[url], **detail, **_capture(url)})
+        failing.append({"url": url, "where": where[url], **detail, **_capture(_bare(url))})
     return {
         "checked": len(urls),
         "ok": len(urls) - len(failing),

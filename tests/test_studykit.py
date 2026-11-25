@@ -576,3 +576,46 @@ def test_check_links_refuses_a_redirect_to_a_private_host(monkeypatch):
     handler = links._Redirects()
     assert handler.redirect_request(None, None, 302, "Found", {}, "http://127.0.0.1/admin") is None
     assert handler.redirect_request(None, None, 302, "Found", {}, "https://user:pw@host.example/") is None
+
+
+def test_vetted_connection_refuses_a_private_address_at_connect_time(monkeypatch):
+    private = [(links.socket.AF_INET, links.socket.SOCK_STREAM, 6, "", ("10.0.0.5", 443))]
+    monkeypatch.setattr(links.socket, "getaddrinfo", lambda *args, **kwargs: private)
+    monkeypatch.setattr(links.socket, "socket", lambda *args: pytest.fail("no socket for a private address"))
+    connection = links._VettedHTTPS("host.example", 443, context=links._SSL)
+    with pytest.raises(OSError, match="not a public host"):
+        connection.connect()
+
+
+def test_vetted_connection_connects_to_the_address_it_vetted(monkeypatch):
+    public = [(links.socket.AF_INET, links.socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+    connected: list[tuple] = []
+
+    class Sock:
+        def __init__(self, *args):
+            pass
+
+        def settimeout(self, value):
+            pass
+
+        def connect(self, sockaddr):
+            connected.append(sockaddr)
+
+    class Context(links.ssl.SSLContext):
+        def wrap_socket(self, sock, server_hostname=None, **kwargs):
+            connected.append(("tls", server_hostname))
+            return sock
+
+    monkeypatch.setattr(links.socket, "getaddrinfo", lambda *args, **kwargs: public)
+    monkeypatch.setattr(links.socket, "socket", Sock)
+    connection = links._VettedHTTPS("host.example", 443, context=Context(links.ssl.PROTOCOL_TLS_CLIENT))
+    connection.connect()
+    assert connected == [("93.184.216.34", 443), ("tls", "host.example")]
+
+
+def test_secret_parameters_and_fragments_never_reach_the_archive():
+    assert links._secret("https://h.example/f?a=1;sid=9")
+    assert links._secret("https://h.example/f?jwt=x") and links._secret("https://h.example/f?X-Amz-Signature=x")
+    assert links._secret("https://h.example/f?access_key=x") and not links._secret("https://h.example/f?page=2&id=7")
+    assert links._bare("https://h.example/f?page=2#sec") == "https://h.example/f?page=2"
+    assert links._blocked("https://ho%73t.example/") == "no valid host"
